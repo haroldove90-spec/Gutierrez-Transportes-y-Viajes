@@ -1,0 +1,6 @@
+{
+  "name": "Gutierrez Transportes y Viajes",
+  "description": "Sistema Integral de Gestión de Rutas, Reservas de Pasajes y Rentas Privadas",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
