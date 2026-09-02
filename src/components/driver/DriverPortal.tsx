@@ -351,8 +351,8 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
 
       {/* Modal to register new on-road expense */}
       {showExpenseForm && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 border-2 border-neutral-200">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in">
+          <div className="relative bg-white w-full max-w-sm sm:max-w-md my-auto rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 border-2 border-neutral-200 max-h-[90dvh] overflow-y-auto no-scrollbar">
             <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
               <h3 className="text-base font-black uppercase text-neutral-900 flex items-center gap-2">
                 <Receipt className="w-5 h-5 text-orange-600" /> Captura de Comprobante

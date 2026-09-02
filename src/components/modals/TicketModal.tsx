@@ -48,10 +48,10 @@ export const TicketModal: React.FC<TicketModalProps> = ({ booking, onClose }) =>
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border-2 border-neutral-300 flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+      <div className="relative w-full max-w-sm sm:max-w-md my-auto bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-neutral-300 flex flex-col max-h-[90dvh]">
         {/* Modal Top Header */}
-        <div className="bg-black px-5 py-4 text-white flex items-center justify-between border-b border-neutral-800">
+        <div className="bg-black px-4 py-3.5 sm:px-5 sm:py-4 text-white flex items-center justify-between border-b border-neutral-800 shrink-0">
           <div className="flex items-center gap-2.5">
             <ShieldCheck className="w-6 h-6 text-orange-500" />
             <span className="text-sm font-black tracking-wider uppercase text-white">Boleto Digital Oficial</span>
