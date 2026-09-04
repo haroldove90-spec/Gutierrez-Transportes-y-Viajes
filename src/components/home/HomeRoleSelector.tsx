@@ -1,5 +1,6 @@
 import React from 'react';
 import { UserRole } from '../../types';
+import { useApp } from '../../context/AppContext';
 import { Logo } from '../common/Logo';
 import { PWAInstallButton } from '../common/PWAInstallButton';
 import { 
@@ -8,7 +9,8 @@ import {
   Briefcase, 
   Compass, 
   DollarSign, 
-  ShieldCheck
+  ShieldCheck,
+  Database
 } from 'lucide-react';
 
 interface HomeRoleSelectorProps {
@@ -16,6 +18,7 @@ interface HomeRoleSelectorProps {
 }
 
 export const HomeRoleSelector: React.FC<HomeRoleSelectorProps> = ({ onSelectRole }) => {
+  const { setShowSupabaseModal, supabaseConnected } = useApp();
   const roles: { id: UserRole; name: string; icon: React.ReactNode }[] = [
     {
       id: 'pasajero',
@@ -83,9 +86,20 @@ export const HomeRoleSelector: React.FC<HomeRoleSelectorProps> = ({ onSelectRole
           ))}
         </div>
 
-        {/* PWA Install Button with Orange Styling */}
-        <div className="flex flex-col items-center gap-2">
+        {/* PWA Install Button with Orange Styling & Supabase Quick Setup */}
+        <div className="flex flex-col sm:flex-row items-center gap-3">
           <PWAInstallButton variant="home" />
+          
+          <button
+            onClick={() => setShowSupabaseModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-xs font-black text-neutral-800 transition-all shadow-xs cursor-pointer active:scale-95"
+          >
+            <Database className="w-4 h-4 text-emerald-600" />
+            <span>Configuración Supabase (SQL & Sync)</span>
+            <span
+              className={`w-2 h-2 rounded-full ${supabaseConnected ? 'bg-emerald-500' : 'bg-amber-500'}`}
+            />
+          </button>
         </div>
 
       </div>

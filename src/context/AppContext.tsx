@@ -26,6 +26,15 @@ import {
   ROUTE_STOPS,
   OFFICIAL_PRICING
 } from '../data/mockData';
+import {
+  checkSupabaseConnection,
+  fetchTripsFromSupabase,
+  fetchBookingsFromSupabase,
+  saveBookingToSupabase,
+  updateBookingCheckInInSupabase,
+  saveRentalQuoteToSupabase
+} from '../lib/supabase';
+import { SupabaseSqlModal } from '../components/modals/SupabaseSqlModal';
 
 interface AppContextType {
   currentRole: UserRole;
@@ -82,6 +91,13 @@ interface AppContextType {
   // Notifications
   notification: { message: string; type: 'success' | 'error' | 'info' } | null;
   showNotification: (message: string, type?: 'success' | 'error' | 'info') => void;
+
+  // Supabase Cloud Sync
+  supabaseConnected: boolean;
+  supabaseMessage: string;
+  showSupabaseModal: boolean;
+  setShowSupabaseModal: (show: boolean) => void;
+  syncWithSupabase: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -104,6 +120,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tempLockedSeats, setTempLockedSeats] = useState<{ tripId: string; seatNumbers: number[]; expiresAt: number } | null>(null);
   const [activeTicket, setActiveTicket] = useState<Booking | null>(INITIAL_BOOKINGS[0]);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  // Supabase State
+  const [supabaseConnected, setSupabaseConnected] = useState<boolean>(false);
+  const [supabaseMessage, setSupabaseMessage] = useState<string>('Comprobando Supabase...');
+  const [showSupabaseModal, setShowSupabaseModal] = useState<boolean>(false);
+
+  // Sync with Supabase
+  const syncWithSupabase = async () => {
+    try {
+      const res = await checkSupabaseConnection();
+      setSupabaseConnected(res.connected);
+      if (res.error) {
+        setSupabaseMessage(res.error);
+      } else if (res.connected) {
+        setSupabaseMessage('Conectado a Supabase PostgreSQL');
+        const [cloudTrips, cloudBookings] = await Promise.all([
+          fetchTripsFromSupabase(),
+          fetchBookingsFromSupabase()
+        ]);
+        if (cloudTrips && cloudTrips.length > 0) {
+          setTrips(cloudTrips);
+        }
+        if (cloudBookings && cloudBookings.length > 0) {
+          setBookings(cloudBookings);
+        }
+      }
+    } catch {
+      setSupabaseConnected(false);
+      setSupabaseMessage('Modo local (Supabase no alcanzable)');
+    }
+  };
+
+  useEffect(() => {
+    syncWithSupabase();
+  }, []);
 
   const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setNotification({ message, type });
@@ -236,6 +287,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setActiveTicket(newBooking);
     setTempLockedSeats(null);
 
+    // Asynchronously synchronize with Supabase
+    saveBookingToSupabase(newBooking).catch(err => {
+      console.warn('Supabase sync notice:', err);
+    });
+
     addAuditEntry(
       'EMISION_BOLETO_DEFINITIVO',
       'Booking',
@@ -316,6 +372,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     addAuditEntry('CHECK_IN_PASAJERO_QR', 'Booking', bookingId, 'Pendiente', `Abordó en: ${locationName} a las ${time}`);
     showNotification(`Abordaje confirmado: ${booking.passengerName}`, 'success');
+    
+    // Sync check-in to Supabase
+    updateBookingCheckInInSupabase(bookingId, locationName).catch(err => {
+      console.warn('Supabase checkin sync notice:', err);
+    });
+
     return true;
   };
 
@@ -410,6 +472,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setQuotes(prev => [newQuote, ...prev]);
+    
+    // Sync rental quote to Supabase
+    saveRentalQuoteToSupabase(newQuote).catch(err => {
+      console.warn('Supabase quote sync notice:', err);
+    });
+
     addAuditEntry('NUEVA_COTIZACION_RENTA', 'RentalQuote', quoteId, undefined, `$${quoteData.totalPrice} a ${quoteData.destination}`);
     showNotification(`Cotización ${quoteId} generada exitosamente.`, 'success');
     return newQuote;
@@ -508,10 +576,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         activeTicket,
         setActiveTicket,
         notification,
-        showNotification
+        showNotification,
+        supabaseConnected,
+        supabaseMessage,
+        showSupabaseModal,
+        setShowSupabaseModal,
+        syncWithSupabase
       }}
     >
       {children}
+      {showSupabaseModal && (
+        <SupabaseSqlModal onClose={() => setShowSupabaseModal(false)} />
+      )}
     </AppContext.Provider>
   );
 };

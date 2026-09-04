@@ -14,7 +14,8 @@ import {
   Compass, 
   LogOut,
   Menu,
-  X
+  X,
+  Database
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -30,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
   isSidebarOpen = true, 
   onToggleSidebar 
 }) => {
-  const { currentRole, setCurrentRole, activeTicket } = useApp();
+  const { currentRole, setCurrentRole, activeTicket, setShowSupabaseModal, supabaseConnected } = useApp();
 
   const roleOptions: { id: UserRole; label: string; icon: React.ReactNode }[] = [
     { id: 'pasajero', label: 'Pasajero / Cliente', icon: <User className="w-4 h-4 md:w-5 md:h-5 text-orange-400" /> },
@@ -99,6 +100,20 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden sm:inline">Mi Boleto</span>
             </button>
           )}
+
+          {/* Supabase Status / SQL Script Button */}
+          <button
+            onClick={() => setShowSupabaseModal(true)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 md:py-2 bg-black/60 hover:bg-black text-white rounded-xl text-xs font-black transition-all border border-white/20 shrink-0 cursor-pointer shadow-xs"
+            title="Ver estado de conexión Supabase y copiar Script SQL"
+          >
+            <Database className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-400" />
+            <span className="hidden lg:inline text-[11px]">Supabase</span>
+            <span
+              className={`w-2 h-2 rounded-full ${supabaseConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}
+              title={supabaseConnected ? 'Conectado a Supabase' : 'Esperando ejecución de SQL'}
+            />
+          </button>
 
           {/* Quick QR Scanner (especially for driver/counter) */}
           {(currentRole === 'conductor' || currentRole === 'secretaria' || currentRole === 'operaciones') && (

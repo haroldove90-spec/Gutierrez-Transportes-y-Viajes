@@ -4,8 +4,12 @@ import App from './App.tsx';
 import './index.css';
 import { registerSW } from 'virtual:pwa-register';
 
-// Register PWA Service Worker
-registerSW({ immediate: true });
+// Register PWA Service Worker safely
+try {
+  registerSW({ immediate: true });
+} catch (e) {
+  console.warn('PWA registration skipped in current environment', e);
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
