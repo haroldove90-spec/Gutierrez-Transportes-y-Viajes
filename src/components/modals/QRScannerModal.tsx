@@ -71,7 +71,7 @@ export const QRScannerModal: React.FC<QRScannerModalProps> = ({ onClose, current
             <div className="absolute bottom-3 right-3 w-6 h-6 border-b-3 border-r-3 border-orange-400 rounded-br-sm"></div>
 
             {/* Laser scanning beam */}
-            <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-orange-300 to-transparent shadow-[0_0_12px_#fb923c] animate-bounce opacity-90"></div>
+            <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-red-300 to-transparent shadow-[0_0_12px_#C50407] animate-bounce opacity-90"></div>
 
             <QrCode className="w-14 h-14 sm:w-16 sm:h-16 text-orange-500/50 animate-pulse" />
             <p className="text-[11px] sm:text-xs text-orange-100 font-mono mt-2 z-10 font-bold text-center px-2">

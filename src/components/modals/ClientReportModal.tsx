@@ -98,7 +98,7 @@ Contacto Oficial: WhatsApp ${OFFICIAL_WHATSAPP} | Tel. ${OFFICIAL_PHONE}
       });
 
       // Colors
-      const orange = [234, 88, 12]; // #ea580c
+      const orange = [197, 4, 7]; // #C50407 (Gutiérrez Red)
       const dark = [24, 24, 27];    // #18181b
       const gray = [113, 113, 122];
 

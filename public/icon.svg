@@ -5,41 +5,41 @@
       <stop offset="100%" stop-color="#18181b" />
     </linearGradient>
     <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f97316" />
-      <stop offset="100%" stop-color="#ea580c" />
+      <stop offset="0%" stop-color="#e02424" />
+      <stop offset="100%" stop-color="#C50407" />
     </linearGradient>
   </defs>
   
   <!-- Background with rounded corners for maskable safe zone -->
   <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
   
-  <!-- Orange accent halo -->
-  <circle cx="256" cy="230" r="160" fill="#ea580c" opacity="0.15" />
+  <!-- Red accent halo -->
+  <circle cx="256" cy="230" r="160" fill="#C50407" opacity="0.18" />
   
   <!-- Sprinter Van Silhouette (White/Silver) -->
   <g transform="translate(60, 110) scale(3.2)" fill="#f8fafc">
     <path d="M 5 40 L 5 22 Q 5 12 18 10 L 72 10 Q 82 10 88 18 L 94 28 Q 96 32 96 40 L 88 40 A 6 6 0 0 1 76 40 L 32 40 A 6 6 0 0 1 20 40 Z" />
     <circle cx="26" cy="40" r="5" fill="#000000" />
-    <circle cx="26" cy="40" r="2.5" fill="#f97316" />
+    <circle cx="26" cy="40" r="2.5" fill="#C50407" />
     <circle cx="82" cy="40" r="5" fill="#000000" />
-    <circle cx="82" cy="40" r="2.5" fill="#f97316" />
+    <circle cx="82" cy="40" r="2.5" fill="#C50407" />
     <path d="M 22 14 L 46 14 L 46 25 L 22 25 Z" fill="#000000" />
     <path d="M 50 14 L 72 14 L 72 25 L 50 25 Z" fill="#000000" />
     <path d="M 76 15 L 86 20 L 86 25 L 76 25 Z" fill="#000000" />
   </g>
 
-  <!-- Orange Sports Car Silhouette -->
+  <!-- Red Sports Car Silhouette -->
   <g transform="translate(190, 160) scale(2.8)" fill="url(#orangeGrad)">
     <path d="M 6 36 L 6 24 Q 6 18 16 16 L 36 12 Q 46 8 60 12 L 78 20 Q 86 24 86 36 L 76 36 A 6 6 0 0 1 64 36 L 28 36 A 6 6 0 0 1 16 36 Z" />
     <circle cx="22" cy="36" r="5" fill="#000000" />
-    <circle cx="22" cy="36" r="2.5" fill="#fed7aa" />
+    <circle cx="22" cy="36" r="2.5" fill="#fecaca" />
     <circle cx="70" cy="36" r="5" fill="#000000" />
-    <circle cx="70" cy="36" r="2.5" fill="#fed7aa" />
+    <circle cx="70" cy="36" r="2.5" fill="#fecaca" />
     <path d="M 32 15 L 52 14 L 52 24 L 28 24 Z" fill="#ffffff" opacity="0.9" />
     <path d="M 56 14 L 70 19 L 70 24 L 56 24 Z" fill="#ffffff" opacity="0.9" />
   </g>
 
   <!-- Brand Typography -->
   <text x="256" y="395" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="44" letter-spacing="2">GUTIERREZ</text>
-  <text x="256" y="435" text-anchor="middle" fill="#ea580c" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="20" letter-spacing="6">TRANSPORTES Y VIAJES</text>
+  <text x="256" y="435" text-anchor="middle" fill="#C50407" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="20" letter-spacing="6">TRANSPORTES Y VIAJES</text>
 </svg>

@@ -12,12 +12,16 @@ import { FinancePortal } from './components/finance/FinancePortal';
 import { DirectorPortal } from './components/director/DirectorPortal';
 import { TicketModal } from './components/modals/TicketModal';
 import { QRScannerModal } from './components/modals/QRScannerModal';
+import { SplashScreen } from './components/common/SplashScreen';
 import { Booking } from './types';
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 
 function AppContent() {
   const { currentRole, setCurrentRole, notification, activeTicket, setActiveTicket } = useApp();
   
+  // Splash Screen state on initial launch
+  const [showSplash, setShowSplash] = useState<boolean>(true);
+
   // Active Tab state inside current portal
   const [activeTab, setActiveTab] = useState<string>('search');
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
@@ -168,6 +172,11 @@ function AppContent() {
         <QRScannerModal
           onClose={() => setIsScannerOpen(false)}
         />
+      )}
+
+      {/* Initial Brand Splash Screen - Shows complete unencapsulated logo */}
+      {showSplash && (
+        <SplashScreen onFinish={() => setShowSplash(false)} />
       )}
     </div>
   );

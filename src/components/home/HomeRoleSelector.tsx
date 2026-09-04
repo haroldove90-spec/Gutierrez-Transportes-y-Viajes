@@ -56,10 +56,10 @@ export const HomeRoleSelector: React.FC<HomeRoleSelectorProps> = ({ onSelectRole
     <div className="flex-1 w-full min-h-screen bg-white text-neutral-900 flex flex-col items-center justify-between p-4 sm:p-8 md:p-12 overflow-y-auto">
       <div className="w-full max-w-4xl flex flex-col items-center my-auto py-6 sm:py-10">
         
-        {/* Brand Logo Header - Centered on Top */}
-        <div className="mb-8 sm:mb-12 text-center flex flex-col items-center">
-          <Logo theme="light" size="lg" />
-          <div className="h-1.5 w-24 bg-orange-600 rounded-full mt-5 mb-3"></div>
+        {/* Brand Logo Header - Centered on Top (Full unencapsulated official logo) */}
+        <div className="mb-6 sm:mb-10 text-center flex flex-col items-center px-4 w-full">
+          <Logo theme="light" size="xl" />
+          <div className="h-1.5 w-24 bg-orange-600 rounded-full mt-4 mb-3"></div>
           <p className="text-sm sm:text-base md:text-lg font-black text-neutral-600 uppercase tracking-widest">
             Selecciona tu Perfil de Acceso
           </p>

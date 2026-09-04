@@ -17,7 +17,7 @@ export default defineConfig(() => {
           name: 'Gutierrez Transportes y Viajes',
           short_name: 'Gutierrez',
           description: 'Sistema Integral de Gestión de Rutas, Reservas de Pasajes y Rentas Privadas',
-          theme_color: '#ea580c',
+          theme_color: '#C50407',
           background_color: '#ffffff',
           display: 'standalone',
           start_url: '/',
