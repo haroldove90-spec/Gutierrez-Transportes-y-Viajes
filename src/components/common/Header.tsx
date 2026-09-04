@@ -51,15 +51,15 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="bg-orange-600 text-white border-b-2 border-orange-700 shadow-lg shrink-0 sticky top-0 z-40 select-none">
       {/* Top Banner Bar */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 md:py-3 flex items-center justify-between gap-3">
+      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 py-2 md:py-2.5 flex items-center justify-between gap-2">
         
-        {/* Left Section: Hamburger Toggle + Brand Logo */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Hamburger Menu Toggle for Tablet / Desktop Sidebar */}
+        {/* Left Section: Hamburger Toggle (DESKTOP/TABLET ONLY) + Brand Logo */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Hamburger Menu Toggle for Tablet / Desktop Sidebar ONLY (Hidden on mobile) */}
           {onToggleSidebar && (
             <button
               onClick={onToggleSidebar}
-              className="p-2 md:p-2.5 rounded-xl bg-black/30 hover:bg-black text-white transition-all border border-white/20 active:scale-95 cursor-pointer flex items-center justify-center"
+              className="hidden md:flex p-2 md:p-2.5 rounded-xl bg-black/30 hover:bg-black text-white transition-all border border-white/20 active:scale-95 cursor-pointer items-center justify-center shrink-0"
               title={isSidebarOpen ? "Ocultar menú lateral" : "Mostrar menú lateral"}
             >
               {isSidebarOpen ? (
@@ -70,10 +70,10 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* Brand Logo */}
+          {/* Brand Logo - Unencapsulated rectangular logo */}
           <button
             onClick={() => setCurrentRole('home')}
-            className="flex items-center gap-2 cursor-pointer hover:opacity-95 transition-opacity text-left group"
+            className="flex items-center cursor-pointer hover:opacity-95 transition-opacity text-left shrink-0"
             title="Ir al Inicio (Menú de Roles)"
           >
             <Logo compact />
@@ -81,10 +81,10 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right Section: Active Role Badge, Ticket, Scanner, PWA & Logout Button */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           
-          {/* Active Role Indicator Badge */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 md:py-2 bg-black/40 text-white rounded-xl border border-white/20 text-xs md:text-sm font-black">
+          {/* Active Role Indicator Badge (Hidden on mobile and tablet) */}
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-black/40 text-white rounded-xl border border-white/20 text-xs md:text-sm font-black">
             {currentRoleInfo.icon}
             <span className="tracking-wide">{currentRoleInfo.label}</span>
           </div>
@@ -93,22 +93,22 @@ export const Header: React.FC<HeaderProps> = ({
           {activeTicket && currentRole === 'pasajero' && (
             <button
               onClick={onOpenTicket}
-              className="flex items-center gap-1.5 px-3 py-2 bg-black hover:bg-neutral-900 text-white rounded-xl text-xs md:text-sm font-extrabold transition-all shadow-md border border-white/20 shrink-0"
+              className="p-2 sm:px-2.5 sm:py-1.5 bg-black hover:bg-neutral-900 text-white rounded-xl text-xs font-extrabold transition-all shadow-md border border-white/20 shrink-0 flex items-center gap-1"
               title="Ver mi boleto digital con QR"
             >
-              <Ticket className="w-4 h-4 md:w-5 md:h-5 text-orange-400" />
-              <span className="hidden sm:inline">Mi Boleto</span>
+              <Ticket className="w-4 h-4 text-orange-400" />
+              <span className="hidden md:inline">Mi Boleto</span>
             </button>
           )}
 
           {/* Supabase Status / SQL Script Button */}
           <button
             onClick={() => setShowSupabaseModal(true)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 md:py-2 bg-black/60 hover:bg-black text-white rounded-xl text-xs font-black transition-all border border-white/20 shrink-0 cursor-pointer shadow-xs"
+            className="p-2 sm:px-2.5 sm:py-1.5 bg-black/60 hover:bg-black text-white rounded-xl text-xs font-black transition-all border border-white/20 shrink-0 cursor-pointer shadow-xs flex items-center gap-1.5"
             title="Ver estado de conexión Supabase y copiar Script SQL"
           >
-            <Database className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-400" />
-            <span className="hidden lg:inline text-[11px]">Supabase</span>
+            <Database className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden xl:inline text-[11px]">Supabase</span>
             <span
               className={`w-2 h-2 rounded-full ${supabaseConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}
               title={supabaseConnected ? 'Conectado a Supabase' : 'Esperando ejecución de SQL'}
@@ -119,10 +119,10 @@ export const Header: React.FC<HeaderProps> = ({
           {(currentRole === 'conductor' || currentRole === 'secretaria' || currentRole === 'operaciones') && (
             <button
               onClick={onOpenScanner}
-              className="p-2 sm:px-3 sm:py-2 bg-black/80 hover:bg-black text-white rounded-xl text-xs md:text-sm font-extrabold flex items-center gap-1.5 transition-all border border-white/20 shrink-0"
+              className="p-2 sm:px-2.5 sm:py-1.5 bg-black/80 hover:bg-black text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all border border-white/20 shrink-0 cursor-pointer"
               title="Abrir Escáner de Boletos"
             >
-              <QrCode className="w-4 h-4 md:w-5 md:h-5 text-orange-400" />
+              <QrCode className="w-4 h-4 text-orange-400" />
               <span className="hidden md:inline">Escanear</span>
             </button>
           )}
@@ -130,14 +130,15 @@ export const Header: React.FC<HeaderProps> = ({
           {/* PWA Install Button in Header */}
           <PWAInstallButton variant="header" />
 
-          {/* Cerrar Sesión / Salir Button */}
+          {/* Cerrar Sesión / Salir Button - Minimized to ICON ONLY on mobile and tablet */}
           <button
             onClick={() => setCurrentRole('home')}
-            className="flex items-center gap-2 px-3.5 py-2 md:py-2.5 bg-black hover:bg-neutral-900 active:scale-95 text-white rounded-xl border-2 border-white/30 text-xs md:text-sm font-black tracking-wide transition-all shadow-md cursor-pointer hover:border-white"
-            title="Cerrar sesión y volver al menú principal de roles"
+            className="p-2 sm:px-2.5 sm:py-2 bg-black hover:bg-neutral-900 active:scale-95 text-white rounded-xl border border-white/20 hover:border-white text-xs md:text-sm font-black tracking-wide transition-all shadow-md cursor-pointer flex items-center gap-1.5 shrink-0"
+            title="Cerrar sesión y volver al menú principal"
+            aria-label="Cerrar sesión"
           >
-            <LogOut className="w-4 h-4 md:w-5 md:h-5 text-orange-500" />
-            <span>Cerrar Sesión</span>
+            <LogOut className="w-4 h-4 text-white" />
+            <span className="hidden xl:inline">Cerrar Sesión</span>
           </button>
 
         </div>

@@ -23,7 +23,7 @@ export const Logo: React.FC<LogoProps> = ({
         <img
           src={GUTIERREZ_LOGO_URL}
           alt="Gutiérrez Transportes y Viajes"
-          className="h-8 sm:h-9 md:h-10 w-auto max-w-[200px] sm:max-w-[240px] md:max-w-[280px] object-contain transition-all"
+          className="h-7 sm:h-8 md:h-9.5 w-auto max-w-[140px] sm:max-w-[200px] md:max-w-[260px] object-contain transition-all"
           onError={(e) => {
             (e.target as HTMLImageElement).src = '/gutierrezlogo2.png';
           }}

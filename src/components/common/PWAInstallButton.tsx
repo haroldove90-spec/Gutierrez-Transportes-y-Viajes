@@ -39,11 +39,12 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({ variant = 'h
       {variant === 'header' && (
         <button
           onClick={handleInstallClick}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-black hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shadow-md border border-white/20 active:scale-95 shrink-0"
+          className="p-2 sm:px-2.5 sm:py-1.5 bg-black hover:bg-neutral-900 text-white rounded-xl text-xs font-bold transition-all shadow-md border border-white/20 active:scale-95 shrink-0 flex items-center gap-1.5"
           title="Instalar aplicación en tu dispositivo"
+          aria-label="Instalar aplicación"
         >
           <Download className="w-3.5 h-3.5 text-orange-400 animate-bounce" />
-          <span className="hidden sm:inline">Instalar App</span>
+          <span className="hidden md:inline">Instalar</span>
         </button>
       )}
 
