@@ -8,9 +8,15 @@ import {
   CheckCircle2, 
   Lock, 
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  Bus,
+  ArrowRightLeft,
+  MapPin,
+  Phone
 } from 'lucide-react';
 import { RentalQuote } from '../../types';
+import { ROUTE_STOPS, OFFICIAL_PRICING, OFFICIAL_PHONE, OFFICIAL_WHATSAPP, OFFICIAL_EXPERIENCE_YEARS } from '../../data/mockData';
+import { ClientReportModal } from '../modals/ClientReportModal';
 
 interface SecretaryPortalProps {
   activeTab: string;
@@ -35,6 +41,11 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
   const [counterTripId, setCounterTripId] = useState(trips[0]?.id || '');
   const [counterSeatNum, setCounterSeatNum] = useState<number>(5);
   const [counterPaymentMethod, setCounterPaymentMethod] = useState<'cash_counter' | 'card' | 'spei'>('cash_counter');
+  const [counterTripType, setCounterTripType] = useState<'sencillo' | 'redondo'>('sencillo');
+  const [counterBoardingPoint, setCounterBoardingPoint] = useState<string>(
+    'Soriana Híper Manzanillo (Soriana Híper Manzanillo)'
+  );
+  const [showClientReport, setShowClientReport] = useState<boolean>(false);
 
   // Dynamic Rental Quote Form State
   const [clientName, setClientName] = useState('Dra. Claudia Vaca (Congreso Médico)');
@@ -66,6 +77,17 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
     }
 
     const trip = trips.find(t => t.id === counterTripId) || trips[0];
+    
+    // Look up official pricing
+    const matchedPricing = OFFICIAL_PRICING.find(
+      p => (p.origin.toLowerCase().includes(trip.origin.toLowerCase().split(' ')[0]) || trip.origin.toLowerCase().includes(p.origin.toLowerCase())) &&
+           (p.destination.toLowerCase().includes(trip.destination.toLowerCase().split(' ')[0]) || trip.destination.toLowerCase().includes(p.destination.toLowerCase()))
+    );
+
+    const price = (counterTripType === 'redondo' && matchedPricing?.roundTripPrice) 
+      ? matchedPricing.roundTripPrice 
+      : (matchedPricing?.singlePrice || trip.basePrice);
+
     const newBooking = createBooking({
       tripId: trip.id,
       passengerName: counterPassengerName,
@@ -73,16 +95,18 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
       passengerEmail: 'mostrador@transportesgutierrez.com',
       origin: trip.origin,
       destination: trip.destination,
-      boardingPoint: 'Oficina Gutiérrez (Mostrador)',
-      dropoffPoint: 'Destino Troncal',
+      boardingPoint: counterBoardingPoint,
+      dropoffPoint: trip.destination,
       date: trip.date,
       departureTime: trip.departureTime,
       seatNumbers: [counterSeatNum],
-      unitNumber: 'Unidad 07 (Sprinter)',
-      totalAmount: trip.basePrice,
+      unitNumber: trip.vehicleId === 'veh-01' ? 'Unidad 04 (Sprinter)' : 'Unidad 07 (Sprinter)',
+      totalAmount: price,
       paymentMethod: counterPaymentMethod,
       paymentStatus: 'paid',
       source: 'counter',
+      tripType: counterTripType,
+      packageType: matchedPricing?.packageType,
       addons: {}
     });
 
@@ -122,14 +146,66 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
       {/* Tab 1: Venta Rápida en Mostrador / WhatsApp */}
       {activeTab === 'counter' && (
         <div className="max-w-4xl mx-auto w-full space-y-6">
+          
+          {/* Official Company Banner with Contact and Report button */}
+          <div className="bg-neutral-900 text-white rounded-3xl p-5 md:p-6 border border-neutral-800 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-orange-600 text-white flex items-center justify-center font-black shadow-lg shrink-0">
+                <Bus className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base md:text-lg font-black uppercase">Gutiérrez Transportes y Viajes</h3>
+                  <span className="bg-orange-600 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
+                    {OFFICIAL_EXPERIENCE_YEARS} Años
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-300 font-medium mt-0.5">
+                  WhatsApp: <strong className="text-orange-400">{OFFICIAL_WHATSAPP}</strong> • Fijo: <strong>{OFFICIAL_PHONE}</strong>
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowClientReport(true)}
+              className="px-4 py-2.5 bg-orange-600 hover:bg-orange-700 active:scale-95 text-white text-xs md:text-sm font-black rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer shrink-0"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Reporte Cliente & Tarifas (PDF)</span>
+            </button>
+          </div>
+
           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-4">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 pb-3">
               <span className="text-sm md:text-base font-black text-orange-600 uppercase tracking-wider flex items-center gap-2">
                 <PlusCircle className="w-5 h-5" /> Venta en Ventanilla / WhatsApp
               </span>
               <span className="text-xs md:text-sm bg-neutral-900 text-white font-black px-3 py-1 rounded-full">
                 Inventario Sincronizado
               </span>
+            </div>
+
+            {/* Trip Type Selector */}
+            <div className="flex items-center gap-2 bg-neutral-100 p-1 rounded-2xl border border-neutral-200 w-fit">
+              <button
+                type="button"
+                onClick={() => setCounterTripType('sencillo')}
+                className={`px-4 py-2 rounded-xl text-xs md:text-sm font-black transition-all cursor-pointer ${
+                  counterTripType === 'sencillo' ? 'bg-orange-600 text-white shadow-xs' : 'text-neutral-700'
+                }`}
+              >
+                Viaje Sencillo
+              </button>
+              <button
+                type="button"
+                onClick={() => setCounterTripType('redondo')}
+                className={`px-4 py-2 rounded-xl text-xs md:text-sm font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                  counterTripType === 'redondo' ? 'bg-orange-600 text-white shadow-xs' : 'text-neutral-700'
+                }`}
+              >
+                <ArrowRightLeft className="w-3.5 h-3.5" />
+                Viaje Redondo
+              </button>
             </div>
 
             <form onSubmit={handleCreateCounterSale} className="space-y-4 text-sm">
@@ -144,6 +220,24 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                   {trips.map(t => (
                     <option key={t.id} value={t.id}>
                       {t.departureTime} - {t.routeTitle} (${t.basePrice} MXN)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Boarding Stop Picker */}
+              <div>
+                <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-orange-600" /> Punto de Abordaje Oficial
+                </label>
+                <select
+                  value={counterBoardingPoint}
+                  onChange={e => setCounterBoardingPoint(e.target.value)}
+                  className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900 text-xs md:text-sm"
+                >
+                  {ROUTE_STOPS.map(stop => (
+                    <option key={stop.id} value={`${stop.city}: ${stop.name} (${stop.landmark})`}>
+                      {stop.city} — {stop.name} [{stop.landmark}]
                     </option>
                   ))}
                 </select>
@@ -461,6 +555,11 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
             </div>
           </div>
         </div>
+      )}
+
+      {/* Client Implementation & Rates PDF Report Modal */}
+      {showClientReport && (
+        <ClientReportModal onClose={() => setShowClientReport(false)} />
       )}
     </div>
   );

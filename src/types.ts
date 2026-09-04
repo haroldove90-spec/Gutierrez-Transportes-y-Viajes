@@ -25,6 +25,7 @@ export interface RoutePricing {
   roundTripPrice?: number;
   timeEstimate: string;
   notes: string;
+  packageType?: 'estandar' | 'consulado' | 'zoologico' | 'intermedio';
 }
 
 export interface Seat {
@@ -115,6 +116,9 @@ export interface Booking {
   paymentMethod: 'card' | 'cash_counter' | 'spei' | 'oxxo';
   paymentStatus: 'paid' | 'pending' | 'refunded';
   source: 'web' | 'counter' | 'whatsapp' | 'phone';
+  tripType?: 'sencillo' | 'redondo';
+  returnDate?: string;
+  packageType?: 'estandar' | 'consulado' | 'zoologico' | 'intermedio';
   qrCodeData: string;
   createdAt: string;
   checkInStatus: 'pending' | 'checked_in' | 'no_show';

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   Search, 
@@ -14,10 +14,15 @@ import {
   CreditCard, 
   Wallet, 
   QrCode, 
-  Timer
+  Timer,
+  FileText,
+  Phone,
+  Sparkles,
+  ArrowRightLeft
 } from 'lucide-react';
-import { OFFICIAL_PRICING, ROUTE_STOPS } from '../../data/mockData';
+import { OFFICIAL_PRICING, ROUTE_STOPS, OFFICIAL_PHONE, OFFICIAL_WHATSAPP, OFFICIAL_EXPERIENCE_YEARS } from '../../data/mockData';
 import { TripSchedule, Seat, Booking, RoutePricing } from '../../types';
+import { ClientReportModal } from '../modals/ClientReportModal';
 
 interface PassengerPortalProps {
   activeTab: string;
@@ -40,14 +45,17 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
 
   // Search filter states
   const [origin, setOrigin] = useState<string>('Manzanillo');
-  const [destination, setDestination] = useState<string>('CAS / Consulado GDL');
+  const [destination, setDestination] = useState<string>('Guadalajara (GDL)');
   const [travelDate, setTravelDate] = useState<string>('2026-09-02');
   const [paxCount, setPaxCount] = useState<number>(1);
+  const [tripType, setTripType] = useState<'sencillo' | 'redondo'>('sencillo');
+  const [returnDate, setReturnDate] = useState<string>('2026-09-05');
+  const [showClientReport, setShowClientReport] = useState<boolean>(false);
 
   // Seat selection states
   const [selectedSeatNums, setSelectedSeatNums] = useState<number[]>([3]);
-  const [selectedBoardingStop, setSelectedBoardingStop] = useState<string>('Oficina Central Manzanillo');
-  const [selectedDropoffStop, setSelectedDropoffStop] = useState<string>('CAS / Consulado Americano');
+  const [selectedBoardingStop, setSelectedBoardingStop] = useState<string>('Soriana Híper Manzanillo (Soriana Híper Manzanillo)');
+  const [selectedDropoffStop, setSelectedDropoffStop] = useState<string>('Minerva (Burger) - Afuera del estacionamiento del Burger');
   
   // Passenger Info & Addons
   const [passengerName, setPassengerName] = useState<string>('María Elena Torres');
@@ -59,15 +67,40 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
 
   const selectedTrip = trips.find(t => t.id === selectedTripId) || trips[0];
 
+  // Dynamic available destinations for chosen origin
+  const availableDestinations = useMemo(() => {
+    const list = OFFICIAL_PRICING
+      .filter(p => p.origin.toLowerCase() === origin.toLowerCase())
+      .map(p => p.destination);
+    return list.length > 0 ? list : ['Guadalajara (GDL)', 'Colima'];
+  }, [origin]);
+
+  const handleOriginChange = (newOrigin: string) => {
+    setOrigin(newOrigin);
+    const validDests = OFFICIAL_PRICING
+      .filter(p => p.origin.toLowerCase() === newOrigin.toLowerCase())
+      .map(p => p.destination);
+    if (validDests.length > 0 && !validDests.includes(destination)) {
+      setDestination(validDests[0]);
+    }
+  };
+
   // Calculate pricing based on origin and destination
   const matchedPricing: RoutePricing = OFFICIAL_PRICING.find(
+    p => p.origin.toLowerCase() === origin.toLowerCase() &&
+         p.destination.toLowerCase() === destination.toLowerCase()
+  ) || OFFICIAL_PRICING.find(
     p => (p.origin.toLowerCase().includes(origin.toLowerCase().split(' ')[0]) || origin.toLowerCase().includes(p.origin.toLowerCase())) &&
          (p.destination.toLowerCase().includes(destination.toLowerCase().split(' ')[0]) || destination.toLowerCase().includes(p.destination.toLowerCase()))
   ) || { origin, destination, singlePrice: selectedTrip.basePrice, roundTripPrice: selectedTrip.basePrice * 2 - 20, timeEstimate: '4 hrs', notes: 'Ruta directa troncal' };
 
+  const unitPrice = (tripType === 'redondo' && matchedPricing.roundTripPrice) 
+    ? matchedPricing.roundTripPrice 
+    : matchedPricing.singlePrice;
+
   const parcelFee = hasParcel ? (origin.includes('Manzanillo') ? 250 : 150) : 0;
   const petFee = hasPet ? (origin.includes('Manzanillo') ? 250 : 150) : 0;
-  const seatSubtotal = matchedPricing.singlePrice * selectedSeatNums.length;
+  const seatSubtotal = unitPrice * selectedSeatNums.length;
   const totalAmount = seatSubtotal + parcelFee + petFee;
 
   const handleSelectTrip = (trip: TripSchedule) => {
@@ -124,6 +157,9 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
       paymentMethod,
       paymentStatus: 'paid',
       source: 'web',
+      tripType,
+      returnDate: tripType === 'redondo' ? returnDate : undefined,
+      packageType: matchedPricing.packageType,
       addons: {
         parcel: hasParcel,
         parcelFee,
@@ -142,18 +178,100 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
       {/* Tab 1: Itinerarios / Búsqueda */}
       {activeTab === 'search' && (
         <div className="max-w-5xl mx-auto w-full space-y-6">
-          {/* Header Card */}
-          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-5">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-100 pb-3">
-              <span className="text-sm md:text-base font-black text-orange-600 uppercase tracking-wider flex items-center gap-2">
-                <Bus className="w-5 h-5" /> Corredor Troncal & Escalas
-              </span>
-              <span className="text-xs md:text-sm bg-neutral-900 text-white font-extrabold px-3 py-1 rounded-full">
-                Disponibilidad en Tiempo Real
-              </span>
+          
+          {/* Official Company Banner with 18 Years & Contact */}
+          <div className="bg-neutral-900 text-white rounded-3xl p-5 md:p-6 border border-neutral-800 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-orange-600 text-white flex items-center justify-center font-black text-xl shadow-lg shrink-0">
+                <Bus className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg md:text-xl font-black uppercase tracking-wide">Gutiérrez Transportes y Viajes</h2>
+                  <span className="bg-orange-600 text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full">
+                    {OFFICIAL_EXPERIENCE_YEARS} Años de Experiencia
+                  </span>
+                </div>
+                <p className="text-xs md:text-sm text-neutral-300 font-medium mt-0.5">
+                  Salidas diarias en unidades ejecutivas • WhatsApp: <strong className="text-orange-400">{OFFICIAL_WHATSAPP}</strong> • Fijo: <strong>{OFFICIAL_PHONE}</strong>
+                </p>
+              </div>
             </div>
 
-            {/* Origin & Destination pickers with Larger Typography */}
+            <button
+              onClick={() => setShowClientReport(true)}
+              className="px-4 py-2.5 bg-orange-600 hover:bg-orange-700 active:scale-95 text-white text-xs md:text-sm font-black rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer shrink-0"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Reporte Cliente y Tarifas (PDF)</span>
+            </button>
+          </div>
+
+          {/* Quick Package Selector Pills */}
+          <div className="bg-white rounded-2xl p-3 border border-neutral-200 shadow-xs flex items-center gap-2 overflow-x-auto no-scrollbar">
+            <span className="text-xs font-black uppercase tracking-wider text-neutral-500 shrink-0 px-2">
+              Paquetes Rápidos:
+            </span>
+            <button
+              onClick={() => { handleOriginChange('Manzanillo'); setDestination('Guadalajara (GDL)'); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 ${
+                destination.includes('Guadalajara') ? 'bg-orange-600 text-white' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+              }`}
+            >
+              🚌 Salidas Diarias Troncal
+            </button>
+            <button
+              onClick={() => { handleOriginChange('Manzanillo'); setDestination('CAS / Consulado Americano'); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 ${
+                destination.includes('CAS') ? 'bg-orange-600 text-white' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+              }`}
+            >
+              🇺🇸 CAS / Consulado Americano
+            </button>
+            <button
+              onClick={() => { handleOriginChange('Manzanillo'); setDestination('Zoológico de GDL'); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 ${
+                destination.includes('Zoológico') ? 'bg-orange-600 text-white' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+              }`}
+            >
+              🦁 Zoológico Guadalajara
+            </button>
+          </div>
+
+          {/* Header Card with Search Controls */}
+          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-5">
+            
+            {/* Trip Type Selector (Sencillo vs Redondo) */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 pb-4">
+              <div className="flex items-center gap-1.5 bg-neutral-100 p-1 rounded-2xl border border-neutral-200">
+                <button
+                  type="button"
+                  onClick={() => setTripType('sencillo')}
+                  className={`px-4 py-2 rounded-xl text-xs md:text-sm font-black transition-all cursor-pointer ${
+                    tripType === 'sencillo' ? 'bg-orange-600 text-white shadow-xs' : 'text-neutral-700 hover:text-neutral-900'
+                  }`}
+                >
+                  Viaje Sencillo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTripType('redondo')}
+                  className={`px-4 py-2 rounded-xl text-xs md:text-sm font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                    tripType === 'redondo' ? 'bg-orange-600 text-white shadow-xs' : 'text-neutral-700 hover:text-neutral-900'
+                  }`}
+                >
+                  <ArrowRightLeft className="w-3.5 h-3.5" />
+                  Viaje Redondo (Ahorro)
+                </button>
+              </div>
+
+              {/* Colima scale alert pill */}
+              <div className="text-xs font-black text-amber-900 bg-amber-100 border border-amber-300 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                <span>⏱️</span> En Colima se hace escala técnica de 10 a 15 min
+              </div>
+            </div>
+
+            {/* Origin & Destination pickers */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-3 bg-neutral-50 rounded-2xl p-4 border-2 border-neutral-200 focus-within:border-orange-500 transition-all">
                 <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 shrink-0"></div>
@@ -161,13 +279,13 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                   <p className="text-xs font-black text-neutral-500 uppercase tracking-wider">Origen</p>
                   <select
                     value={origin}
-                    onChange={e => setOrigin(e.target.value)}
+                    onChange={e => handleOriginChange(e.target.value)}
                     className="w-full bg-transparent font-black text-neutral-900 text-base md:text-lg focus:outline-none cursor-pointer mt-0.5"
                   >
-                    <option value="Manzanillo">Manzanillo (Blvd. Costero)</option>
+                    <option value="Manzanillo">Manzanillo (Soriana / AutoZone)</option>
                     <option value="Tecomán">Tecomán (Kiosko Centro)</option>
-                    <option value="Colima">Colima (Oficina San Fernando)</option>
-                    <option value="Guadalajara (Minerva)">Guadalajara (La Minerva)</option>
+                    <option value="Colima">Colima (Oficina Central San Fernando)</option>
+                    <option value="Cd. Guzmán">Cd. Guzmán (Glorieta Colón)</option>
                   </select>
                 </div>
               </div>
@@ -181,22 +299,21 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                     onChange={e => setDestination(e.target.value)}
                     className="w-full bg-transparent font-black text-neutral-900 text-base md:text-lg focus:outline-none cursor-pointer mt-0.5"
                   >
-                    <option value="CAS / Consulado GDL">CAS / Consulado Americano GDL</option>
-                    <option value="Guadalajara (Minerva)">Guadalajara (La Minerva / Plaza del Sol)</option>
-                    <option value="Zoológico Guadalajara">Zoológico Guadalajara (Turístico)</option>
-                    <option value="Colima">Colima (San Fernando)</option>
-                    <option value="Tecomán">Tecomán</option>
-                    <option value="Manzanillo">Manzanillo</option>
+                    {availableDestinations.map(dest => (
+                      <option key={dest} value={dest}>
+                        {dest}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
             </div>
 
-            {/* Date & Pax */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Date, Return Date (if Redondo), & Pax */}
+            <div className={`grid grid-cols-1 ${tripType === 'redondo' ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4`}>
               <div className="bg-neutral-50 p-4 rounded-2xl border-2 border-neutral-200">
                 <p className="text-xs font-black text-neutral-500 uppercase flex items-center gap-1.5 tracking-wider">
-                  <Calendar className="w-4 h-4 text-orange-600" /> Fecha del Viaje
+                  <Calendar className="w-4 h-4 text-orange-600" /> Fecha de Salida
                 </p>
                 <input
                   type="date"
@@ -205,6 +322,20 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                   className="w-full bg-transparent font-black text-neutral-900 text-base md:text-lg mt-1 focus:outline-none cursor-pointer"
                 />
               </div>
+
+              {tripType === 'redondo' && (
+                <div className="bg-orange-50/70 p-4 rounded-2xl border-2 border-orange-200">
+                  <p className="text-xs font-black text-orange-700 uppercase flex items-center gap-1.5 tracking-wider">
+                    <Calendar className="w-4 h-4 text-orange-600" /> Fecha de Retorno
+                  </p>
+                  <input
+                    type="date"
+                    value={returnDate}
+                    onChange={e => setReturnDate(e.target.value)}
+                    className="w-full bg-transparent font-black text-neutral-900 text-base md:text-lg mt-1 focus:outline-none cursor-pointer"
+                  />
+                </div>
+              )}
 
               <div className="bg-neutral-50 p-4 rounded-2xl border-2 border-neutral-200">
                 <p className="text-xs font-black text-neutral-500 uppercase flex items-center gap-1.5 tracking-wider">
@@ -223,16 +354,30 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
               </div>
             </div>
 
-            {/* Official Fare Pill */}
+            {/* Official Fare Pill with Sencillo / Redondo Display */}
             <div className="bg-orange-50/90 border-2 border-orange-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div>
-                <p className="text-xs md:text-sm text-orange-700 font-black uppercase tracking-wider">Tarifa Oficial por Asiento</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs md:text-sm text-orange-700 font-black uppercase tracking-wider">
+                    Tarifa Oficial • {tripType === 'redondo' ? 'Viaje Redondo' : 'Viaje Sencillo'}
+                  </p>
+                  {tripType === 'redondo' && matchedPricing.roundTripPrice && (
+                    <span className="text-[11px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                      Ahorro: ${(matchedPricing.singlePrice * 2) - matchedPricing.roundTripPrice} MXN
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm md:text-base text-neutral-700 font-medium mt-0.5">{matchedPricing.notes}</p>
               </div>
               <div className="text-left sm:text-right">
-                <p className="text-2xl md:text-3xl font-black text-orange-600">${matchedPricing.singlePrice} MXN</p>
-                {matchedPricing.roundTripPrice && (
-                  <p className="text-xs md:text-sm text-neutral-600 font-bold">Viaje Redondo: ${matchedPricing.roundTripPrice} MXN</p>
+                <p className="text-2xl md:text-3xl font-black text-orange-600">${unitPrice} MXN</p>
+                {matchedPricing.roundTripPrice && tripType === 'sencillo' && (
+                  <p className="text-xs md:text-sm text-neutral-600 font-bold">
+                    Opción Redondo: ${matchedPricing.roundTripPrice} MXN
+                  </p>
+                )}
+                {tripType === 'redondo' && (
+                  <p className="text-xs text-neutral-500 font-medium">Incluye ida y vuelta</p>
                 )}
               </div>
             </div>
@@ -248,56 +393,61 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {trips.map(trip => {
-                const availableSeats = trip.seats.filter(s => s.type === 'standard' && s.status === 'available').length;
-                const isFull = availableSeats === 0;
-
-                return (
-                  <div
-                    key={trip.id}
-                    onClick={() => !isFull && handleSelectTrip(trip)}
-                    className={`bg-white rounded-3xl p-5 border-2 transition-all cursor-pointer ${
-                      selectedTripId === trip.id
-                        ? 'border-orange-600 shadow-xl ring-2 ring-orange-500/20'
-                        : 'border-neutral-200 hover:border-orange-300'
-                    } ${isFull ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg md:text-xl font-black text-neutral-900">{trip.departureTime}</span>
-                          <span className="text-sm text-neutral-400 font-bold">➔</span>
-                          <span className="text-base md:text-lg font-bold text-neutral-700">{trip.estimatedArrival}</span>
-                        </div>
-                        <p className="text-sm md:text-base font-bold text-neutral-900 mt-1">{trip.routeTitle}</p>
-                        <p className="text-xs md:text-sm text-neutral-600 font-medium flex items-center gap-1 mt-1.5">
-                          <Clock className="w-4 h-4 text-orange-600" /> Escala: {trip.currentScale || 'Directo por autopista'}
-                        </p>
+              {trips.map(trip => (
+                <div
+                  key={trip.id}
+                  className={`bg-white rounded-3xl p-5 border-2 transition-all shadow-xs ${
+                    selectedTripId === trip.id
+                      ? 'border-orange-600 ring-2 ring-orange-500/20'
+                      : 'border-neutral-200 hover:border-neutral-300'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-xs font-black uppercase px-2.5 py-1 rounded-lg bg-orange-100 text-orange-700 font-mono">
+                        {trip.unitNumber}
+                      </span>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Clock className="w-5 h-5 text-orange-600" />
+                        <h4 className="text-xl md:text-2xl font-black text-neutral-900">{trip.departureTime}</h4>
+                        <span className="text-xs font-bold text-neutral-500">➔ {trip.estimatedArrival}</span>
                       </div>
-
-                      <div className="text-right">
-                        <span className="text-xl md:text-2xl font-black text-orange-600">${trip.basePrice} MXN</span>
-                        <p className="text-xs font-bold text-neutral-500">por boleto</p>
-                      </div>
+                      <p className="text-xs text-neutral-600 font-medium mt-1">
+                        Conductor: <strong>{trip.driverName}</strong>
+                      </p>
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-neutral-100 mt-4 pt-3 text-xs md:text-sm">
-                      <span className="inline-flex items-center gap-1.5 font-bold text-neutral-700">
-                        <Bus className="w-4 h-4 text-orange-600" />
-                        {trip.vehicleId === 'veh-03' ? 'Toyota Hiace (14 Plazas)' : 'Sprinter Ejecutiva (19 Plazas)'}
+                    <div className="text-right">
+                      <span className="text-xl md:text-2xl font-black text-neutral-900">
+                        ${unitPrice}
                       </span>
-                      <span className={`px-3 py-1 rounded-full font-black text-xs ${
-                        availableSeats > 5 ? 'bg-emerald-100 text-emerald-800' : availableSeats > 0 ? 'bg-amber-100 text-amber-900' : 'bg-red-100 text-red-900'
-                      }`}>
-                        {availableSeats} asientos libres
-                      </span>
+                      <p className="text-xs text-neutral-500 font-bold">por persona</p>
                     </div>
                   </div>
-                );
-              })}
+
+                  <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between">
+                    <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+                      {trip.totalSeats - trip.occupiedSeatsCount} asientos disponibles
+                    </span>
+                    <button
+                      onClick={() => handleSelectTrip(trip)}
+                      className="px-4 py-2 bg-neutral-900 hover:bg-orange-600 text-white text-xs md:text-sm font-black rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>Elegir Asientos</span>
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
+
         </div>
+      )}
+
+      {/* Modal Reporte para Cliente */}
+      {showClientReport && (
+        <ClientReportModal onClose={() => setShowClientReport(false)} />
       )}
 
       {/* Tab 2: Mapa Interactivo de Asientos & Checkout */}
@@ -408,22 +558,41 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
               <MapPin className="w-5 h-5 text-orange-600" /> Punto de Abordaje y Pasajero
             </span>
 
-            {/* Boarding Stop Picker */}
-            <div>
-              <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider">
-                Punto de Abordaje Oficial
-              </label>
-              <select
-                value={selectedBoardingStop}
-                onChange={e => setSelectedBoardingStop(e.target.value)}
-                className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl text-sm md:text-base font-bold text-neutral-900 focus:outline-none focus:border-orange-500"
-              >
-                {ROUTE_STOPS.map(stop => (
-                  <option key={stop.id} value={stop.name}>
-                    {stop.city}: {stop.name} ({stop.landmark})
-                  </option>
-                ))}
-              </select>
+            {/* Boarding & Dropoff Stop Pickers with Exact Physical Landmarks */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider">
+                  Punto de Abordaje Oficial (con Referencia)
+                </label>
+                <select
+                  value={selectedBoardingStop}
+                  onChange={e => setSelectedBoardingStop(e.target.value)}
+                  className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl text-xs md:text-sm font-bold text-neutral-900 focus:outline-none focus:border-orange-500"
+                >
+                  {ROUTE_STOPS.map(stop => (
+                    <option key={stop.id} value={`${stop.city}: ${stop.name} (${stop.landmark})`}>
+                      {stop.city}: {stop.name} — {stop.landmark}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider">
+                  Punto de Descenso Oficial
+                </label>
+                <select
+                  value={selectedDropoffStop}
+                  onChange={e => setSelectedDropoffStop(e.target.value)}
+                  className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl text-xs md:text-sm font-bold text-neutral-900 focus:outline-none focus:border-orange-500"
+                >
+                  {ROUTE_STOPS.map(stop => (
+                    <option key={stop.id} value={`${stop.city}: ${stop.name} (${stop.landmark})`}>
+                      {stop.city}: {stop.name} — {stop.landmark}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Passenger Fields */}

@@ -13,28 +13,59 @@ import {
   Seat
 } from '../types';
 
+export const OFFICIAL_PHONE = '312 312 4237';
+export const OFFICIAL_WHATSAPP = '312 113 8193';
+export const OFFICIAL_EXPERIENCE_YEARS = 18;
+
 export const OFFICIAL_PRICING: RoutePricing[] = [
-  { origin: 'Manzanillo', destination: 'Tecomán', singlePrice: 60, timeEstimate: '1 hr', notes: 'Escala intermedia en ruta' },
-  { origin: 'Manzanillo', destination: 'Colima', singlePrice: 120, timeEstimate: '2 hrs', notes: 'Oficina Gutiérrez / Starbucks / Kiosko' },
-  { origin: 'Tecomán', destination: 'Colima', singlePrice: 60, timeEstimate: '45 mins', notes: 'Conexión intermedia' },
-  { origin: 'Colima', destination: 'Guadalajara (Minerva)', singlePrice: 270, roundTripPrice: 520, timeEstimate: '2.5 hrs', notes: 'Minerva, Plaza del Sol, Las Fuentes' },
-  { origin: 'Colima', destination: 'CAS / Consulado GDL', singlePrice: 340, roundTripPrice: 650, timeEstimate: '3 hrs', notes: 'Punto especial de visados y trámites' },
-  { origin: 'Manzanillo', destination: 'Guadalajara (Troncal)', singlePrice: 370, roundTripPrice: 720, timeEstimate: '4.5 hrs', notes: 'Trayecto completo eje Manzanillo-GDL' },
-  { origin: 'Manzanillo', destination: 'CAS / Consulado GDL', singlePrice: 450, roundTripPrice: 850, timeEstimate: '5 hrs', notes: 'Traslado directo a citas consulares' },
-  { origin: 'Manzanillo', destination: 'Zoológico Guadalajara', singlePrice: 500, roundTripPrice: 900, timeEstimate: '5.5 hrs', notes: 'Servicio especial y turístico' },
+  // Origen: Manzanillo
+  { origin: 'Manzanillo', destination: 'Guadalajara (GDL)', singlePrice: 370, roundTripPrice: 720, timeEstimate: '4.5 hrs', notes: 'Salida diaria troncal. Escala de 10-15 min en Colima.', packageType: 'estandar' },
+  { origin: 'Manzanillo', destination: 'Tecomán', singlePrice: 60, timeEstimate: '1 hr', notes: 'Conexión directa costa-valle.', packageType: 'intermedio' },
+  { origin: 'Manzanillo', destination: 'Colima', singlePrice: 120, roundTripPrice: 210, timeEstimate: '2 hrs', notes: 'Escala técnica y conexión estatal.', packageType: 'intermedio' },
+  { origin: 'Manzanillo', destination: 'CAS / Consulado Americano', singlePrice: 450, roundTripPrice: 850, timeEstimate: '5 hrs', notes: 'Traslado directo a citas consulares y visados.', packageType: 'consulado' },
+  { origin: 'Manzanillo', destination: 'Zoológico de GDL', singlePrice: 500, roundTripPrice: 920, timeEstimate: '5.5 hrs', notes: 'Paquete especial y turístico familiar.', packageType: 'zoologico' },
+
+  // Origen: Tecomán
+  { origin: 'Tecomán', destination: 'Colima', singlePrice: 60, timeEstimate: '45 mins', notes: 'Conexión regional directa.', packageType: 'intermedio' },
+  { origin: 'Tecomán', destination: 'Guadalajara (GDL)', singlePrice: 330, timeEstimate: '3.5 hrs', notes: 'Salida diaria directa hacia GDL.', packageType: 'estandar' },
+  { origin: 'Tecomán', destination: 'CAS / Consulado Americano', singlePrice: 400, roundTripPrice: 780, timeEstimate: '4 hrs', notes: 'Paquete de traslado para citas consulares.', packageType: 'consulado' },
+
+  // Origen: Colima
+  { origin: 'Colima', destination: 'Guadalajara (GDL)', singlePrice: 279, roundTripPrice: 520, timeEstimate: '2.5 hrs', notes: 'Salida directa a Minerva y Plaza del Sol.', packageType: 'estandar' },
+  { origin: 'Colima', destination: 'Cd. Guzmán', singlePrice: 130, timeEstimate: '1.2 hrs', notes: 'Conexión sur de Jalisco.', packageType: 'intermedio' },
+  { origin: 'Colima', destination: 'CAS / Consulado Americano', singlePrice: 340, roundTripPrice: 650, timeEstimate: '3 hrs', notes: 'Servicio especializado para citas de visa.', packageType: 'consulado' },
+  { origin: 'Colima', destination: 'Zoológico de GDL', singlePrice: 400, roundTripPrice: 780, timeEstimate: '3.5 hrs', notes: 'Paquete turístico y recreativo familiar.', packageType: 'zoologico' },
+
+  // Origen: Cd. Guzmán
+  { origin: 'Cd. Guzmán', destination: 'Guadalajara (GDL)', singlePrice: 170, roundTripPrice: 330, timeEstimate: '1.8 hrs', notes: 'Salida ágil por autopista.', packageType: 'estandar' },
+  { origin: 'Cd. Guzmán', destination: 'CAS / Consulado Americano', singlePrice: 240, roundTripPrice: 450, timeEstimate: '2.2 hrs', notes: 'Servicio directo a trámites consulares.', packageType: 'consulado' },
 ];
 
 export const ROUTE_STOPS: RouteStop[] = [
-  { id: 'mzn-oficina', name: 'Oficina Central Manzanillo', city: 'Manzanillo', landmark: 'Blvd. Costero Miguel de la Madrid #120', address: 'Zona Hotelera, Manzanillo', order: 1, timeOffsetMins: 0 },
-  { id: 'mzn-starbucks', name: 'Starbucks Las Brisas', city: 'Manzanillo', landmark: 'Frente a Hotel Las Hadas', address: 'Blvd. Costero Km 9.5', order: 2, timeOffsetMins: 15 },
+  // Manzanillo Stops
+  { id: 'mzn-soriana', name: 'Soriana Híper Manzanillo', city: 'Manzanillo', landmark: 'Soriana Híper Manzanillo', address: 'Blvd. Miguel de la Madrid s/n', order: 1, timeOffsetMins: 0 },
+  { id: 'mzn-autozone', name: 'AutoZone Manzanillo', city: 'Manzanillo', landmark: 'AutoZone Manzanillo', address: 'Blvd. Miguel de la Madrid #1120', order: 2, timeOffsetMins: 15 },
+  
+  // Tecomán Stops
   { id: 'tec-kiosko', name: 'Kiosko Tecomán Centro', city: 'Tecomán', landmark: 'Jardín Principal / Farmacia Guadalajara', address: 'Av. López Mateos #45', order: 3, timeOffsetMins: 60 },
-  { id: 'col-sanfernando', name: 'Oficina Gutiérrez Colima', city: 'Colima', landmark: 'Av. San Fernando frente a Plaza Sevilla', address: 'Av. San Fernando #410', order: 4, timeOffsetMins: 120 },
-  { id: 'col-kiosko', name: 'Kiosko La Palma', city: 'Colima', landmark: 'Salida hacia Autopista GDL', address: 'Calzada Galván Sur', order: 5, timeOffsetMins: 135 },
-  { id: 'gdl-fuentes', name: 'Las Fuentes GDL', city: 'Guadalajara', landmark: 'Av. López Mateos Sur & Las Fuentes', address: 'Zapopan / Tlaquepaque', order: 6, timeOffsetMins: 240 },
-  { id: 'gdl-plazasol', name: 'Plaza del Sol', city: 'Guadalajara', landmark: 'Bahía sobre Mariano Otero', address: 'Av. Mariano Otero #1499', order: 7, timeOffsetMins: 255 },
-  { id: 'gdl-minerva', name: 'Terminal La Minerva', city: 'Guadalajara', landmark: 'Hotel Fiesta Americana / Minerva', address: 'Av. Vallarta #2875', order: 8, timeOffsetMins: 270 },
-  { id: 'gdl-cas', name: 'CAS / Consulado Americano', city: 'Guadalajara', landmark: 'Centro de Atención a Solicitantes', address: 'Av. Unión #210, Col. Obrera', order: 9, timeOffsetMins: 290, isSpecialPoint: true },
-  { id: 'gdl-zoo', name: 'Zoológico Guadalajara', city: 'Guadalajara', landmark: 'Taquilla Principal Huentitán', address: 'Paseo del Zoológico #600', order: 10, timeOffsetMins: 310, isSpecialPoint: true },
+  
+  // Colima Stops
+  { id: 'col-sanfernando', name: 'Oficina Central Colima', city: 'Colima', landmark: 'Av. San Fernando frente a Plaza Sevilla', address: 'Av. San Fernando #410', order: 4, timeOffsetMins: 120 },
+  { id: 'col-escala', name: 'Escala Técnica Colima (10-15 min)', city: 'Colima', landmark: 'Punto de escala, estiramiento y sanitarios', address: 'Autopista Colima-Guadalajara Km 5', order: 5, timeOffsetMins: 135 },
+
+  // Cd. Guzmán
+  { id: 'cdguzman-parada', name: 'Cd. Guzmán (Acceso Autopista)', city: 'Colima', landmark: 'Glorieta Colón / Entrada Cd. Guzmán', address: 'Av. Cristóbal Colón', order: 6, timeOffsetMins: 190 },
+
+  // Guadalajara Stops
+  { id: 'gdl-minerva', name: 'Minerva (Burger)', city: 'Guadalajara', landmark: 'Afuera del estacionamiento del Burger', address: 'Av. Vallarta y Av. López Mateos', order: 7, timeOffsetMins: 270 },
+  { id: 'gdl-plazasol', name: 'Plaza del Sol (Súper Colchones)', city: 'Guadalajara', landmark: 'Afuera de Súper Colchones', address: 'Av. Mariano Otero #1499', order: 8, timeOffsetMins: 285 },
+  { id: 'gdl-fuentes', name: 'Starbucks Las Fuentes', city: 'Guadalajara', landmark: 'Starbucks Las Fuentes', address: 'Av. López Mateos Sur #5560', order: 9, timeOffsetMins: 300 },
+  { id: 'gdl-enramada', name: 'Restaurante Enramada', city: 'Guadalajara', landmark: 'Restaurante Enramada', address: 'Av. López Mateos Sur acceso', order: 10, timeOffsetMins: 315 },
+  { id: 'gdl-cuatas', name: 'Gasolinera Cuatas', city: 'Guadalajara', landmark: 'Gasolinera Cuatas', address: 'Carretera a Morelia Km 20', order: 11, timeOffsetMins: 330 },
+
+  // Puntos Especiales
+  { id: 'gdl-cas', name: 'CAS / Consulado Americano', city: 'Guadalajara', landmark: 'Centro de Atención a Solicitantes (CAS)', address: 'Av. Unión #210, Col. Obrera, Guadalajara', order: 12, timeOffsetMins: 345, isSpecialPoint: true },
+  { id: 'gdl-zoo', name: 'Zoológico Guadalajara', city: 'Guadalajara', landmark: 'Taquilla Principal Huentitán', address: 'Paseo del Zoológico #600, Guadalajara', order: 13, timeOffsetMins: 360, isSpecialPoint: true },
 ];
 
 export const INITIAL_VEHICLES: Vehicle[] = [
@@ -210,8 +241,8 @@ export const INITIAL_BOOKINGS: Booking[] = [
     passengerPhone: '314-889-1022',
     passengerEmail: 'elena.torres@gmail.com',
     origin: 'Manzanillo',
-    destination: 'CAS / Consulado GDL',
-    boardingPoint: 'Oficina Central Manzanillo',
+    destination: 'CAS / Consulado Americano',
+    boardingPoint: 'Soriana Híper Manzanillo',
     dropoffPoint: 'CAS / Consulado Americano',
     date: '2026-09-02',
     departureTime: '06:30 AM',
@@ -221,11 +252,13 @@ export const INITIAL_BOOKINGS: Booking[] = [
     paymentMethod: 'card',
     paymentStatus: 'paid',
     source: 'web',
-    qrCodeData: 'TG-9824-MZN-GDL-SEAT3-20260902',
+    tripType: 'sencillo',
+    packageType: 'consulado',
+    qrCodeData: 'TG-9824-MZN-CAS-SEAT3-20260902',
     createdAt: '2026-09-01 14:20',
     checkInStatus: 'checked_in',
     checkInTime: '06:22 AM',
-    checkInLocation: 'Manzanillo Oficina Central',
+    checkInLocation: 'Soriana Híper Manzanillo',
     addons: { pet: false, parcel: false }
   },
   {
@@ -235,8 +268,8 @@ export const INITIAL_BOOKINGS: Booking[] = [
     passengerPhone: '312-301-4455',
     passengerEmail: 'rgomez_viz@hotmail.com',
     origin: 'Colima',
-    destination: 'CAS / Consulado GDL',
-    boardingPoint: 'Oficina Gutiérrez Colima (San Fernando)',
+    destination: 'CAS / Consulado Americano',
+    boardingPoint: 'Oficina Central Colima (Av. San Fernando)',
     dropoffPoint: 'CAS / Consulado Americano',
     date: '2026-09-02',
     departureTime: '08:30 AM',
@@ -246,6 +279,8 @@ export const INITIAL_BOOKINGS: Booking[] = [
     paymentMethod: 'spei',
     paymentStatus: 'paid',
     source: 'whatsapp',
+    tripType: 'sencillo',
+    packageType: 'consulado',
     qrCodeData: 'TG-9825-COL-CAS-SEAT4-20260902',
     createdAt: '2026-09-01 16:45',
     checkInStatus: 'pending',
@@ -258,21 +293,24 @@ export const INITIAL_BOOKINGS: Booking[] = [
     passengerPhone: '312-998-0114',
     passengerEmail: 'sofia.navarro@outlook.com',
     origin: 'Colima',
-    destination: 'Guadalajara (Minerva)',
-    boardingPoint: 'Kiosko La Palma Colima',
-    dropoffPoint: 'Terminal La Minerva',
+    destination: 'Guadalajara (GDL)',
+    boardingPoint: 'Escala Técnica Colima (10-15 min)',
+    dropoffPoint: 'Minerva (Burger)',
     date: '2026-09-02',
     departureTime: '09:00 AM',
     seatNumbers: [7, 8],
     unitNumber: 'Unidad 07 (Sprinter)',
-    totalAmount: 540,
+    totalAmount: 520,
     paymentMethod: 'cash_counter',
     paymentStatus: 'paid',
     source: 'counter',
+    tripType: 'redondo',
+    returnDate: '2026-09-04',
+    packageType: 'estandar',
     qrCodeData: 'TG-9826-COL-GDL-SEAT78-20260902',
     createdAt: '2026-09-01 17:10',
     checkInStatus: 'pending',
-    addons: { pet: true, petFee: 150 }
+    addons: { pet: false }
   }
 ];
 
