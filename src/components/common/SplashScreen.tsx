@@ -42,7 +42,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             alt="Gutiérrez Transportes y Viajes"
             className="w-auto max-h-36 sm:max-h-48 md:max-h-60 max-w-[92vw] object-contain transition-transform duration-500 hover:scale-102"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = '/gutierrezlogo.png';
+              (e.target as HTMLImageElement).src = '/gutierrezlogo2.png';
             }}
           />
         </div>
