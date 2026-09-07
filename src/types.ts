@@ -149,6 +149,23 @@ export interface TripExpense {
   status: 'pending_audit' | 'approved' | 'rejected';
 }
 
+export interface RentalCar {
+  id: string;
+  name: string;
+  brand: string;
+  category: 'Sedán' | 'Familiar' | 'SUV' | 'Camioneta / Van' | 'Sprinter Ejecutiva';
+  capacity: number; // Pasajeros
+  dailyRateWithoutDriver: number; // Tarifa por día sin chofer
+  dailyRateWithDriver: number; // Tarifa por día con chofer
+  transmission: string;
+  hasAC: boolean;
+  fuelType: string;
+  luggageCapacity: string;
+  image: string;
+  available: boolean;
+  features: string[];
+}
+
 export interface RentalQuote {
   id: string;
   clientName: string;
@@ -159,7 +176,7 @@ export interface RentalQuote {
   departureDate: string;
   returnDate: string;
   paxCount: number;
-  vehicleModel: 'Mercedes Sprinter (19 Pax)' | 'Toyota Hiace (14 Pax)' | 'Autobús Ejecutivo';
+  vehicleModel: string; // e.g., 'Mercedes Sprinter (20 Pax)', 'Jetta VW', 'Vento VW', etc.
   includesDriver: boolean;
   subtotal: number;
   estimatedFuel: number;

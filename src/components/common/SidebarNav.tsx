@@ -18,6 +18,7 @@ import {
   ShieldCheck, 
   History, 
   Layers,
+  Car,
   LogOut,
   ChevronRight
 } from 'lucide-react';
@@ -41,6 +42,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
             { id: 'search', label: 'Buscar Itinerarios', icon: <Search className="w-5 h-5" /> },
             { id: 'seats', label: 'Selección de Asientos', icon: <Grid className="w-5 h-5" /> },
             { id: 'tickets', label: 'Mis Boletos Digitales', icon: <Ticket className="w-5 h-5" /> },
+            { id: 'rentals', label: 'Renta de Autos y Vans', icon: <Car className="w-5 h-5" /> },
             { id: 'routes', label: 'Tarifario y Paradas', icon: <Map className="w-5 h-5" /> },
           ]
         };
@@ -62,6 +64,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
           items: [
             { id: 'counter', label: 'Venta en Ventanilla', icon: <PlusCircle className="w-5 h-5" /> },
             { id: 'quotes', label: 'Cotizador de Rentas', icon: <FileText className="w-5 h-5" /> },
+            { id: 'rental_catalog', label: 'Autos de Renta (Tarifas)', icon: <Car className="w-5 h-5" /> },
             { id: 'crm', label: 'CRM Leads & Clientes', icon: <Users className="w-5 h-5" /> },
             { id: 'calendar', label: 'Disponibilidad Flota', icon: <Calendar className="w-5 h-5" /> },
           ]

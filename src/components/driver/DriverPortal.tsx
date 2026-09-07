@@ -36,7 +36,8 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
   } = useApp();
 
   // Current logged in driver for demo
-  const currentDriver = drivers[0]; // Carlos Mendoza
+  const [selectedDriverId, setSelectedDriverId] = useState<string>(drivers[0]?.id || 'drv-01');
+  const currentDriver = drivers.find(d => d.id === selectedDriverId) || drivers[0];
   const driverVehicle = vehicles.find(v => v.id === currentDriver.currentVehicleId) || vehicles[0];
   const assignedTrips = trips.filter(t => t.driverId === currentDriver.id);
   const activeTrip = assignedTrips[0] || trips[0];
@@ -84,6 +85,30 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
     <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar bg-neutral-100 p-4 md:p-6 lg:p-8 space-y-6">
       {/* Top Driver Status Bar */}
       <div className="max-w-5xl mx-auto w-full bg-black text-white p-5 md:p-6 rounded-3xl border-2 border-neutral-800 shadow-md space-y-4">
+        {/* Operator Switcher for Demo & Multi-driver device sharing */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-neutral-800">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-xs uppercase font-black tracking-wider text-neutral-400">
+              Operador en Cabina (7 Choferes Registrados)
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-bold text-neutral-400">Cambiar Operador:</label>
+            <select
+              value={selectedDriverId}
+              onChange={e => setSelectedDriverId(e.target.value)}
+              className="bg-neutral-900 border border-neutral-700 text-orange-400 text-xs font-black rounded-xl px-3 py-1.5 focus:outline-none focus:border-orange-500"
+            >
+              {drivers.map(drv => (
+                <option key={drv.id} value={drv.id}>
+                  {drv.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <img
@@ -93,7 +118,9 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
             />
             <div>
               <h3 className="text-base md:text-lg font-black text-white leading-tight">{currentDriver.name}</h3>
-              <p className="text-xs md:text-sm text-neutral-400 font-mono mt-0.5">Lic. Federal {currentDriver.licenseNumber}</p>
+              <p className="text-xs md:text-sm text-neutral-400 font-mono mt-0.5">
+                Lic. Federal {currentDriver.licenseNumber} • Tel: {currentDriver.phone}
+              </p>
             </div>
           </div>
           <div className="text-left sm:text-right">

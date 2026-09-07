@@ -23,6 +23,7 @@ import {
 import { OFFICIAL_PRICING, ROUTE_STOPS, OFFICIAL_PHONE, OFFICIAL_WHATSAPP, OFFICIAL_EXPERIENCE_YEARS } from '../../data/mockData';
 import { TripSchedule, Seat, Booking, RoutePricing } from '../../types';
 import { ClientReportModal } from '../modals/ClientReportModal';
+import { RentalCatalog } from '../common/RentalCatalog';
 
 interface PassengerPortalProps {
   activeTab: string;
@@ -812,6 +813,11 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
             ))}
           </div>
         </div>
+      )}
+
+      {/* Tab 5: Catálogo Oficial de Autos y Camionetas de Renta (Con y Sin Chofer) */}
+      {activeTab === 'rentals' && (
+        <RentalCatalog />
       )}
     </div>
   );

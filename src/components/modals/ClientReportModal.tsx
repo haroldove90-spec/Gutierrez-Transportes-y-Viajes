@@ -26,60 +26,50 @@ export const ClientReportModal: React.FC<ClientReportModalProps> = ({ onClose })
   const [downloading, setDownloading] = useState(false);
 
   const reportText = `*GUTIÉRREZ TRANSPORTES Y VIAJES - 18 AÑOS DE EXPERIENCIA*
-*REPORTE DE ACTUALIZACIONES Y CHECKLIST DE IMPLEMENTACIÓN*
+*REPORTE EJECUTIVO Y CHECKLIST DE ACTUALIZACIONES ENTREGADAS AL CLIENTE*
 --------------------------------------------------
 Contacto Oficial: WhatsApp ${OFFICIAL_WHATSAPP} | Tel. ${OFFICIAL_PHONE}
 
-✅ 1. MATRIZ OFICIAL DE TARIFAS Y SALIDAS DIARIAS (MÓDULOS: PASAJERO, SECRETARÍA, OPERACIONES):
-• MANZANILLO:
-  - A Guadalajara (GDL): Sencillo $370 | Redondo $720
-  - A Tecomán: Sencillo $60
-  - A Colima: Sencillo $120 | Redondo $210
-  - Al CAS / Consulado Americano: Sencillo $450 | Redondo $850
-  - Al Zoológico de GDL: Sencillo $500 | Redondo $920
+✅ 1. IDENTIDAD DE MARCA Y EXPERIENCIA MÓVIL:
+  [✔] Logotipo oficial aplicado: formato rectangular completo, sin encapsulado en contenedor y sin textos redundantes.
+  [✔] Header responsivo optimizado para móviles: icono de hamburguesa oculto en móvil y botón "Cerrar Sesión" minimizado a icono para evitar cortes en pantalla.
+  [✔] Purga total: Eliminado al 100% todo código, tablas o referencias a condominios. Plataforma enfocada exclusivamente en Gutiérrez Transportes y Viajes.
 
-• TECOMÁN:
-  - A Colima: Sencillo $60
-  - A Guadalajara (GDL): Sencillo $330
-  - Al CAS / Consulado Americano: Sencillo $400 | Redondo $780
+✅ 2. LOS 7 OPERADORES FEDERALES REGISTRADOS Y ACTIVOS:
+  [✔] 1. Efraín Martínez Cruz (Lic. Federal 771029-A) - Unidad 01 (Mercedes Sprinter 20 Pax)
+  [✔] 2. Rosendo Navarro (Lic. Federal 884102-B) - Unidad 02 (Toyota Hiace 14 Pax)
+  [✔] 3. Eduardo Morales (Lic. Federal 653920-C) - Unidad 03 (Toyota Hiace 14 Pax)
+  [✔] 4. Omar Salvador Álvarez (Lic. Federal 910482-D) - Unidad 04 (Toyota Hiace 14 Pax)
+  [✔] 5. José Antonio Gutiérrez (Lic. Federal 552019-E) - Unidad 05 (Toyota Hiace 14 Pax)
+  [✔] 6. Antonio Guerrero Troncoso (Lic. Federal 440192-F) - Unidad 06 (Toyota Hiace 11 Pax)
+  [✔] 7. Adán Daryan Ayala Méndez (Lic. Federal 339014-G) - Unidad 08 (Ford Transit 18 Pax)
+  * Integrados en: Portal Chofer (selector dinámico de cabina), Secretaría (asignación a cotizaciones y reservas CRM), y Manifiestos de Pasajeros.
 
-• COLIMA:
-  - A Guadalajara (GDL): Sencillo $279 | Redondo $520
-  - A Cd. Guzmán: Sencillo $130
-  - Al CAS / Consulado Americano: Sencillo $340 | Redondo $650
-  - Al Zoológico de GDL: Sencillo $400 | Redondo $780
+✅ 3. FLOTA DE TRANSPORTE TURÍSTICO (ASUNTO LIBRE DEL CHOFER):
+  [✔] 1 Mercedes Sprinter de 20 pasajeros
+  [✔] 4 Toyota Hiace de 14 pasajeros
+  [✔] 2 Toyota Hiace de 11 pasajeros
+  [✔] 1 Ford Transit de 18 pasajeros
+  * Capacidad total configurada con mapeo visual de asientos interactivos por unidad.
 
-• CD. GUZMÁN:
-  - A Guadalajara (GDL): Sencillo $170 | Redondo $330
-  - Al CAS / Consulado Americano: Sencillo $240 | Redondo $450
+✅ 4. CATÁLOGO Y TARIFAS DE AUTOS DE RENTA (CON Y SIN CHOFER):
+  [✔] Jetta VW: $1,300 el día sin chofer | $2,100 el día con chofer
+  [✔] Vento VW: $800 el día sin chofer | $1,600 el día con chofer
+  [✔] Avanza Toyota: $1,500 el día sin chofer | $2,300 el día con chofer
+  [✔] Teramont VW: $4,500 el día sin chofer | $5,500 el día con chofer
+  [✔] Tiguan VW: $2,800 el día sin chofer | $3,600 el día con chofer
+  [✔] Toyota Hiace (14 pasajeros): $3,000 el día sin chofer | $4,000 el día con chofer
+  [✔] Toyota Hiace (11 pasajeros): $3,000 el día sin chofer | $4,000 el día con chofer
+  [✔] Ford Transit (18 pasajeros): $4,800 el día sin chofer | $6,000 el día con chofer
+  [✔] Mercedes Sprinter (20 pasajeros): $5,800 el día sin chofer | $7,200 el día con chofer
+  * Módulo "Catálogo de Autos de Renta" activo para Pasajeros y Secretaría con cotizador instantáneo y enlace directo a WhatsApp.
 
-✅ 2. PUNTOS EXACTOS DE ABORDAJE CON REFERENCIAS FÍSICAS (MÓDULOS: PASAJERO, CHOFER, BOLETOS):
-• GUADALAJARA:
-  1. Minerva: Afuera del estacionamiento del Burger
-  2. Plaza del Sol: Afuera de Súper Colchones
-  3. Starbucks: Las Fuentes
-  4. Enramada: Restaurante
-  5. Cuatas: Gasolinera
-  *(En Colima se realiza escala técnica obligatoria de 10 a 15 min)*
-
-• MANZANILLO:
-  1. Soriana Híper Manzanillo
-  2. AutoZone Manzanillo
-
-• INTERMEDIOS:
-  - Kiosko Tecomán Centro (Jardín Principal / Farmacia Guadalajara)
-  - Oficina Central Colima (Av. San Fernando frente a Plaza Sevilla)
-  - Parada Cd. Guzmán (Glorieta Colón)
-
-✅ 3. PAQUETES ESPECIALES ACTIVOS:
-• 🇺🇸 CAS / Consulado Americano (Citas de visado directo y retorno)
-• 🦁 Zoológico de Guadalajara (Paquete turístico familiar)
-• 🚌 Troncal Salidas Diarias (Manzanillo-Tecomán-Colima-Cd.Guzmán-GDL)
-
-✅ 4. BOLETO DIGITAL OFICIAL Y ESCÁNER QR:
-• Identificador de Viaje Sencillo vs. Redondo
-• Punto de abordaje con referencia física exacta
-• Validación óptica inmediata sin papel
+✅ 5. MATRIZ DE RUTAS DIARIAS Y TARIFAS REGULADAS:
+  [✔] Manzanillo a GDL: Sencillo $370 | Redondo $720
+  [✔] Colima a GDL: Sencillo $279 | Redondo $520
+  [✔] Tecomán a GDL: Sencillo $330
+  [✔] Paquetes especiales CAS / Consulado Americano y Zoológico Guadalajara activos.
+  [✔] Escalas técnicas de 10-15 min en Colima y puntos de abordaje con referencias físicas en GDL y Manzanillo.
 --------------------------------------------------`;
 
   const handleCopyText = () => {

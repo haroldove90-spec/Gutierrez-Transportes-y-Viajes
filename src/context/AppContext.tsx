@@ -11,7 +11,8 @@ import {
   AuditLog, 
   ExceptionRequest,
   Seat,
-  RouteStop
+  RouteStop,
+  RentalCar
 } from '../types';
 import {
   INITIAL_TRIPS,
@@ -24,7 +25,8 @@ import {
   INITIAL_AUDIT_LOGS,
   INITIAL_EXCEPTIONS,
   ROUTE_STOPS,
-  OFFICIAL_PRICING
+  OFFICIAL_PRICING,
+  OFFICIAL_RENTAL_CARS
 } from '../data/mockData';
 import {
   checkSupabaseConnection,
@@ -46,6 +48,7 @@ interface AppContextType {
   trips: TripSchedule[];
   vehicles: Vehicle[];
   drivers: Driver[];
+  rentalCars: RentalCar[];
   bookings: Booking[];
   expenses: TripExpense[];
   quotes: RentalQuote[];
@@ -109,6 +112,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [trips, setTrips] = useState<TripSchedule[]>(INITIAL_TRIPS);
   const [vehicles, setVehicles] = useState<Vehicle[]>(INITIAL_VEHICLES);
   const [drivers, setDrivers] = useState<Driver[]>(INITIAL_DRIVERS);
+  const [rentalCars, setRentalCars] = useState<RentalCar[]>(OFFICIAL_RENTAL_CARS);
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
   const [expenses, setExpenses] = useState<TripExpense[]>(INITIAL_EXPENSES);
   const [quotes, setQuotes] = useState<RentalQuote[]>(INITIAL_RENTAL_QUOTES);
@@ -548,6 +552,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         trips,
         vehicles,
         drivers,
+        rentalCars,
         bookings,
         expenses,
         quotes,

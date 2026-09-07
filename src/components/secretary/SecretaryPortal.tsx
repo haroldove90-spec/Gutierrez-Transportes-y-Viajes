@@ -12,11 +12,13 @@ import {
   Bus,
   ArrowRightLeft,
   MapPin,
-  Phone
+  Phone,
+  Car
 } from 'lucide-react';
-import { RentalQuote } from '../../types';
+import { RentalQuote, RentalCar } from '../../types';
 import { ROUTE_STOPS, OFFICIAL_PRICING, OFFICIAL_PHONE, OFFICIAL_WHATSAPP, OFFICIAL_EXPERIENCE_YEARS } from '../../data/mockData';
 import { ClientReportModal } from '../modals/ClientReportModal';
+import { RentalCatalog } from '../common/RentalCatalog';
 
 interface SecretaryPortalProps {
   activeTab: string;
@@ -28,6 +30,8 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
   const { 
     trips, 
     vehicles, 
+    drivers,
+    rentalCars,
     quotes, 
     createRentalQuote, 
     convertQuoteToReservation, 
@@ -55,19 +59,41 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
   const [rentalDestination, setRentalDestination] = useState('Guadalajara Expo / Cintermex');
   const [departureDate, setDepartureDate] = useState('2026-09-15 07:00');
   const [returnDate, setReturnDate] = useState('2026-09-17 19:00');
-  const [paxCount, setPaxCount] = useState<number>(16);
-  const [vehicleModel, setVehicleModel] = useState<RentalQuote['vehicleModel']>('Mercedes Sprinter (19 Pax)');
+  const [paxCount, setPaxCount] = useState<number>(14);
+  const [rentalDays, setRentalDays] = useState<number>(2);
+  const [vehicleModel, setVehicleModel] = useState<string>('Toyota Hiace (14 Pasajeros)');
   const [includesDriver, setIncludesDriver] = useState<boolean>(true);
-  const [baseRent, setBaseRent] = useState<number>(14000);
-  const [estFuel, setEstFuel] = useState<number>(3200);
-  const [estTolls, setEstTolls] = useState<number>(1300);
-  const [driverFee, setDriverFee] = useState<number>(2000);
-  const [selectedUnitForReservation] = useState<string>('veh-02');
-  const [selectedDriverForReservation] = useState<string>('drv-02');
+  const [assignedDriverForQuote, setAssignedDriverForQuote] = useState<string>(drivers[0]?.id || 'drv-01');
+  const [baseRent, setBaseRent] = useState<number>(8000); // 2 days * 4000
+  const [estFuel, setEstFuel] = useState<number>(2500);
+  const [estTolls, setEstTolls] = useState<number>(1200);
+  const [driverFee, setDriverFee] = useState<number>(1600);
+  const [selectedUnitForReservation, setSelectedUnitForReservation] = useState<string>(vehicles[0]?.id || 'veh-sp20-01');
+  const [selectedDriverForReservation, setSelectedDriverForReservation] = useState<string>(drivers[0]?.id || 'drv-01');
 
   const quoteSubtotal = baseRent;
   const quoteTotal = baseRent + estFuel + estTolls + (includesDriver ? driverFee : 0);
   const quoteAdvance = Math.round(quoteTotal * 0.3); // 30% advance
+
+  // Auto-calculate base rent when vehicleModel, includesDriver, or rentalDays changes
+  const updateVehicleSelection = (modelName: string, days: number = rentalDays, withDriver: boolean = includesDriver) => {
+    setVehicleModel(modelName);
+    const matched = rentalCars.find(c => c.name.toLowerCase() === modelName.toLowerCase() || modelName.toLowerCase().includes(c.name.toLowerCase()));
+    if (matched) {
+      setPaxCount(matched.capacity);
+      const rate = withDriver ? matched.dailyRateWithDriver : matched.dailyRateWithoutDriver;
+      setBaseRent(rate * days);
+    }
+  };
+
+  const handleSelectCarForQuote = (car: RentalCar) => {
+    setVehicleModel(car.name);
+    setPaxCount(car.capacity);
+    const rate = includesDriver ? car.dailyRateWithDriver : car.dailyRateWithoutDriver;
+    setBaseRent(rate * rentalDays);
+    setActiveTab('quotes');
+    showNotification(`Unidad ${car.name} cargada al cotizador.`, 'info');
+  };
 
   const handleCreateCounterSale = (e: React.FormEvent) => {
     e.preventDefault();
@@ -378,69 +404,139 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                 </div>
               </div>
 
-              {/* Vehicle & Driver Options */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider">Unidad Requerida</label>
+              {/* Vehicle, Days & Driver Options */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider">
+                    Unidad Oficial de Renta
+                  </label>
                   <select
                     value={vehicleModel}
-                    onChange={e => setVehicleModel(e.target.value as any)}
+                    onChange={e => updateVehicleSelection(e.target.value)}
                     className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-800 text-sm md:text-base"
                   >
-                    <option value="Mercedes Sprinter (19 Pax)">Sprinter (19 Pax)</option>
-                    <option value="Toyota Hiace (14 Pax)">Toyota Hiace (14 Pax)</option>
-                    <option value="Autobús Ejecutivo">Autobús Ejecutivo (45 Pax)</option>
+                    {rentalCars.map(car => (
+                      <option key={car.id} value={car.name}>
+                        {car.name} — Sin chofer: ${car.dailyRateWithoutDriver.toLocaleString()} / día | Con chofer: ${car.dailyRateWithDriver.toLocaleString()}
+                      </option>
+                    ))}
                   </select>
                 </div>
-                <div className="flex flex-col justify-end">
+
+                <div>
+                  <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider">
+                    Días de Renta
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={rentalDays}
+                    onChange={e => {
+                      const days = Math.max(1, Number(e.target.value));
+                      setRentalDays(days);
+                      updateVehicleSelection(vehicleModel, days, includesDriver);
+                    }}
+                    className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-sm md:text-base"
+                  />
+                </div>
+              </div>
+
+              {/* Driver Inclusion Toggle & Operator Selector */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex flex-col justify-center">
                   <label className="flex items-center gap-2 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl cursor-pointer">
                     <input
                       type="checkbox"
                       checked={includesDriver}
-                      onChange={e => setIncludesDriver(e.target.checked)}
+                      onChange={e => {
+                        const withDriver = e.target.checked;
+                        setIncludesDriver(withDriver);
+                        updateVehicleSelection(vehicleModel, rentalDays, withDriver);
+                      }}
                       className="w-5 h-5 accent-orange-600 rounded"
                     />
-                    <span className="text-xs md:text-sm font-bold text-neutral-800">Incluye Chofer Certificado</span>
+                    <div>
+                      <span className="text-xs md:text-sm font-black text-neutral-800 block">
+                        Incluye Chofer Certificado
+                      </span>
+                      <span className="text-[11px] text-neutral-500 font-medium">
+                        Operador federal capacitado de Gutiérrez Transportes
+                      </span>
+                    </div>
                   </label>
                 </div>
+
+                {includesDriver ? (
+                  <div>
+                    <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider">
+                      Operador Asignado (7 Choferes)
+                    </label>
+                    <select
+                      value={assignedDriverForQuote}
+                      onChange={e => setAssignedDriverForQuote(e.target.value)}
+                      className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-800 text-sm md:text-base"
+                    >
+                      {drivers.map(drv => (
+                        <option key={drv.id} value={drv.id}>
+                          {drv.name} ({drv.status === 'available' ? 'Disponible' : 'En Ruta'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-amber-50 border-2 border-amber-200 rounded-2xl text-xs text-amber-900 font-medium flex items-center gap-2">
+                    <Car className="w-5 h-5 text-amber-600 shrink-0" />
+                    <span>Renta libre sin chofer. Requiere INE, licencia y tarjeta para depósito.</span>
+                  </div>
+                )}
               </div>
 
               {/* Price Calculation Matrix */}
               <div className="bg-neutral-50 p-4 md:p-5 rounded-2xl border-2 border-neutral-200 space-y-2 text-xs md:text-sm">
                 <div className="flex justify-between text-neutral-600">
-                  <span>Renta Base Unidad:</span>
-                  <span className="font-bold">${baseRent} MXN</span>
+                  <span>Renta Base ({rentalDays} {rentalDays === 1 ? 'día' : 'días'} {includesDriver ? 'con chofer' : 'sin chofer'}):</span>
+                  <span className="font-bold">${baseRent.toLocaleString('es-MX')} MXN</span>
                 </div>
                 <div className="flex justify-between text-neutral-600">
                   <span>Combustible Estimado:</span>
-                  <span className="font-bold">${estFuel} MXN</span>
+                  <span className="font-bold">${estFuel.toLocaleString('es-MX')} MXN</span>
                 </div>
                 <div className="flex justify-between text-neutral-600">
                   <span>Casetas de Peaje:</span>
-                  <span className="font-bold">${estTolls} MXN</span>
+                  <span className="font-bold">${estTolls.toLocaleString('es-MX')} MXN</span>
                 </div>
                 {includesDriver && (
                   <div className="flex justify-between text-neutral-600">
-                    <span>Honorarios de Operador:</span>
-                    <span className="font-bold">${driverFee} MXN</span>
+                    <span>Viáticos de Operador:</span>
+                    <span className="font-bold">${driverFee.toLocaleString('es-MX')} MXN</span>
                   </div>
                 )}
                 <div className="flex justify-between text-neutral-900 font-black border-t border-neutral-200 pt-2 text-sm md:text-base">
                   <span>Presupuesto Total:</span>
-                  <span className="text-orange-600 text-lg md:text-xl font-black">${quoteTotal} MXN</span>
+                  <span className="text-orange-600 text-lg md:text-xl font-black">${quoteTotal.toLocaleString('es-MX')} MXN</span>
                 </div>
                 <div className="flex justify-between text-neutral-500 text-xs">
                   <span>Anticipo Requerido (30%):</span>
-                  <span className="font-bold text-neutral-800">${quoteAdvance} MXN</span>
+                  <span className="font-bold text-neutral-800">${quoteAdvance.toLocaleString('es-MX')} MXN</span>
                 </div>
               </div>
 
-              <button
-                type="submit"
-                className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-sm md:text-base shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Sparkles className="w-5 h-5" /> Generar Presupuesto y Registrar en CRM
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <button
+                  type="submit"
+                  className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-sm md:text-base shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Sparkles className="w-5 h-5" /> Generar Presupuesto y Guardar en CRM
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('rental_catalog')}
+                  className="w-full py-4 bg-neutral-900 hover:bg-black text-white rounded-2xl font-black text-sm md:text-base shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Car className="w-5 h-5 text-orange-400" /> Ver Catálogo Visual y Tarifas
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -503,12 +599,42 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                 </div>
 
                 {q.status !== 'reserved' ? (
-                  <div className="pt-2 border-t border-neutral-100 flex items-center gap-2">
+                  <div className="pt-3 border-t border-neutral-100 space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <label className="font-bold text-neutral-600 block mb-1">Unidad a Bloquear:</label>
+                        <select
+                          value={selectedUnitForReservation}
+                          onChange={e => setSelectedUnitForReservation(e.target.value)}
+                          className="w-full p-2 bg-neutral-50 border border-neutral-300 rounded-xl font-medium text-neutral-800"
+                        >
+                          {vehicles.map(v => (
+                            <option key={v.id} value={v.id}>
+                              {v.unitNumber} ({v.model} - {v.capacity}p)
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="font-bold text-neutral-600 block mb-1">Operador a Asignar (7 Choferes):</label>
+                        <select
+                          value={selectedDriverForReservation}
+                          onChange={e => setSelectedDriverForReservation(e.target.value)}
+                          className="w-full p-2 bg-neutral-50 border border-neutral-300 rounded-xl font-medium text-neutral-800"
+                        >
+                          {drivers.map(d => (
+                            <option key={d.id} value={d.id}>
+                              {d.name} ({d.status === 'available' ? 'Disponible' : 'En Ruta'})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
                     <button
                       onClick={() => convertQuoteToReservation(q.id, selectedUnitForReservation, selectedDriverForReservation)}
-                      className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs md:text-sm flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
+                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs md:text-sm flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer"
                     >
-                      <CheckCircle2 className="w-4 h-4" /> Convertir en Reserva (Bloquear Flota)
+                      <CheckCircle2 className="w-4 h-4" /> Convertir en Reserva (Bloquear Flota y Operador)
                     </button>
                   </div>
                 ) : (
@@ -555,6 +681,11 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
             </div>
           </div>
         </div>
+      )}
+
+      {/* Tab 5: Catálogo Oficial de Autos de Renta (Con y Sin Chofer) */}
+      {activeTab === 'rental_catalog' && (
+        <RentalCatalog onSelectCarForQuote={handleSelectCarForQuote} />
       )}
 
       {/* Client Implementation & Rates PDF Report Modal */}
