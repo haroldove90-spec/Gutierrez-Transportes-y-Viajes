@@ -10,7 +10,8 @@ import {
 } from 'lucide-react';
 import { RouteLocationsManager } from '../common/RouteLocationsManager';
 import { FleetPhotosManager } from './FleetPhotosManager';
-import { Camera } from 'lucide-react';
+import { DriverAssignmentsSchedule } from '../operations/DriverAssignmentsSchedule';
+import { Camera, CalendarDays } from 'lucide-react';
 
 interface DirectorPortalProps {
   activeTab: string;
@@ -272,6 +273,13 @@ export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab, setAc
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Tab: Agenda de Operadores & Viajes Turísticos Particulares */}
+      {activeTab === 'charter_schedule' && (
+        <div className="max-w-6xl mx-auto w-full">
+          <DriverAssignmentsSchedule />
         </div>
       )}
 

@@ -11,7 +11,8 @@ import {
   AuditLog, 
   ExceptionRequest,
   Seat,
-  RentalCar
+  RentalCar,
+  CharterAssignment
 } from '../types';
 
 export const OFFICIAL_PHONE = '312 312 4237';
@@ -1073,3 +1074,45 @@ export const INITIAL_EXCEPTIONS: ExceptionRequest[] = [
     createdAt: '2026-08-31 10:20'
   }
 ];
+
+export const INITIAL_CHARTER_ASSIGNMENTS: CharterAssignment[] = [
+  {
+    id: 'charter-01',
+    folio: 'TUR-2026-084',
+    clientName: 'Familia Ochoa Cárdenas',
+    clientPhone: '+52 312 155 9210',
+    origin: 'Colima, Col.',
+    destination: 'Mazamitla & Tapalpa, Jal. (Tour Pueblos Mágicos 3 Días)',
+    vehicleId: 'veh-hi14-03',
+    unitNumber: 'Unidad 04 (Hiace 14 Pax)',
+    driverId: 'drv-04',
+    driverName: 'Omar Salvador Álvarez',
+    driverPhone: '+52 312 113 6284',
+    startDate: '2026-09-08',
+    endDate: '2026-09-10',
+    totalAmount: 14500,
+    status: 'active',
+    notes: 'Servicio particular privado con chofer. Unidad bloqueada para venta de ruta.',
+    createdAt: '2026-09-05'
+  },
+  {
+    id: 'charter-02',
+    folio: 'TUR-2026-085',
+    clientName: 'Grupo Médico Hospital Puerta de Hierro',
+    clientPhone: '+52 33 2210 4488',
+    origin: 'Guadalajara, Jal.',
+    destination: 'Manzanillo (Convención Médica Hotel Barceló Karmina)',
+    vehicleId: 'veh-sp20-01',
+    unitNumber: 'Unidad 01 (Sprinter 20 Pax)',
+    driverId: 'drv-01',
+    driverName: 'Efraín Martínez Cruz',
+    driverPhone: '+52 314 109 4725',
+    startDate: '2026-09-12',
+    endDate: '2026-09-15',
+    totalAmount: 28800,
+    status: 'upcoming',
+    notes: 'Traslado ejecutivo redondo con traslados locales en bahía.',
+    createdAt: '2026-09-06'
+  }
+];
+

@@ -50,12 +50,20 @@ export interface Vehicle {
   model: string; // 'Mercedes-Benz Sprinter' | 'Toyota Hiace' | 'Ford Transit'
   plate: string;
   capacity: number; // 20, 14, 18, etc.
-  status: 'active' | 'in_route' | 'maintenance' | 'reserved_rent';
+  status: 'active' | 'in_route' | 'maintenance' | 'reserved_rent' | 'tour_contract';
   odometer: number;
   nextServiceKm: number;
   lastServiceDate: string;
   driverId?: string;
   image?: string;
+  tourContractDetails?: {
+    clientName: string;
+    clientPhone?: string;
+    destination: string;
+    startDate: string;
+    endDate: string;
+    notes?: string;
+  };
 }
 
 export interface Driver {
@@ -64,10 +72,39 @@ export interface Driver {
   phone: string;
   licenseNumber?: string;
   licenseExpiry?: string;
-  status: 'available' | 'in_service' | 'off_duty' | 'resting';
+  status: 'available' | 'in_service' | 'charter_service' | 'off_duty' | 'resting';
   rating: number;
   avatar: string;
   currentVehicleId?: string;
+  currentServiceType?: 'route' | 'charter' | 'none';
+  charterDetails?: {
+    clientName: string;
+    clientPhone?: string;
+    destination: string;
+    startDate: string;
+    endDate: string;
+    notes?: string;
+  };
+}
+
+export interface CharterAssignment {
+  id: string;
+  folio: string;
+  clientName: string;
+  clientPhone: string;
+  destination: string;
+  origin: string;
+  vehicleId: string;
+  unitNumber: string;
+  driverId: string;
+  driverName: string;
+  driverPhone: string;
+  startDate: string;
+  endDate: string;
+  totalAmount: number;
+  status: 'active' | 'upcoming' | 'completed' | 'cancelled';
+  notes?: string;
+  createdAt: string;
 }
 
 export interface TripSchedule {

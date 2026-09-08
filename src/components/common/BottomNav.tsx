@@ -17,7 +17,8 @@ import {
   TrendingUp, 
   ShieldCheck, 
   History, 
-  Layers
+  Layers,
+  CalendarDays
 } from 'lucide-react';
 
 interface BottomNavProps {
@@ -54,6 +55,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
       case 'operaciones':
         return [
           { id: 'dispatch', label: 'Despacho', icon: <Bus className="w-5 h-5 text-white" /> },
+          { id: 'charter_schedule', label: 'Agenda Tours', icon: <CalendarDays className="w-5 h-5 text-white" /> },
           { id: 'maintenance', label: 'Taller & Km', icon: <Wrench className="w-5 h-5 text-white" /> },
           { id: 'manifests', label: 'Manifiestos', icon: <FileSpreadsheet className="w-5 h-5 text-white" /> },
           { id: 'routes_config', label: 'Puntos Maps', icon: <Map className="w-5 h-5 text-white" /> },
@@ -68,6 +70,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
       case 'director':
         return [
           { id: 'executive', label: 'KPIs Hoy', icon: <TrendingUp className="w-5 h-5 text-white" /> },
+          { id: 'charter_schedule', label: 'Agenda Tours', icon: <CalendarDays className="w-5 h-5 text-white" /> },
           { id: 'fleet_photos', label: 'Flota & Fotos', icon: <Bus className="w-5 h-5 text-white" /> },
           { id: 'profit_deep', label: 'Rentabilidad', icon: <Layers className="w-5 h-5 text-white" /> },
           { id: 'routes_config', label: 'Puntos Maps', icon: <Map className="w-5 h-5 text-white" /> },

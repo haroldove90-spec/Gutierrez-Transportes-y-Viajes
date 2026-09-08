@@ -8,9 +8,13 @@ import {
   ShieldAlert, 
   Printer, 
   Gauge, 
-  UserCheck
+  UserCheck,
+  CalendarDays,
+  Palmtree,
+  ArrowRight
 } from 'lucide-react';
 import { RouteLocationsManager } from '../common/RouteLocationsManager';
+import { DriverAssignmentsSchedule } from './DriverAssignmentsSchedule';
 
 interface OperationsPortalProps {
   activeTab: string;
@@ -36,14 +40,42 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
 
   const handleAssignDispatch = (e: React.FormEvent) => {
     e.preventDefault();
-    assignDriverToVehicle(selectedDriverId, selectedVehicleId);
+    assignDriverToVehicle(selectedDriverId, selectedVehicleId, true);
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar bg-neutral-100 p-4 md:p-6 lg:p-8 space-y-6">
+      {/* Tab: Agenda de Servicios, Choferes y Viajes Particulares */}
+      {activeTab === 'charter_schedule' && (
+        <div className="max-w-6xl mx-auto w-full">
+          <DriverAssignmentsSchedule />
+        </div>
+      )}
+
       {/* Tab 1: Despacho & Asignación de Recursos */}
       {activeTab === 'dispatch' && (
         <div className="max-w-4xl mx-auto w-full space-y-6">
+          {/* Banner de Acceso Rápido a la Agenda de Viajes Turísticos y Reasignación */}
+          <div className="bg-linear-to-r from-purple-900 to-neutral-900 rounded-3xl p-5 md:p-6 text-white shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <span className="px-3 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-purple-500/30 text-purple-200 border border-purple-400/30">
+                Nuevo Módulo
+              </span>
+              <h4 className="text-base md:text-lg font-black flex items-center gap-2">
+                <CalendarDays className="w-5 h-5 text-purple-300" /> Agenda de Operadores & Bloqueo por Viajes Particulares
+              </h4>
+              <p className="text-xs text-neutral-300 max-w-xl">
+                ¿Vas a cambiar el servicio a un chofer o asignar una unidad a contratación particular para que no venda boletos de ruta? Usa la agenda con desbloqueo directo.
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveTab('charter_schedule')}
+              className="px-4 py-2.5 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl text-xs md:text-sm font-black transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-md"
+            >
+              Abrir Agenda <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+
           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-4">
             <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
               <span className="text-sm md:text-base font-black text-orange-600 uppercase tracking-wider flex items-center gap-2">

@@ -14,7 +14,8 @@ import {
   CheckCheck,
   Navigation,
   ExternalLink,
-  Compass
+  Compass,
+  Palmtree
 } from 'lucide-react';
 import { TripExpense } from '../../types';
 
@@ -154,6 +155,39 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
       {/* Tab 1: Mi Viaje Activo & Bitácora de Tiempos */}
       {activeTab === 'trip' && (
         <div className="max-w-5xl mx-auto w-full space-y-6">
+          {/* Card de Viaje Turístico Particular si aplica */}
+          {(currentDriver.status === 'charter_service' || currentDriver.charterDetails) && (
+            <div className="bg-linear-to-r from-purple-900 to-indigo-950 text-white rounded-3xl p-6 md:p-8 shadow-lg border-2 border-purple-500/50 space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-purple-500/30 text-purple-200 border border-purple-400/40 flex items-center gap-1.5">
+                  <Palmtree className="w-3.5 h-3.5" /> Viaje Turístico Particular Asignado
+                </span>
+                <span className="text-xs font-black text-amber-300 bg-amber-950/60 px-3 py-1 rounded-full border border-amber-500/30">
+                  Fuera de Ruta Fija
+                </span>
+              </div>
+
+              <div>
+                <h3 className="text-xl md:text-2xl font-black text-white">
+                  {currentDriver.charterDetails?.destination || 'Servicio Turístico Contratado'}
+                </h3>
+                <p className="text-xs md:text-sm text-purple-200 mt-1">
+                  Cliente Contratante: <strong>{currentDriver.charterDetails?.clientName}</strong> {currentDriver.charterDetails?.clientPhone && `• Tel: ${currentDriver.charterDetails.clientPhone}`}
+                </p>
+                <p className="text-xs text-purple-300 font-mono mt-1">
+                  Fechas: {currentDriver.charterDetails?.startDate} al {currentDriver.charterDetails?.endDate}
+                </p>
+              </div>
+
+              {currentDriver.charterDetails?.notes && (
+                <div className="p-3 bg-white/10 rounded-2xl text-xs text-neutral-200 border border-white/10">
+                  <span className="font-bold text-purple-200 uppercase text-[10px] block">Instrucciones:</span>
+                  {currentDriver.charterDetails.notes}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Active Trip Card */}
           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-5">
             <div className="flex items-center justify-between">

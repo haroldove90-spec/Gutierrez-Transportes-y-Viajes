@@ -20,7 +20,9 @@ import {
   Layers,
   Car,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  CalendarDays,
+  Palmtree
 } from 'lucide-react';
 
 interface SidebarNavProps {
@@ -75,6 +77,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
           badge: 'Despacho y Flota',
           items: [
             { id: 'dispatch', label: 'Despacho & Asignación', icon: <Bus className="w-5 h-5" /> },
+            { id: 'charter_schedule', label: 'Agenda & Choferes (Tours)', icon: <CalendarDays className="w-5 h-5" /> },
             { id: 'maintenance', label: 'Taller & Kilometraje', icon: <Wrench className="w-5 h-5" /> },
             { id: 'manifests', label: 'Descarga Manifiestos', icon: <FileSpreadsheet className="w-5 h-5" /> },
             { id: 'routes_config', label: 'Puntos de Partida (Maps)', icon: <Map className="w-5 h-5" /> },
@@ -97,6 +100,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
           badge: 'Control Ejecutivo',
           items: [
             { id: 'executive', label: 'KPIs en Tiempo Real', icon: <TrendingUp className="w-5 h-5" /> },
+            { id: 'charter_schedule', label: 'Agenda Choferes & Tours', icon: <CalendarDays className="w-5 h-5" /> },
             { id: 'fleet_photos', label: 'Gestión Flotilla & Fotos', icon: <Bus className="w-5 h-5" /> },
             { id: 'profit_deep', label: 'Rentabilidad Detallada', icon: <Layers className="w-5 h-5" /> },
             { id: 'routes_config', label: 'Puntos de Partida (Maps)', icon: <Map className="w-5 h-5" /> },

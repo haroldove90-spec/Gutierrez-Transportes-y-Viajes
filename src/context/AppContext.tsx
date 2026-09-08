@@ -12,7 +12,8 @@ import {
   ExceptionRequest,
   Seat,
   RouteStop,
-  RentalCar
+  RentalCar,
+  CharterAssignment
 } from '../types';
 import {
   INITIAL_TRIPS,
@@ -24,6 +25,7 @@ import {
   INITIAL_INVOICES,
   INITIAL_AUDIT_LOGS,
   INITIAL_EXCEPTIONS,
+  INITIAL_CHARTER_ASSIGNMENTS,
   ROUTE_STOPS,
   OFFICIAL_PRICING,
   OFFICIAL_RENTAL_CARS
@@ -57,6 +59,7 @@ interface AppContextType {
   invoices: InvoiceCFDI[];
   auditLogs: AuditLog[];
   exceptions: ExceptionRequest[];
+  charterAssignments: CharterAssignment[];
   
   // Active selection / temp state
   selectedTripId: string | null;
@@ -76,9 +79,13 @@ interface AppContextType {
   addExpense: (expense: Omit<TripExpense, 'id' | 'status'>) => TripExpense;
   approveExpense: (expenseId: string) => void;
   
-  // Operations & Maintenance
+  // Operations & Maintenance & Agenda de Servicios
   toggleVehicleMaintenance: (vehicleId: string, reason?: string) => void;
-  assignDriverToVehicle: (driverId: string, vehicleId: string) => boolean;
+  assignDriverToVehicle: (driverId: string, vehicleId: string, forceOverride?: boolean) => boolean;
+  releaseDriverFromService: (driverId: string, reason?: string) => boolean;
+  assignDriverToCharter: (data: Omit<CharterAssignment, 'id' | 'folio' | 'createdAt' | 'status'>) => CharterAssignment;
+  releaseVehicleFromTourContract: (vehicleId: string) => boolean;
+  completeCharterAssignment: (charterId: string) => boolean;
   
   // Secretary & CRM
   createRentalQuote: (quoteData: Omit<RentalQuote, 'id' | 'createdAt' | 'status' | 'balanceRemaining'>) => RentalQuote;
@@ -155,6 +162,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [invoices, setInvoices] = useState<InvoiceCFDI[]>(INITIAL_INVOICES);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
   const [exceptions, setExceptions] = useState<ExceptionRequest[]>(INITIAL_EXCEPTIONS);
+  const [charterAssignments, setCharterAssignments] = useState<CharterAssignment[]>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_charter_assignments_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Error loading cached charter assignments', e);
+    }
+    return INITIAL_CHARTER_ASSIGNMENTS;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_charter_assignments_v1', JSON.stringify(charterAssignments));
+    } catch (e) {
+      console.error('Error persisting charter assignments', e);
+    }
+  }, [charterAssignments]);
   
   // Route Stops & Departure Points (Admin manual configuration)
   const [routeStops, setRouteStops] = useState<RouteStop[]>(() => {
@@ -502,7 +529,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
-  const assignDriverToVehicle = (driverId: string, vehicleId: string): boolean => {
+  const assignDriverToVehicle = (driverId: string, vehicleId: string, forceOverride: boolean = true): boolean => {
     // Check if vehicle in maintenance
     const vehicle = vehicles.find(v => v.id === vehicleId);
     if (vehicle?.status === 'maintenance') {
@@ -510,18 +537,165 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return false;
     }
 
-    // Check if driver is already in service
     const driver = drivers.find(d => d.id === driverId);
-    if (driver?.status === 'in_service' && driver.currentVehicleId !== vehicleId) {
+    if (!driver) return false;
+
+    // If driver is already in service and forceOverride is false
+    if ((driver.status === 'in_service' || driver.status === 'charter_service') && driver.currentVehicleId !== vehicleId && !forceOverride) {
       showNotification('Conflicto: El chofer ya tiene un servicio activo asignado.', 'error');
       return false;
     }
 
-    setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, driverId } : v));
-    setDrivers(prev => prev.map(d => d.id === driverId ? { ...d, currentVehicleId: vehicleId, status: 'in_service' } : d));
+    // Unassign driver from any previous vehicle if reassigning
+    if (driver.currentVehicleId && driver.currentVehicleId !== vehicleId) {
+      setVehicles(prev => prev.map(v => v.id === driver.currentVehicleId ? { ...v, driverId: undefined } : v));
+    }
 
-    addAuditEntry('DESPACHO_ASIGNACION', 'Fleet', vehicleId, 'Sin asignar', `Chofer: ${driver?.name}`);
-    showNotification(`Unidad ${vehicle?.unitNumber} asignada a ${driver?.name}`, 'success');
+    // Assign to new vehicle
+    setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, driverId } : v));
+    setDrivers(prev => prev.map(d => d.id === driverId ? { 
+      ...d, 
+      currentVehicleId: vehicleId, 
+      status: 'in_service',
+      currentServiceType: 'route',
+      charterDetails: undefined
+    } : d));
+
+    addAuditEntry('DESPACHO_ASIGNACION', 'Fleet', vehicleId, 'Reasignación', `Chofer: ${driver.name} a ${vehicle?.unitNumber}`);
+    showNotification(`Unidad ${vehicle?.unitNumber} asignada con éxito a ${driver.name}`, 'success');
+    return true;
+  };
+
+  const releaseDriverFromService = (driverId: string, reason?: string): boolean => {
+    const driver = drivers.find(d => d.id === driverId);
+    if (!driver) return false;
+
+    // Release from vehicle if assigned
+    if (driver.currentVehicleId) {
+      setVehicles(prev => prev.map(v => v.id === driver.currentVehicleId ? { 
+        ...v, 
+        driverId: undefined,
+        status: v.status === 'tour_contract' ? 'active' : v.status,
+        tourContractDetails: undefined
+      } : v));
+    }
+
+    setDrivers(prev => prev.map(d => d.id === driverId ? {
+      ...d,
+      status: 'available',
+      currentVehicleId: undefined,
+      currentServiceType: 'none',
+      charterDetails: undefined
+    } : d));
+
+    addAuditEntry('LIBERACION_CHOFER', 'Driver', driverId, driver.status, `Liberado: ${driver.name}. Motivo: ${reason || 'Fin de servicio / Cambio de agenda'}`);
+    showNotification(`Operador ${driver.name} liberado exitosamente. Ahora está DISPONIBLE en base.`, 'success');
+    return true;
+  };
+
+  const assignDriverToCharter = (data: Omit<CharterAssignment, 'id' | 'folio' | 'createdAt' | 'status'>): CharterAssignment => {
+    const charterId = `charter-${Date.now()}`;
+    const folio = `TUR-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
+
+    const newAssignment: CharterAssignment = {
+      ...data,
+      id: charterId,
+      folio,
+      status: 'active',
+      createdAt: new Date().toISOString().substring(0, 10)
+    };
+
+    // 1. Bloquear camioneta para viaje turístico particular (No disponible para rutas regulares)
+    setVehicles(prev => prev.map(v => v.id === data.vehicleId ? {
+      ...v,
+      status: 'tour_contract',
+      driverId: data.driverId,
+      tourContractDetails: {
+        clientName: data.clientName,
+        clientPhone: data.clientPhone,
+        destination: data.destination,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        notes: data.notes
+      }
+    } : v));
+
+    // 2. Asignar chofer al viaje turístico particular
+    setDrivers(prev => prev.map(d => d.id === data.driverId ? {
+      ...d,
+      status: 'charter_service',
+      currentVehicleId: data.vehicleId,
+      currentServiceType: 'charter',
+      charterDetails: {
+        clientName: data.clientName,
+        clientPhone: data.clientPhone,
+        destination: data.destination,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        notes: data.notes
+      }
+    } : d));
+
+    // 3. Registrar en la agenda de asignaciones
+    setCharterAssignments(prev => [newAssignment, ...prev]);
+
+    addAuditEntry(
+      'ASIGNACION_VIAJE_TURISTICO_PARTICULAR',
+      'CharterAssignment',
+      folio,
+      undefined,
+      `${data.unitNumber} con ${data.driverName} p/ ${data.clientName} a ${data.destination}`
+    );
+
+    showNotification(
+      `¡Servicio Turístico Asignado! ${data.unitNumber} bloqueada y ${data.driverName} asignado al viaje particular a ${data.destination}.`,
+      'success'
+    );
+
+    return newAssignment;
+  };
+
+  const releaseVehicleFromTourContract = (vehicleId: string): boolean => {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    if (!vehicle) return false;
+
+    const assignedDriverId = vehicle.driverId;
+
+    // Reactivar unidad
+    setVehicles(prev => prev.map(v => v.id === vehicleId ? {
+      ...v,
+      status: 'active',
+      driverId: undefined,
+      tourContractDetails: undefined
+    } : v));
+
+    // Liberar chofer si estaba en este viaje
+    if (assignedDriverId) {
+      setDrivers(prev => prev.map(d => d.id === assignedDriverId ? {
+        ...d,
+        status: 'available',
+        currentVehicleId: undefined,
+        currentServiceType: 'none',
+        charterDetails: undefined
+      } : d));
+    }
+
+    addAuditEntry('LIBERACION_CONTRATACION_TURISTICA', 'Vehicle', vehicleId, 'tour_contract', 'active');
+    showNotification(`Unidad ${vehicle.unitNumber} desbloqueada y disponible para rutas regulares.`, 'success');
+    return true;
+  };
+
+  const completeCharterAssignment = (charterId: string): boolean => {
+    const charter = charterAssignments.find(c => c.id === charterId);
+    if (!charter) return false;
+
+    // Mark charter as completed
+    setCharterAssignments(prev => prev.map(c => c.id === charterId ? { ...c, status: 'completed' } : c));
+
+    // Release vehicle
+    releaseVehicleFromTourContract(charter.vehicleId);
+
+    showNotification(`Servicio turístico ${charter.folio} finalizado y recursos liberados.`, 'info');
     return true;
   };
 
@@ -725,6 +899,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         invoices,
         auditLogs,
         exceptions,
+        charterAssignments,
         selectedTripId,
         setSelectedTripId,
         tempLockedSeats,
@@ -739,6 +914,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         approveExpense,
         toggleVehicleMaintenance,
         assignDriverToVehicle,
+        releaseDriverFromService,
+        assignDriverToCharter,
+        releaseVehicleFromTourContract,
+        completeCharterAssignment,
         createRentalQuote,
         convertQuoteToReservation,
         updateQuoteStatus,
