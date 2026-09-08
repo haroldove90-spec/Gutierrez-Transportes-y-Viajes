@@ -47,14 +47,15 @@ export interface Seat {
 export interface Vehicle {
   id: string;
   unitNumber: string;
-  model: string; // 'Mercedes-Benz Sprinter' | 'Toyota Hiace'
+  model: string; // 'Mercedes-Benz Sprinter' | 'Toyota Hiace' | 'Ford Transit'
   plate: string;
-  capacity: number; // 19 or 14
+  capacity: number; // 20, 14, 18, etc.
   status: 'active' | 'in_route' | 'maintenance' | 'reserved_rent';
   odometer: number;
   nextServiceKm: number;
   lastServiceDate: string;
   driverId?: string;
+  image?: string;
 }
 
 export interface Driver {
@@ -156,7 +157,7 @@ export interface RentalCar {
   id: string;
   name: string;
   brand: string;
-  category: 'Sedán' | 'Familiar' | 'SUV' | 'Camioneta / Van' | 'Sprinter Ejecutiva';
+  category: 'Sedán' | 'Familiar' | 'SUV' | 'Camioneta / Van' | 'Sprinter Ejecutiva' | 'Pick-up / Trabajo & Aventura';
   capacity: number; // Pasajeros
   dailyRateWithoutDriver: number; // Tarifa por día sin chofer
   dailyRateWithDriver: number; // Tarifa por día con chofer

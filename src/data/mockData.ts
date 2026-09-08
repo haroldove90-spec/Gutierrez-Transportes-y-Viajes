@@ -213,7 +213,8 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     odometer: 114200, 
     nextServiceKm: 120000, 
     lastServiceDate: '2026-08-15', 
-    driverId: 'drv-01' 
+    driverId: 'drv-01',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/sprinterde21pasajeros.png'
   },
   // 4 Toyota Hiace 14 pasajeros
   { 
@@ -226,7 +227,8 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     odometer: 72400, 
     nextServiceKm: 75000, 
     lastServiceDate: '2026-08-20', 
-    driverId: 'drv-02' 
+    driverId: 'drv-02',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png'
   },
   { 
     id: 'veh-hi14-02', 
@@ -238,7 +240,8 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     odometer: 68900, 
     nextServiceKm: 70000, 
     lastServiceDate: '2026-08-22', 
-    driverId: 'drv-03' 
+    driverId: 'drv-03',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png'
   },
   { 
     id: 'veh-hi14-03', 
@@ -250,7 +253,8 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     odometer: 84100, 
     nextServiceKm: 90000, 
     lastServiceDate: '2026-08-10', 
-    driverId: 'drv-04' 
+    driverId: 'drv-04',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png'
   },
   { 
     id: 'veh-hi14-04', 
@@ -262,7 +266,8 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     odometer: 59300, 
     nextServiceKm: 65000, 
     lastServiceDate: '2026-08-28', 
-    driverId: 'drv-05' 
+    driverId: 'drv-05',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png'
   },
   // 2 Toyota Hiace 11 pasajeros
   { 
@@ -275,7 +280,8 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     odometer: 45200, 
     nextServiceKm: 50000, 
     lastServiceDate: '2026-08-12', 
-    driverId: 'drv-06' 
+    driverId: 'drv-06',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede12pasajeros.png'
   },
   { 
     id: 'veh-hi11-02', 
@@ -286,7 +292,8 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     status: 'maintenance', 
     odometer: 41800, 
     nextServiceKm: 45000, 
-    lastServiceDate: '2026-08-05' 
+    lastServiceDate: '2026-08-05',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede12pasajeros.png'
   },
   // 1 Ford Transit 18 pasajeros
   { 
@@ -299,7 +306,8 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     odometer: 63500, 
     nextServiceKm: 70000, 
     lastServiceDate: '2026-08-19', 
-    driverId: 'drv-07' 
+    driverId: 'drv-07',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/fordtransitde18pasajeros.png'
   }
 ];
 
@@ -385,22 +393,6 @@ export const INITIAL_DRIVERS: Driver[] = [
 
 export const OFFICIAL_RENTAL_CARS: RentalCar[] = [
   {
-    id: 'rc-jetta',
-    name: 'Jetta VW',
-    brand: 'Volkswagen',
-    category: 'Sedán',
-    capacity: 5,
-    dailyRateWithoutDriver: 1300,
-    dailyRateWithDriver: 2100,
-    transmission: 'Automática',
-    hasAC: true,
-    fuelType: 'Gasolina',
-    luggageCapacity: '3 maletas grandes',
-    image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=600&auto=format&fit=crop&q=80',
-    available: true,
-    features: ['Aire acondicionado Climatronic', 'Pantalla táctil con Carplay/Android', 'Seguro cobertura amplia', 'Motor 1.4 TSI eficiente']
-  },
-  {
     id: 'rc-vento',
     name: 'Vento VW',
     brand: 'Volkswagen',
@@ -412,7 +404,7 @@ export const OFFICIAL_RENTAL_CARS: RentalCar[] = [
     hasAC: true,
     fuelType: 'Gasolina',
     luggageCapacity: '2 maletas grandes',
-    image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=600&auto=format&fit=crop&q=80',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/vento.png',
     available: true,
     features: ['Aire acondicionado', 'Económico y rendidor', 'Bluetooth & USB', 'Cajuela amplia 455L']
   },
@@ -428,9 +420,25 @@ export const OFFICIAL_RENTAL_CARS: RentalCar[] = [
     hasAC: true,
     fuelType: 'Gasolina',
     luggageCapacity: '3 maletas + portaequipaje',
-    image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=600&auto=format&fit=crop&q=80',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/avanzatoyota.png',
     available: true,
     features: ['3 filas de asientos (7 pasajeros)', 'Doble aire acondicionado', 'Gran versatilidad familiar', 'Frenos ABS']
+  },
+  {
+    id: 'rc-l200',
+    name: 'Mitsubishi L200 (Doble Cabina 4x4)',
+    brand: 'Mitsubishi',
+    category: 'Pick-up / Trabajo & Aventura',
+    capacity: 5,
+    dailyRateWithoutDriver: 1800,
+    dailyRateWithDriver: 2600,
+    transmission: 'Manual 6 vel 4x4',
+    hasAC: true,
+    fuelType: 'Diésel Turbo',
+    luggageCapacity: 'Batea de carga amplia para herramientas y equipaje',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/l200mitsubishi.png',
+    available: true,
+    features: ['Tracción 4x4 todo terreno', 'Doble cabina para 5 pasajeros', 'Batea de carga para trabajo rudo', 'Clima y conectividad Bluetooth']
   },
   {
     id: 'rc-teramont',
@@ -444,7 +452,7 @@ export const OFFICIAL_RENTAL_CARS: RentalCar[] = [
     hasAC: true,
     fuelType: 'Gasolina',
     luggageCapacity: '5 maletas grandes',
-    image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&auto=format&fit=crop&q=80',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/teramon.png',
     available: true,
     features: ['SUV de Gran Lujo 7 Pasajeros', 'Asientos de piel climatizados', 'Techo panorámico corredizo', 'Motor V6 4MOTION']
   },
@@ -460,7 +468,7 @@ export const OFFICIAL_RENTAL_CARS: RentalCar[] = [
     hasAC: true,
     fuelType: 'Gasolina',
     luggageCapacity: '4 maletas',
-    image: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=600&auto=format&fit=crop&q=80',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/tiguan.png',
     available: true,
     features: ['SUV ejecutiva moderna 7 Pax', 'Excelente confort de marcha', 'Tracción y seguridad avanzada', 'Cámara de reversa 360']
   },
@@ -476,7 +484,7 @@ export const OFFICIAL_RENTAL_CARS: RentalCar[] = [
     hasAC: true,
     fuelType: 'Diésel',
     luggageCapacity: 'Área posterior de equipaje',
-    image: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?w=600&auto=format&fit=crop&q=80',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png',
     available: true,
     features: ['14 asientos reclinables de confort', 'Doble difusor de A/C en cabina', 'Disponible con y sin chofer', 'Ideal para grupos y familias']
   },
@@ -492,7 +500,7 @@ export const OFFICIAL_RENTAL_CARS: RentalCar[] = [
     hasAC: true,
     fuelType: 'Gasolina/Diésel',
     luggageCapacity: 'Amplio maletero trasero',
-    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&auto=format&fit=crop&q=80',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede12pasajeros.png',
     available: true,
     features: ['11 asientos ejecutivos VIP', 'Mayor espacio entre filas', 'Disponible con y sin chofer', 'Cinturones de 3 puntos']
   },
@@ -508,7 +516,7 @@ export const OFFICIAL_RENTAL_CARS: RentalCar[] = [
     hasAC: true,
     fuelType: 'Diésel EcoBlue',
     luggageCapacity: 'Maletero posterior reforzado',
-    image: 'https://images.unsplash.com/photo-1559297434-fae8a1916a79?w=600&auto=format&fit=crop&q=80',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/fordtransitde18pasajeros.png',
     available: true,
     features: ['18 asientos individuales', 'Doble rodado y máxima estabilidad', 'Disponible con y sin chofer', 'Aire acondicionado integral']
   },
@@ -524,7 +532,7 @@ export const OFFICIAL_RENTAL_CARS: RentalCar[] = [
     hasAC: true,
     fuelType: 'Diésel',
     luggageCapacity: 'Cajuela posterior de gran volumen',
-    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&auto=format&fit=crop&q=80',
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/sprinterde21pasajeros.png',
     available: true,
     features: ['20 asientos de piel reclinables', 'Sonido premium y pantallas', 'Disponible con y sin chofer', 'Suspensión neumática ejecutiva']
   }

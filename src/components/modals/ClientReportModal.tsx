@@ -35,33 +35,34 @@ Contacto Oficial: WhatsApp ${OFFICIAL_WHATSAPP} | Tel. ${OFFICIAL_PHONE}
   [✔] Header responsivo optimizado para móviles: icono de hamburguesa oculto en móvil y botón "Cerrar Sesión" minimizado a icono para evitar cortes en pantalla.
   [✔] Purga total: Eliminado al 100% todo código, tablas o referencias a condominios. Plataforma enfocada exclusivamente en Gutiérrez Transportes y Viajes.
 
-✅ 2. LOS 7 OPERADORES FEDERALES REGISTRADOS Y ACTIVOS:
-  [✔] 1. Efraín Martínez Cruz (Lic. Federal 771029-A) - Unidad 01 (Mercedes Sprinter 20 Pax)
-  [✔] 2. Rosendo Navarro (Lic. Federal 884102-B) - Unidad 02 (Toyota Hiace 14 Pax)
-  [✔] 3. Eduardo Morales (Lic. Federal 653920-C) - Unidad 03 (Toyota Hiace 14 Pax)
-  [✔] 4. Omar Salvador Álvarez (Lic. Federal 910482-D) - Unidad 04 (Toyota Hiace 14 Pax)
-  [✔] 5. José Antonio Gutiérrez (Lic. Federal 552019-E) - Unidad 05 (Toyota Hiace 14 Pax)
-  [✔] 6. Antonio Guerrero Troncoso (Lic. Federal 440192-F) - Unidad 06 (Toyota Hiace 11 Pax)
-  [✔] 7. Adán Daryan Ayala Méndez (Lic. Federal 339014-G) - Unidad 08 (Ford Transit 18 Pax)
-  * Integrados en: Portal Chofer (selector dinámico de cabina), Secretaría (asignación a cotizaciones y reservas CRM), y Manifiestos de Pasajeros.
+✅ 2. LOS 7 OPERADORES FEDERALES CON NÚMEROS DE CELULAR (+52):
+  [✔] 1. Efraín Martínez Cruz - Tel: +52 314 109 4725 - Unidad 01 (Mercedes Sprinter 20 Pax)
+  [✔] 2. Rosendo Navarro - Tel: +52 33 1735 4281 - Unidad 02 (Toyota Hiace 14 Pax)
+  [✔] 3. Eduardo Morales - Tel: +52 33 2633 5014 - Unidad 03 (Toyota Hiace 14 Pax)
+  [✔] 4. Omar Salvador Álvarez - Tel: +52 312 113 6284 - Unidad 04 (Toyota Hiace 14 Pax)
+  [✔] 5. José Antonio Gutiérrez Ochoa - Tel: +52 33 3326 3521 - Unidad 05 (Toyota Hiace 14 Pax)
+  [✔] 6. Antonio Guerrero Troncoso - Tel: +52 312 298 4953 - Unidad 06 (Toyota Hiace 11 Pax VIP)
+  [✔] 7. Adán Daryan Ayala Méndez - Tel: +52 312 120 6564 - Unidad 08 (Ford Transit 18 Pax)
+  * Ajuste realizado: Se retiraron números de licencia y se sustituyeron por su número telefónico directo con prefijo internacional +52 activo en toda la plataforma.
 
-✅ 3. FLOTA DE TRANSPORTE TURÍSTICO (ASUNTO LIBRE DEL CHOFER):
-  [✔] 1 Mercedes Sprinter de 20 pasajeros
-  [✔] 4 Toyota Hiace de 14 pasajeros
-  [✔] 2 Toyota Hiace de 11 pasajeros
-  [✔] 1 Ford Transit de 18 pasajeros
-  * Capacidad total configurada con mapeo visual de asientos interactivos por unidad.
+✅ 3. FLOTA OFICIAL CON FOTOGRAFÍAS REALES (SUPABASE STORAGE):
+  [✔] 1 Mercedes Sprinter (20-21 Pax) • Foto: sprinterde21pasajeros.png
+  [✔] 4 Toyota Hiace (14-15 Pax) • Foto: toyotahiacede15pasajeros.png
+  [✔] 2 Toyota Hiace (11-12 Pax) • Foto: toyotahiacede12pasajeros.png
+  [✔] 1 Ford Transit (18 Pax) • Foto: fordtransitde18pasajeros.png
+  * Nuevo módulo en Dirección: "Gestión de Fotos de Flotilla" con previsualizador HD y selector rápido.
 
 ✅ 4. CATÁLOGO Y TARIFAS DE AUTOS DE RENTA (CON Y SIN CHOFER):
-  [✔] Jetta VW: $1,300 el día sin chofer | $2,100 el día con chofer
-  [✔] Vento VW: $800 el día sin chofer | $1,600 el día con chofer
-  [✔] Avanza Toyota: $1,500 el día sin chofer | $2,300 el día con chofer
-  [✔] Teramont VW: $4,500 el día sin chofer | $5,500 el día con chofer
-  [✔] Tiguan VW: $2,800 el día sin chofer | $3,600 el día con chofer
-  [✔] Toyota Hiace (14 pasajeros): $3,000 el día sin chofer | $4,000 el día con chofer
-  [✔] Toyota Hiace (11 pasajeros): $3,000 el día sin chofer | $4,000 el día con chofer
-  [✔] Ford Transit (18 pasajeros): $4,800 el día sin chofer | $6,000 el día con chofer
-  [✔] Mercedes Sprinter (20 pasajeros): $5,800 el día sin chofer | $7,200 el día con chofer
+  [✔] Mitsubishi L200 (Pick-up Doble Cabina 4x4): $2,200/día sin chofer | $3,100/día con chofer [NUEVO VEHÍCULO] • Foto: l200mitsubishi.png
+  [✔] Avanza Toyota (7 Pax): $1,500/día sin chofer | $2,300/día con chofer • Foto: avanzatoyota.png
+  [✔] Teramont VW (7 Pax VIP): $4,500/día sin chofer | $5,500/día con chofer • Foto: teramon.png
+  [✔] Tiguan VW (5 Pax): $2,800/día sin chofer | $3,600/día con chofer • Foto: tiguan.png
+  [✔] Vento VW (5 Pax): $800/día sin chofer | $1,600/día con chofer • Foto: vento.png
+  [✔] Jetta VW (5 Pax): $1,300/día sin chofer | $2,100/día con chofer
+  [✔] Toyota Hiace (14 Pax): $3,000/día sin chofer | $4,000/día con chofer
+  [✔] Toyota Hiace (11 Pax): $3,000/día sin chofer | $4,000/día con chofer
+  [✔] Ford Transit (18 Pax): $4,800/día sin chofer | $6,000/día con chofer
+  [✔] Mercedes Sprinter (20 Pax): $5,800/día sin chofer | $7,200/día con chofer
   * Módulo "Catálogo de Autos de Renta" activo para Pasajeros y Secretaría con cotizador instantáneo y enlace directo a WhatsApp.
 
 ✅ 5. MATRIZ DE RUTAS DIARIAS Y TARIFAS REGULADAS:

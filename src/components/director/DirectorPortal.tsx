@@ -9,13 +9,15 @@ import {
   MapPin
 } from 'lucide-react';
 import { RouteLocationsManager } from '../common/RouteLocationsManager';
+import { FleetPhotosManager } from './FleetPhotosManager';
+import { Camera } from 'lucide-react';
 
 interface DirectorPortalProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
 }
 
-export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab }) => {
+export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab, setActiveTab }) => {
   const { 
     bookings, 
     quotes, 
@@ -80,11 +82,19 @@ export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab }) => 
         <div className="max-w-5xl mx-auto w-full space-y-6">
           {/* Active Fleet Health */}
           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <span className="text-base md:text-lg font-black text-orange-600 uppercase tracking-wider flex items-center gap-2">
                 <Bus className="w-5 h-5" /> Estado Operativo de la Flota
               </span>
-              <span className="text-xs md:text-sm text-neutral-600 font-bold">{vehicles.length} unidades registradas</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs md:text-sm text-neutral-600 font-bold">{vehicles.length} unidades registradas</span>
+                <button
+                  onClick={() => setActiveTab('fleet_photos')}
+                  className="px-3 py-1.5 bg-neutral-900 hover:bg-orange-600 text-white rounded-xl text-xs font-black transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
+                >
+                  <Camera className="w-3.5 h-3.5 text-orange-400" /> Gestionar Fotos
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs md:text-sm">
@@ -263,6 +273,11 @@ export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab }) => 
             ))}
           </div>
         </div>
+      )}
+
+      {/* Tab: Gestión de Flotilla y Fotos */}
+      {activeTab === 'fleet_photos' && (
+        <FleetPhotosManager />
       )}
 
       {/* Tab 5: Configuración de Puntos de Partida y Ubicaciones GPS */}

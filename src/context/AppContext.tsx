@@ -97,6 +97,10 @@ interface AppContextType {
   deleteRouteStop: (id: string) => boolean;
   resetRouteStopsToDefault: () => void;
 
+  // Fleet Image Management (Admin configurable)
+  updateVehicleImage: (vehicleId: string, newImageUrl: string) => void;
+  updateRentalCarImage: (carId: string, newImageUrl: string) => void;
+
   // Active Passenger Quick View (for instant ticket lookup)
   activeTicket: Booking | null;
   setActiveTicket: (booking: Booking | null) => void;
@@ -120,9 +124,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isMobileDeviceFrame, setIsMobileDeviceFrame] = useState<boolean>(false);
   
   const [trips, setTrips] = useState<TripSchedule[]>(INITIAL_TRIPS);
-  const [vehicles, setVehicles] = useState<Vehicle[]>(INITIAL_VEHICLES);
+  const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_vehicles_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Error loading cached vehicles', e);
+    }
+    return INITIAL_VEHICLES;
+  });
   const [drivers, setDrivers] = useState<Driver[]>(INITIAL_DRIVERS);
-  const [rentalCars, setRentalCars] = useState<RentalCar[]>(OFFICIAL_RENTAL_CARS);
+  const [rentalCars, setRentalCars] = useState<RentalCar[]>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_rental_cars_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Error loading cached rental cars', e);
+    }
+    return OFFICIAL_RENTAL_CARS;
+  });
   const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
   const [expenses, setExpenses] = useState<TripExpense[]>(INITIAL_EXPENSES);
   const [quotes, setQuotes] = useState<RentalQuote[]>(INITIAL_RENTAL_QUOTES);
@@ -654,6 +680,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Catálogo restablecido a las ubicaciones oficiales base.', 'info');
   };
 
+  const updateVehicleImage = (vehicleId: string, newImageUrl: string) => {
+    setVehicles(prev => {
+      const updated = prev.map(v => v.id === vehicleId ? { ...v, image: newImageUrl } : v);
+      try {
+        localStorage.setItem('gutierrez_vehicles_v2', JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Error saving vehicles to cache', e);
+      }
+      return updated;
+    });
+    addAuditEntry('ACTUALIZACION_FOTO_FLOTILLA', 'Vehicle', vehicleId, undefined, `Nueva URL: ${newImageUrl}`);
+    showNotification('Foto de la unidad actualizada exitosamente.', 'success');
+  };
+
+  const updateRentalCarImage = (carId: string, newImageUrl: string) => {
+    setRentalCars(prev => {
+      const updated = prev.map(c => c.id === carId ? { ...c, image: newImageUrl } : c);
+      try {
+        localStorage.setItem('gutierrez_rental_cars_v2', JSON.stringify(updated));
+      } catch (e) {
+        console.warn('Error saving rental cars to cache', e);
+      }
+      return updated;
+    });
+    addAuditEntry('ACTUALIZACION_FOTO_RENTA', 'RentalCar', carId, undefined, `Nueva URL: ${newImageUrl}`);
+    showNotification('Foto del vehículo de renta actualizada en catálogo.', 'success');
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -696,6 +750,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleRouteStopStatus,
         deleteRouteStop,
         resetRouteStopsToDefault,
+        updateVehicleImage,
+        updateRentalCarImage,
         activeTicket,
         setActiveTicket,
         notification,

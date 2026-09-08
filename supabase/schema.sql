@@ -21,9 +21,11 @@ CREATE TABLE IF NOT EXISTS public.vehicles (
     next_maintenance DATE,
     fuel_level INTEGER DEFAULT 95,
     mileage INTEGER DEFAULT 120000,
+    image_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE public.vehicles ADD COLUMN IF NOT EXISTS image_url TEXT;
 
 -- 3. TABLA: CONDUCTORES / OPERADORES
 CREATE TABLE IF NOT EXISTS public.drivers (
@@ -285,13 +287,22 @@ VALUES
   ('Cd. Guzmán', 'CAS / Consulado Americano', 240, 450, '2.2 hrs', 'consulado', 'Servicio directo a trámites consulares.')
 ON CONFLICT DO NOTHING;
 
--- Flota Inicial
-INSERT INTO public.vehicles (id, name, plate, capacity, type, status, assigned_driver_id, fuel_level, mileage)
+-- Flota Inicial Oficial (8 Unidades con Fotos en Supabase Storage)
+INSERT INTO public.vehicles (id, name, plate, capacity, type, status, assigned_driver_id, fuel_level, mileage, image_url)
 VALUES
-  ('veh-01', 'Mercedes Sprinter Ejecutiva 04', 'JAL-492-B', 19, 'sprinter', 'active', 'drv-01', 92, 142300),
-  ('veh-02', 'Mercedes Sprinter Ejecutiva 07', 'COL-118-A', 19, 'sprinter', 'active', 'drv-02', 88, 98400),
-  ('veh-03', 'Toyota Hiace Gran Confort 12', 'JAL-883-C', 14, 'hiace', 'active', 'drv-03', 75, 62100)
-ON CONFLICT (id) DO NOTHING;
+  ('veh-sp20-01', 'Unidad 01 (Mercedes-Benz Sprinter 20 Pax)', '48-RB-9X', 20, 'sprinter', 'active', 'drv-01', 95, 114200, 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/sprinterde21pasajeros.png'),
+  ('veh-hi14-01', 'Unidad 02 (Toyota Hiace Gran Confort 14 Pax)', '31-TA-5M', 14, 'hiace', 'active', 'drv-02', 90, 72400, 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png'),
+  ('veh-hi14-02', 'Unidad 03 (Toyota Hiace Gran Confort 14 Pax)', '31-TA-6M', 14, 'hiace', 'active', 'drv-03', 88, 68900, 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png'),
+  ('veh-hi14-03', 'Unidad 04 (Toyota Hiace Gran Confort 14 Pax)', '31-TA-7M', 14, 'hiace', 'reserved_rent', 'drv-04', 85, 84100, 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png'),
+  ('veh-hi14-04', 'Unidad 05 (Toyota Hiace Gran Confort 14 Pax)', '31-TA-8M', 14, 'hiace', 'active', 'drv-05', 92, 59300, 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png'),
+  ('veh-hi11-01', 'Unidad 06 (Toyota Hiace Turismo VIP 11 Pax)', '15-TC-2K', 11, 'hiace', 'active', 'drv-06', 94, 45200, 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede12pasajeros.png'),
+  ('veh-hi11-02', 'Unidad 07 (Toyota Hiace Turismo VIP 11 Pax)', '15-TC-3K', 11, 'hiace', 'maintenance', NULL, 70, 41800, 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede12pasajeros.png'),
+  ('veh-tr18-01', 'Unidad 08 (Ford Transit Tourneo 18 Pax)', '92-FT-4H', 18, 'transit', 'active', 'drv-07', 91, 63500, 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/fordtransitde18pasajeros.png')
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  plate = EXCLUDED.plate,
+  capacity = EXCLUDED.capacity,
+  image_url = EXCLUDED.image_url;
 
 -- Conductores Oficiales (7 Operadores)
 INSERT INTO public.drivers (id, name, phone, license_type, status, rating, emergency_contact)

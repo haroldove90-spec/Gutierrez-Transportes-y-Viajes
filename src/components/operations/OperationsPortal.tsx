@@ -101,15 +101,26 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {vehicles.map(v => (
-                <div key={v.id} className="bg-white rounded-3xl p-5 border-2 border-neutral-200 shadow-xs flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-black text-base md:text-lg text-neutral-900">{v.unitNumber}</span>
-                      <span className="text-xs text-neutral-500 font-mono font-bold">Placas {v.plate}</span>
+                <div key={v.id} className="bg-white rounded-3xl p-5 border-2 border-neutral-200 shadow-xs flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    {v.image && (
+                      <img 
+                        src={v.image} 
+                        alt={v.unitNumber} 
+                        referrerPolicy="no-referrer"
+                        className="w-14 h-14 rounded-2xl object-cover border border-neutral-200 shrink-0 bg-neutral-100" 
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-black text-base md:text-lg text-neutral-900">{v.unitNumber}</span>
+                        <span className="text-xs text-neutral-500 font-mono font-bold">Placas {v.plate}</span>
+                      </div>
+                      <p className="text-xs md:text-sm text-neutral-600 mt-0.5 truncate">{v.model}</p>
+                      <p className="text-[11px] text-neutral-500 font-mono mt-0.5">Odómetro: {v.odometer.toLocaleString()} km</p>
                     </div>
-                    <p className="text-xs md:text-sm text-neutral-600 mt-1">{v.model} • Odómetro: {v.odometer.toLocaleString()} km</p>
                   </div>
-                  <span className={`text-xs font-black px-3 py-1 rounded-full uppercase ${
+                  <span className={`text-xs font-black px-3 py-1 rounded-full uppercase shrink-0 ${
                     v.status === 'active' ? 'bg-emerald-100 text-emerald-800' :
                     v.status === 'in_route' ? 'bg-orange-100 text-orange-800' :
                     v.status === 'maintenance' ? 'bg-red-100 text-red-800' : 'bg-purple-100 text-purple-800'
