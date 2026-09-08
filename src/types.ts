@@ -10,12 +10,15 @@ export type UserRole =
 export interface RouteStop {
   id: string;
   name: string;
-  city: 'Manzanillo' | 'Tecomán' | 'Colima' | 'Guadalajara';
+  city: string; // Manzanillo, Tecomán, Colima, Guzmán, Guadalajara, Cas/Consulado, Zoológico u otros
   landmark: string;
   address: string;
+  mapsUrl?: string; // Enlace Google Maps (ej. https://maps.app.goo.gl/J5REeQ24NnDFKF84A)
   order: number;
   timeOffsetMins: number;
+  isActive: boolean; // Control para activar/desactivar punto de partida
   isSpecialPoint?: boolean; // CAS, Zoológico
+  notes?: string;
 }
 
 export interface RoutePricing {

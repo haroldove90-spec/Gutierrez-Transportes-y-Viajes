@@ -43,30 +43,162 @@ export const OFFICIAL_PRICING: RoutePricing[] = [
 ];
 
 export const ROUTE_STOPS: RouteStop[] = [
-  // Manzanillo Stops
-  { id: 'mzn-soriana', name: 'Soriana Híper Manzanillo', city: 'Manzanillo', landmark: 'Soriana Híper Manzanillo', address: 'Blvd. Miguel de la Madrid s/n', order: 1, timeOffsetMins: 0 },
-  { id: 'mzn-autozone', name: 'AutoZone Manzanillo', city: 'Manzanillo', landmark: 'AutoZone Manzanillo', address: 'Blvd. Miguel de la Madrid #1120', order: 2, timeOffsetMins: 15 },
+  // 1. Manzanillo
+  { 
+    id: 'loc-manzanillo-soriana', 
+    name: 'Manzanillo (Soriana Híper / Blvd. Miguel de la Madrid)', 
+    city: 'Manzanillo', 
+    landmark: 'Soriana Híper Manzanillo / Frente a AutoZone', 
+    address: 'Blvd. Miguel de la Madrid #1120, Valle de las Garzas, Manzanillo, Col.', 
+    mapsUrl: 'https://maps.app.goo.gl/J5REeQ24NnDFKF84A', 
+    order: 1, 
+    timeOffsetMins: 0, 
+    isActive: true,
+    isSpecialPoint: false,
+    notes: 'Punto de partida principal en Manzanillo. Presentarse 15 min antes de la salida.'
+  },
+  { 
+    id: 'mzn-autozone', 
+    name: 'Manzanillo (AutoZone Las Brisas)', 
+    city: 'Manzanillo', 
+    landmark: 'AutoZone Manzanillo Las Brisas', 
+    address: 'Blvd. Miguel de la Madrid #1450, Manzanillo, Col.', 
+    mapsUrl: 'https://maps.app.goo.gl/J5REeQ24NnDFKF84A', 
+    order: 2, 
+    timeOffsetMins: 15, 
+    isActive: true,
+    isSpecialPoint: false,
+    notes: 'Parada de abordaje sobre el Boulevard.'
+  },
   
-  // Tecomán Stops
-  { id: 'tec-kiosko', name: 'Kiosko Tecomán Centro', city: 'Tecomán', landmark: 'Jardín Principal / Farmacia Guadalajara', address: 'Av. López Mateos #45', order: 3, timeOffsetMins: 60 },
+  // 2. Tecomán
+  { 
+    id: 'loc-tecoman-kiosko', 
+    name: 'Tecomán (Kiosko Centro / Farmacia Guadalajara)', 
+    city: 'Tecomán', 
+    landmark: 'Jardín Principal Tecomán / Frente a Farmacia Guadalajara', 
+    address: 'Av. López Mateos #45, Col. Centro, Tecomán, Col.', 
+    mapsUrl: 'https://maps.app.goo.gl/u5K5hG1v3m1qgK5a8', 
+    order: 3, 
+    timeOffsetMins: 60, 
+    isActive: true,
+    isSpecialPoint: false,
+    notes: 'Abordaje en el Kiosko del Jardín Principal de Tecomán.'
+  },
   
-  // Colima Stops
-  { id: 'col-sanfernando', name: 'Oficina Central Colima', city: 'Colima', landmark: 'Av. San Fernando frente a Plaza Sevilla', address: 'Av. San Fernando #410', order: 4, timeOffsetMins: 120 },
-  { id: 'col-escala', name: 'Escala Técnica Colima (10-15 min)', city: 'Colima', landmark: 'Punto de escala, estiramiento y sanitarios', address: 'Autopista Colima-Guadalajara Km 5', order: 5, timeOffsetMins: 135 },
+  // 3. Colima
+  { 
+    id: 'loc-colima-sanfernando', 
+    name: 'Colima (Oficina Central San Fernando)', 
+    city: 'Colima', 
+    landmark: 'Av. San Fernando frente a Plaza Sevilla (Escala Técnica)', 
+    address: 'Av. San Fernando #410, Col. Lomas de Circunvalación, Colima, Col.', 
+    mapsUrl: 'https://maps.app.goo.gl/cT9q5H3rX1B2rW6z7', 
+    order: 4, 
+    timeOffsetMins: 120, 
+    isActive: true,
+    isSpecialPoint: false,
+    notes: 'Oficina Central y escala técnica obligatoria de 10 a 15 minutos (sanitarios y cafetería).'
+  },
+  { 
+    id: 'col-escala', 
+    name: 'Colima (Escala Técnica Autopista)', 
+    city: 'Colima', 
+    landmark: 'Punto de escala, estiramiento y sanitarios autopista', 
+    address: 'Autopista Colima-Guadalajara Km 5, Colima, Col.', 
+    mapsUrl: 'https://maps.app.goo.gl/cT9q5H3rX1B2rW6z7', 
+    order: 5, 
+    timeOffsetMins: 135, 
+    isActive: true,
+    isSpecialPoint: false,
+    notes: 'Parada intermedia técnica.'
+  },
 
-  // Cd. Guzmán
-  { id: 'cdguzman-parada', name: 'Cd. Guzmán (Acceso Autopista)', city: 'Colima', landmark: 'Glorieta Colón / Entrada Cd. Guzmán', address: 'Av. Cristóbal Colón', order: 6, timeOffsetMins: 190 },
+  // 4. Guzmán (Cd. Guzmán)
+  { 
+    id: 'loc-guzman-colombia', 
+    name: 'Guzmán (Glorieta Colón / Acceso Autopista)', 
+    city: 'Guzmán', 
+    landmark: 'Glorieta Colón / Entrada principal a Ciudad Guzmán', 
+    address: 'Av. Cristóbal Colón y Calzada Madero y Carranza, Cd. Guzmán, Jal.', 
+    mapsUrl: 'https://maps.app.goo.gl/8v3a4d5g6h7j8k9l0', 
+    order: 6, 
+    timeOffsetMins: 190, 
+    isActive: true,
+    isSpecialPoint: false,
+    notes: 'Conexión rápida sur de Jalisco sobre la glorieta.'
+  },
 
-  // Guadalajara Stops
-  { id: 'gdl-minerva', name: 'Minerva (Burger)', city: 'Guadalajara', landmark: 'Afuera del estacionamiento del Burger', address: 'Av. Vallarta y Av. López Mateos', order: 7, timeOffsetMins: 270 },
-  { id: 'gdl-plazasol', name: 'Plaza del Sol (Súper Colchones)', city: 'Guadalajara', landmark: 'Afuera de Súper Colchones', address: 'Av. Mariano Otero #1499', order: 8, timeOffsetMins: 285 },
-  { id: 'gdl-fuentes', name: 'Starbucks Las Fuentes', city: 'Guadalajara', landmark: 'Starbucks Las Fuentes', address: 'Av. López Mateos Sur #5560', order: 9, timeOffsetMins: 300 },
-  { id: 'gdl-enramada', name: 'Restaurante Enramada', city: 'Guadalajara', landmark: 'Restaurante Enramada', address: 'Av. López Mateos Sur acceso', order: 10, timeOffsetMins: 315 },
-  { id: 'gdl-cuatas', name: 'Gasolinera Cuatas', city: 'Guadalajara', landmark: 'Gasolinera Cuatas', address: 'Carretera a Morelia Km 20', order: 11, timeOffsetMins: 330 },
+  // 5. Guadalajara
+  { 
+    id: 'loc-gdl-minerva', 
+    name: 'Guadalajara (Minerva - Estacionamiento Burger)', 
+    city: 'Guadalajara', 
+    landmark: 'Afuera del estacionamiento de Burger King Minerva', 
+    address: 'Av. Vallarta #2840 esq. Av. López Mateos, Guadalajara, Jal.', 
+    mapsUrl: 'https://maps.app.goo.gl/k9L8m7n6b5v4c3x21', 
+    order: 7, 
+    timeOffsetMins: 270, 
+    isActive: true,
+    isSpecialPoint: false,
+    notes: 'Punto de abordaje principal en Guadalajara Zona Poniente.'
+  },
+  { 
+    id: 'gdl-plazasol', 
+    name: 'Guadalajara (Plaza del Sol - Súper Colchones)', 
+    city: 'Guadalajara', 
+    landmark: 'Afuera de Súper Colchones Plaza del Sol', 
+    address: 'Av. Mariano Otero #1499, Col. Residencial Victoria, Guadalajara, Jal.', 
+    mapsUrl: 'https://maps.app.goo.gl/4mK3j2h1g0f9e8d76', 
+    order: 8, 
+    timeOffsetMins: 285, 
+    isActive: true,
+    isSpecialPoint: false,
+    notes: 'Punto de abordaje Zona Plaza del Sol.'
+  },
+  { 
+    id: 'gdl-fuentes', 
+    name: 'Guadalajara (Starbucks Las Fuentes)', 
+    city: 'Guadalajara', 
+    landmark: 'Starbucks Las Fuentes sobre López Mateos Sur', 
+    address: 'Av. López Mateos Sur #5560, Las Fuentes, Zapopan, Jal.', 
+    mapsUrl: 'https://maps.app.goo.gl/4mK3j2h1g0f9e8d76', 
+    order: 9, 
+    timeOffsetMins: 300, 
+    isActive: true,
+    isSpecialPoint: false,
+    notes: 'Abordaje rumbo a Colima / Manzanillo.'
+  },
 
-  // Puntos Especiales
-  { id: 'gdl-cas', name: 'CAS / Consulado Americano', city: 'Guadalajara', landmark: 'Centro de Atención a Solicitantes (CAS)', address: 'Av. Unión #210, Col. Obrera, Guadalajara', order: 12, timeOffsetMins: 345, isSpecialPoint: true },
-  { id: 'gdl-zoo', name: 'Zoológico Guadalajara', city: 'Guadalajara', landmark: 'Taquilla Principal Huentitán', address: 'Paseo del Zoológico #600, Guadalajara', order: 13, timeOffsetMins: 360, isSpecialPoint: true },
+  // 6. Cas/Consulado
+  { 
+    id: 'loc-cas-consulado', 
+    name: 'Cas/Consulado (Centro de Solicitantes de Visa)', 
+    city: 'Cas/Consulado', 
+    landmark: 'Centro de Atención a Solicitantes (CAS) Guadalajara', 
+    address: 'Av. Unión #210, Col. Obrera / Americana, Guadalajara, Jal.', 
+    mapsUrl: 'https://maps.app.goo.gl/5nB4v3c2x1z9a8s70', 
+    order: 10, 
+    timeOffsetMins: 345, 
+    isActive: true,
+    isSpecialPoint: true,
+    notes: 'Servicio directo a citas consulares de visa americana.'
+  },
+
+  // 7. Zoológico
+  { 
+    id: 'loc-zoologico-gdl', 
+    name: 'Zoológico (Zoológico Guadalajara Huentitán)', 
+    city: 'Zoológico', 
+    landmark: 'Taquilla Principal y Explanada Paseo del Zoológico', 
+    address: 'Paseo del Zoológico #600, Huentitán el Alto, Guadalajara, Jal.', 
+    mapsUrl: 'https://maps.app.goo.gl/7xQ6w5e4r3t2y1u98', 
+    order: 11, 
+    timeOffsetMins: 360, 
+    isActive: true,
+    isSpecialPoint: true,
+    notes: 'Paquete especial recreativo y familiar.'
+  },
 ];
 
 export const INITIAL_VEHICLES: Vehicle[] = [

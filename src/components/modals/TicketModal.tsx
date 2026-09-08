@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { Booking } from '../../types';
-import { X, Share2, Download, CheckCircle2, MapPin, Calendar, Clock, Bus, User, ShieldCheck } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
+import { X, Share2, Download, CheckCircle2, MapPin, Calendar, Clock, Bus, User, ShieldCheck, Navigation, ExternalLink } from 'lucide-react';
 import { Logo } from '../common/Logo';
 
 interface TicketModalProps {
@@ -10,6 +11,7 @@ interface TicketModalProps {
 }
 
 export const TicketModal: React.FC<TicketModalProps> = ({ booking, onClose }) => {
+  const { routeStops } = useApp();
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
   useEffect(() => {
@@ -28,6 +30,13 @@ export const TicketModal: React.FC<TicketModalProps> = ({ booking, onClose }) =>
   }, [booking]);
 
   if (!booking) return null;
+
+  const matchingStop = routeStops.find(s => 
+    booking.boardingPoint.toLowerCase().includes(s.name.toLowerCase()) || 
+    booking.boardingPoint.toLowerCase().includes(s.landmark.toLowerCase()) ||
+    s.name.toLowerCase().includes(booking.boardingPoint.toLowerCase()) ||
+    booking.boardingPoint.toLowerCase().includes(s.city.toLowerCase())
+  );
 
   const handleShareWhatsApp = () => {
     const text = `*Transportes Gutiérrez - Boleto Digital*\n\n` +
@@ -113,6 +122,19 @@ export const TicketModal: React.FC<TicketModalProps> = ({ booking, onClose }) =>
                     <span>{booking.destination}</span>
                   </div>
                   <p className="text-xs text-neutral-600 mt-1">Abordaje: <span className="font-bold text-neutral-900">{booking.boardingPoint}</span></p>
+
+                  {matchingStop?.mapsUrl && (
+                    <a
+                      href={matchingStop.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2.5 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                    >
+                      <Navigation className="w-3.5 h-3.5 text-emerald-100" />
+                      <span>Abrir Punto de Partida en Google Maps</span>
+                      <ExternalLink className="w-3 h-3 text-emerald-200" />
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

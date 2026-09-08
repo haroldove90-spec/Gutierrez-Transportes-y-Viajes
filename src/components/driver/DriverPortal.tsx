@@ -11,9 +11,11 @@ import {
   Camera, 
   Plus, 
   Fuel, 
-  CheckCheck
+  CheckCheck,
+  Navigation,
+  ExternalLink,
+  Compass
 } from 'lucide-react';
-import { ROUTE_STOPS } from '../../data/mockData';
 import { TripExpense } from '../../types';
 
 interface DriverPortalProps {
@@ -29,6 +31,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
     vehicles, 
     drivers, 
     expenses, 
+    routeStops,
     addExpense, 
     updateTripStatus, 
     checkInPassenger, 
@@ -218,15 +221,28 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
               Paradas y Escalas Autorizadas
             </span>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {ROUTE_STOPS.slice(0, 6).map((stop, idx) => (
-                <div key={stop.id} className="flex items-start gap-3 p-3 bg-neutral-50 rounded-2xl border border-neutral-200">
-                  <div className="w-7 h-7 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-black text-xs shrink-0 mt-0.5">
-                    {idx + 1}
+              {routeStops.filter(s => s.isActive).slice(0, 6).map((stop, idx) => (
+                <div key={stop.id} className="flex items-start justify-between gap-3 p-3 bg-neutral-50 rounded-2xl border border-neutral-200">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="w-7 h-7 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-black text-xs shrink-0 mt-0.5">
+                      {idx + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-sm text-neutral-900 truncate">{stop.name}</p>
+                      <p className="text-xs text-neutral-500 font-bold truncate">{stop.landmark} • +{stop.timeOffsetMins} min</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="font-black text-sm text-neutral-900">{stop.name}</p>
-                    <p className="text-xs text-neutral-500 font-bold">{stop.landmark} • +{stop.timeOffsetMins} min</p>
-                  </div>
+                  {stop.mapsUrl && (
+                    <a 
+                      href={stop.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 bg-emerald-100 text-emerald-800 hover:bg-emerald-200 rounded-lg text-xs shrink-0 cursor-pointer"
+                      title="Abrir en Google Maps"
+                    >
+                      <Navigation className="w-3.5 h-3.5" />
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
@@ -347,30 +363,71 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
         </div>
       )}
 
-      {/* Tab 4: Bitácora de Tiempos */}
+      {/* Tab 4: Bitácora de Tiempos & Puntos de Partida */}
       {activeTab === 'timeline' && (
         <div className="max-w-5xl mx-auto w-full space-y-4">
           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-4">
-            <h3 className="text-base md:text-lg font-black uppercase tracking-wider text-neutral-900 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-orange-600" /> Registro Forense de Horarios
-            </h3>
-            <p className="text-sm text-neutral-600 font-medium">
-              Registros geolocalizados para control operativo y puntualidad de itinerarios.
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-base md:text-lg font-black uppercase tracking-wider text-neutral-900 flex items-center gap-2">
+                  <Compass className="w-5 h-5 text-orange-600" /> Puntos de Partida & Navegación GPS
+                </h3>
+                <p className="text-xs md:text-sm text-neutral-600 font-medium mt-0.5">
+                  Ubicaciones oficiales de abordaje con coordenadas y enlaces directos a Google Maps para navegación móvil.
+                </p>
+              </div>
+              <span className="text-xs bg-emerald-100 text-emerald-800 font-black px-3 py-1 rounded-full w-fit">
+                {routeStops.filter(s => s.isActive).length} Puntos Activos
+              </span>
+            </div>
 
             <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-2xl border border-neutral-200">
-                <span className="text-sm md:text-base font-black text-neutral-800">Salida Manzanillo</span>
-                <span className="text-sm md:text-base font-mono font-black text-emerald-700">06:32 AM (A tiempo)</span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-2xl border border-neutral-200">
-                <span className="text-sm md:text-base font-black text-neutral-800">Escala Tecomán Kiosko</span>
-                <span className="text-sm md:text-base font-mono font-black text-emerald-700">07:28 AM</span>
-              </div>
-              <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-2xl border border-neutral-200">
-                <span className="text-sm md:text-base font-black text-neutral-800">Escala Colima San Fernando</span>
-                <span className="text-sm md:text-base font-mono font-black text-orange-600">08:35 AM (En curso)</span>
-              </div>
+              {routeStops.filter(s => s.isActive).map((stop, idx) => (
+                <div 
+                  key={stop.id} 
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-neutral-50 rounded-2xl border border-neutral-200 gap-3 hover:border-orange-400 transition-colors"
+                >
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-orange-600 text-white font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                        {idx + 1}
+                      </span>
+                      <span className="text-xs font-black uppercase bg-neutral-200 text-neutral-800 px-2 py-0.5 rounded-md">
+                        {stop.city}
+                      </span>
+                      <span className="text-xs font-bold text-neutral-500 font-mono">
+                        +{stop.timeOffsetMins} min
+                      </span>
+                    </div>
+                    <h4 className="text-sm md:text-base font-black text-neutral-900">
+                      {stop.name}
+                    </h4>
+                    <p className="text-xs text-neutral-600">
+                      <span className="font-bold text-neutral-700">Ref:</span> {stop.landmark}
+                    </p>
+                    <p className="text-xs text-neutral-500 font-mono">
+                      {stop.address}
+                    </p>
+                  </div>
+
+                  {stop.mapsUrl ? (
+                    <a
+                      href={stop.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 shadow-sm transition-all shrink-0 cursor-pointer"
+                    >
+                      <Navigation className="w-4 h-4" />
+                      <span>Abrir en Maps</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  ) : (
+                    <span className="text-xs text-neutral-400 italic px-3 py-1.5 bg-neutral-200/60 rounded-xl shrink-0">
+                      Sin GPS Maps
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>

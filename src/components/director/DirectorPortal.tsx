@@ -5,8 +5,10 @@ import {
   Bus, 
   CheckCircle2, 
   Shield, 
-  CheckCheck
+  CheckCheck,
+  MapPin
 } from 'lucide-react';
+import { RouteLocationsManager } from '../common/RouteLocationsManager';
 
 interface DirectorPortalProps {
   activeTab: string;
@@ -260,6 +262,13 @@ export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab }) => 
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Tab 5: Configuración de Puntos de Partida y Ubicaciones GPS */}
+      {activeTab === 'routes_config' && (
+        <div className="max-w-5xl mx-auto w-full">
+          <RouteLocationsManager />
         </div>
       )}
     </div>

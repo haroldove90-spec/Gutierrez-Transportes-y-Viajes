@@ -87,6 +87,14 @@ interface AppContextType {
   requestInvoice: (invoiceData: Omit<InvoiceCFDI, 'id' | 'status'>) => InvoiceCFDI;
   approveException: (exceptionId: string) => void;
   
+  // Route Stops & Departure Points (Admin configurable)
+  routeStops: RouteStop[];
+  addRouteStop: (stopData: Omit<RouteStop, 'id'>) => RouteStop;
+  updateRouteStop: (id: string, updated: Partial<RouteStop>) => boolean;
+  toggleRouteStopStatus: (id: string) => boolean;
+  deleteRouteStop: (id: string) => boolean;
+  resetRouteStopsToDefault: () => void;
+
   // Active Passenger Quick View (for instant ticket lookup)
   activeTicket: Booking | null;
   setActiveTicket: (booking: Booking | null) => void;
@@ -120,6 +128,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
   const [exceptions, setExceptions] = useState<ExceptionRequest[]>(INITIAL_EXCEPTIONS);
   
+  // Route Stops & Departure Points (Admin manual configuration)
+  const [routeStops, setRouteStops] = useState<RouteStop[]>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_route_stops_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error('Error loading saved route stops', e);
+    }
+    return ROUTE_STOPS;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_route_stops_v1', JSON.stringify(routeStops));
+    } catch (e) {
+      console.error('Error persisting route stops', e);
+    }
+  }, [routeStops]);
+
   const [selectedTripId, setSelectedTripId] = useState<string | null>('trip-101');
   const [tempLockedSeats, setTempLockedSeats] = useState<{ tripId: string; seatNumbers: number[]; expiresAt: number } | null>(null);
   const [activeTicket, setActiveTicket] = useState<Booking | null>(INITIAL_BOOKINGS[0]);
@@ -542,6 +572,71 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Excepción autorizada por Dirección.', 'success');
   };
 
+  // Route Stops CRUD Handlers
+  const addRouteStop = (stopData: Omit<RouteStop, 'id'>): RouteStop => {
+    const newStop: RouteStop = {
+      ...stopData,
+      id: `loc-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      order: stopData.order || routeStops.length + 1,
+      isActive: stopData.isActive !== undefined ? stopData.isActive : true
+    };
+    setRouteStops(prev => [...prev, newStop]);
+    addAuditEntry('CREACION_PUNTO_PARTIDA', 'RouteStop', newStop.id, 'n/a', `Ubicación: ${newStop.name} (${newStop.city})`);
+    showNotification(`Nueva ubicación "${newStop.name}" guardada con éxito.`, 'success');
+    return newStop;
+  };
+
+  const updateRouteStop = (id: string, updated: Partial<RouteStop>): boolean => {
+    let found = false;
+    setRouteStops(prev => prev.map(stop => {
+      if (stop.id === id) {
+        found = true;
+        return { ...stop, ...updated };
+      }
+      return stop;
+    }));
+    if (found) {
+      addAuditEntry('ACTUALIZACION_PUNTO_PARTIDA', 'RouteStop', id, 'modificado', JSON.stringify(updated));
+      showNotification('Punto de partida actualizado correctamente.', 'success');
+    }
+    return found;
+  };
+
+  const toggleRouteStopStatus = (id: string): boolean => {
+    let newStatus = false;
+    let stopName = '';
+    setRouteStops(prev => prev.map(stop => {
+      if (stop.id === id) {
+        newStatus = !stop.isActive;
+        stopName = stop.name;
+        return { ...stop, isActive: newStatus };
+      }
+      return stop;
+    }));
+    addAuditEntry('ESTADO_PUNTO_PARTIDA', 'RouteStop', id, newStatus ? 'activo' : 'inactivo', `Punto ${stopName}`);
+    showNotification(
+      newStatus ? `"${stopName}" ACTIVADO como punto de partida` : `"${stopName}" DESACTIVADO de rutas activas`,
+      newStatus ? 'success' : 'info'
+    );
+    return true;
+  };
+
+  const deleteRouteStop = (id: string): boolean => {
+    const target = routeStops.find(s => s.id === id);
+    setRouteStops(prev => prev.filter(stop => stop.id !== id));
+    addAuditEntry('ELIMINACION_PUNTO_PARTIDA', 'RouteStop', id, 'eliminado', target ? target.name : id);
+    showNotification('Ubicación eliminada del catálogo.', 'info');
+    return true;
+  };
+
+  const resetRouteStopsToDefault = () => {
+    setRouteStops(ROUTE_STOPS);
+    try {
+      localStorage.removeItem('gutierrez_route_stops_v1');
+    } catch (e) {}
+    showNotification('Catálogo restablecido a las ubicaciones oficiales base.', 'info');
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -578,6 +673,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateQuoteStatus,
         requestInvoice,
         approveException,
+        routeStops,
+        addRouteStop,
+        updateRouteStop,
+        toggleRouteStopStatus,
+        deleteRouteStop,
+        resetRouteStopsToDefault,
         activeTicket,
         setActiveTicket,
         notification,

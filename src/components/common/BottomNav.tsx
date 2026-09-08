@@ -56,7 +56,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
           { id: 'dispatch', label: 'Despacho', icon: <Bus className="w-5 h-5 text-white" /> },
           { id: 'maintenance', label: 'Taller & Km', icon: <Wrench className="w-5 h-5 text-white" /> },
           { id: 'manifests', label: 'Manifiestos', icon: <FileSpreadsheet className="w-5 h-5 text-white" /> },
-          { id: 'routes_config', label: 'Rutas', icon: <Map className="w-5 h-5 text-white" /> },
+          { id: 'routes_config', label: 'Puntos Maps', icon: <Map className="w-5 h-5 text-white" /> },
         ];
       case 'finanzas':
         return [
@@ -69,7 +69,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
         return [
           { id: 'executive', label: 'KPIs Hoy', icon: <TrendingUp className="w-5 h-5 text-white" /> },
           { id: 'profit_deep', label: 'Rentabilidad', icon: <Layers className="w-5 h-5 text-white" /> },
-          { id: 'forensic', label: 'Auditoría', icon: <History className="w-5 h-5 text-white" /> },
+          { id: 'routes_config', label: 'Puntos Maps', icon: <Map className="w-5 h-5 text-white" /> },
           { id: 'exceptions', label: 'Aprobaciones', icon: <ShieldCheck className="w-5 h-5 text-white" /> },
         ];
       default:

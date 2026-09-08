@@ -77,7 +77,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
             { id: 'dispatch', label: 'Despacho & Asignación', icon: <Bus className="w-5 h-5" /> },
             { id: 'maintenance', label: 'Taller & Kilometraje', icon: <Wrench className="w-5 h-5" /> },
             { id: 'manifests', label: 'Descarga Manifiestos', icon: <FileSpreadsheet className="w-5 h-5" /> },
-            { id: 'routes_config', label: 'Configuración Rutas', icon: <Map className="w-5 h-5" /> },
+            { id: 'routes_config', label: 'Puntos de Partida (Maps)', icon: <Map className="w-5 h-5" /> },
           ]
         };
       case 'finanzas':
@@ -98,6 +98,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
           items: [
             { id: 'executive', label: 'KPIs en Tiempo Real', icon: <TrendingUp className="w-5 h-5" /> },
             { id: 'profit_deep', label: 'Rentabilidad Detallada', icon: <Layers className="w-5 h-5" /> },
+            { id: 'routes_config', label: 'Puntos de Partida (Maps)', icon: <Map className="w-5 h-5" /> },
             { id: 'forensic', label: 'Auditoría Forense', icon: <History className="w-5 h-5" /> },
             { id: 'exceptions', label: 'Aprobación de Cortesías', icon: <ShieldCheck className="w-5 h-5" /> },
           ]

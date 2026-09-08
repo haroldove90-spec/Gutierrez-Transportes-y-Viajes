@@ -10,7 +10,7 @@ import {
   Gauge, 
   UserCheck
 } from 'lucide-react';
-import { ROUTE_STOPS } from '../../data/mockData';
+import { RouteLocationsManager } from '../common/RouteLocationsManager';
 
 interface OperationsPortalProps {
   activeTab: string;
@@ -243,31 +243,10 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
         </div>
       )}
 
-      {/* Tab 4: Configuración de Rutas */}
+      {/* Tab 4: Configuración de Rutas y Puntos de Partida */}
       {activeTab === 'routes_config' && (
-        <div className="max-w-4xl mx-auto w-full space-y-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-3">
-            <h3 className="text-base md:text-lg font-black uppercase tracking-wider text-orange-600 flex items-center gap-2">
-              <Map className="w-5 h-5" /> Configuración de Puntos y Paradas de Ruta
-            </h3>
-            <p className="text-sm text-neutral-600">
-              Puntos de parada y transbordo activos en el corredor Pacífico - Occidente.
-            </p>
-
-            <div className="space-y-2 pt-2">
-              {ROUTE_STOPS.map((stop, idx) => (
-                <div key={stop.id} className="p-4 bg-neutral-50 rounded-2xl border-2 border-neutral-200 flex items-center justify-between text-xs md:text-sm">
-                  <div>
-                    <span className="font-black text-neutral-900">{idx + 1}. {stop.name}</span>
-                    <p className="text-xs text-neutral-500 font-bold">{stop.city} &bull; Referencia: {stop.landmark}</p>
-                  </div>
-                  <span className="text-xs font-black text-neutral-700 bg-neutral-200 px-3 py-1 rounded-xl">
-                    +{stop.timeOffsetMins} min
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="max-w-5xl mx-auto w-full">
+          <RouteLocationsManager />
         </div>
       )}
     </div>

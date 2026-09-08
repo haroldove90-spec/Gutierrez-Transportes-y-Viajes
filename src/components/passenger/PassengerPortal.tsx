@@ -18,9 +18,11 @@ import {
   FileText,
   Phone,
   Sparkles,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Navigation,
+  ExternalLink
 } from 'lucide-react';
-import { OFFICIAL_PRICING, ROUTE_STOPS, OFFICIAL_PHONE, OFFICIAL_WHATSAPP, OFFICIAL_EXPERIENCE_YEARS } from '../../data/mockData';
+import { OFFICIAL_PRICING, OFFICIAL_PHONE, OFFICIAL_WHATSAPP, OFFICIAL_EXPERIENCE_YEARS } from '../../data/mockData';
 import { TripSchedule, Seat, Booking, RoutePricing } from '../../types';
 import { ClientReportModal } from '../modals/ClientReportModal';
 import { RentalCatalog } from '../common/RentalCatalog';
@@ -35,6 +37,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
   const { 
     trips, 
     bookings, 
+    routeStops,
     selectedTripId, 
     setSelectedTripId, 
     tempLockedSeats, 
@@ -570,7 +573,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                   onChange={e => setSelectedBoardingStop(e.target.value)}
                   className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl text-xs md:text-sm font-bold text-neutral-900 focus:outline-none focus:border-orange-500"
                 >
-                  {ROUTE_STOPS.map(stop => (
+                  {routeStops.filter(s => s.isActive).map(stop => (
                     <option key={stop.id} value={`${stop.city}: ${stop.name} (${stop.landmark})`}>
                       {stop.city}: {stop.name} — {stop.landmark}
                     </option>
@@ -587,7 +590,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                   onChange={e => setSelectedDropoffStop(e.target.value)}
                   className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl text-xs md:text-sm font-bold text-neutral-900 focus:outline-none focus:border-orange-500"
                 >
-                  {ROUTE_STOPS.map(stop => (
+                  {routeStops.filter(s => s.isActive).map(stop => (
                     <option key={stop.id} value={`${stop.city}: ${stop.name} (${stop.landmark})`}>
                       {stop.city}: {stop.name} — {stop.landmark}
                     </option>
@@ -811,6 +814,68 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Ubicaciones de Partida y Enlaces Google Maps */}
+          <div className="bg-white rounded-3xl p-6 border-2 border-neutral-200 shadow-sm space-y-4 mt-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-base md:text-lg font-black uppercase tracking-wider text-neutral-900 flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-orange-600" /> Puntos Oficiales de Abordaje & GPS
+                </h3>
+                <p className="text-xs md:text-sm text-neutral-600 font-medium mt-0.5">
+                  Ubicaciones con enlace directo a Google Maps para que puedas llegar sin contratiempos.
+                </p>
+              </div>
+              <span className="text-xs font-black bg-orange-100 text-orange-800 px-3 py-1 rounded-full w-fit">
+                {routeStops.filter(s => s.isActive).length} Puntos Habilitados
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+              {routeStops.filter(s => s.isActive).map((stop) => (
+                <div key={stop.id} className="p-4 bg-neutral-50 rounded-2xl border-2 border-neutral-200 space-y-2 flex flex-col justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black bg-neutral-900 text-white px-2 py-0.5 rounded-md uppercase">
+                        {stop.city}
+                      </span>
+                      {stop.isSpecialPoint && (
+                        <span className="text-[10px] font-black bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md">
+                          ⭐ Especial
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="font-black text-sm text-neutral-900 leading-snug pt-1">
+                      {stop.name}
+                    </h4>
+                    <p className="text-xs text-neutral-600 font-medium">
+                      <span className="font-bold text-neutral-800">Referencia:</span> {stop.landmark}
+                    </p>
+                    <p className="text-xs text-neutral-500 font-mono">
+                      {stop.address}
+                    </p>
+                  </div>
+
+                  {stop.mapsUrl ? (
+                    <a
+                      href={stop.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    >
+                      <Navigation className="w-3.5 h-3.5" />
+                      <span>Abrir en Google Maps</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  ) : (
+                    <span className="text-[11px] text-neutral-400 italic text-center py-1">
+                      Ubicación física en terminal
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
