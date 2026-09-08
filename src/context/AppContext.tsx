@@ -32,6 +32,8 @@ import {
   checkSupabaseConnection,
   fetchTripsFromSupabase,
   fetchBookingsFromSupabase,
+  fetchRouteStopsFromSupabase,
+  upsertRouteStopToSupabase,
   saveBookingToSupabase,
   updateBookingCheckInInSupabase,
   saveRentalQuoteToSupabase
@@ -169,15 +171,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSupabaseMessage(res.error);
       } else if (res.connected) {
         setSupabaseMessage('Conectado a Supabase PostgreSQL');
-        const [cloudTrips, cloudBookings] = await Promise.all([
+        const [cloudTrips, cloudBookings, cloudStops] = await Promise.all([
           fetchTripsFromSupabase(),
-          fetchBookingsFromSupabase()
+          fetchBookingsFromSupabase(),
+          fetchRouteStopsFromSupabase()
         ]);
         if (cloudTrips && cloudTrips.length > 0) {
           setTrips(cloudTrips);
         }
         if (cloudBookings && cloudBookings.length > 0) {
           setBookings(cloudBookings);
+        }
+        if (cloudStops && cloudStops.length > 0) {
+          setRouteStops(cloudStops);
         }
       }
     } catch {
@@ -581,6 +587,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isActive: stopData.isActive !== undefined ? stopData.isActive : true
     };
     setRouteStops(prev => [...prev, newStop]);
+    upsertRouteStopToSupabase(newStop).catch(() => {});
     addAuditEntry('CREACION_PUNTO_PARTIDA', 'RouteStop', newStop.id, 'n/a', `Ubicación: ${newStop.name} (${newStop.city})`);
     showNotification(`Nueva ubicación "${newStop.name}" guardada con éxito.`, 'success');
     return newStop;
@@ -588,14 +595,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateRouteStop = (id: string, updated: Partial<RouteStop>): boolean => {
     let found = false;
+    let targetStop: RouteStop | null = null;
     setRouteStops(prev => prev.map(stop => {
       if (stop.id === id) {
         found = true;
-        return { ...stop, ...updated };
+        const merged = { ...stop, ...updated };
+        targetStop = merged;
+        return merged;
       }
       return stop;
     }));
-    if (found) {
+    if (found && targetStop) {
+      upsertRouteStopToSupabase(targetStop).catch(() => {});
       addAuditEntry('ACTUALIZACION_PUNTO_PARTIDA', 'RouteStop', id, 'modificado', JSON.stringify(updated));
       showNotification('Punto de partida actualizado correctamente.', 'success');
     }
@@ -605,14 +616,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const toggleRouteStopStatus = (id: string): boolean => {
     let newStatus = false;
     let stopName = '';
+    let targetStop: RouteStop | null = null;
     setRouteStops(prev => prev.map(stop => {
       if (stop.id === id) {
         newStatus = !stop.isActive;
         stopName = stop.name;
-        return { ...stop, isActive: newStatus };
+        const merged = { ...stop, isActive: newStatus };
+        targetStop = merged;
+        return merged;
       }
       return stop;
     }));
+    if (targetStop) {
+      upsertRouteStopToSupabase(targetStop).catch(() => {});
+    }
     addAuditEntry('ESTADO_PUNTO_PARTIDA', 'RouteStop', id, newStatus ? 'activo' : 'inactivo', `Punto ${stopName}`);
     showNotification(
       newStatus ? `"${stopName}" ACTIVADO como punto de partida` : `"${stopName}" DESACTIVADO de rutas activas`,

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Booking, TripSchedule, RentalQuote } from '../types';
+import { Booking, TripSchedule, RentalQuote, RouteStop } from '../types';
 import { ROUTE_STOPS } from '../data/mockData';
 
 // Fallback configuration provided by user
@@ -238,6 +238,60 @@ export async function saveRentalQuoteToSupabase(quote: RentalQuote): Promise<boo
       balance_remaining: quote.balanceRemaining,
       status: quote.status,
       notes: quote.notes || null
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch route stops from Supabase if table exists
+ */
+export async function fetchRouteStopsFromSupabase(): Promise<RouteStop[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('route_stops')
+      .select('*')
+      .order('stop_order', { ascending: true });
+
+    if (error || !data || data.length === 0) return null;
+
+    return data.map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      city: s.city,
+      landmark: s.landmark,
+      address: s.address,
+      mapsUrl: s.maps_url,
+      order: s.stop_order,
+      timeOffsetMins: s.time_offset_mins,
+      isActive: s.is_active ?? true,
+      isSpecialPoint: s.is_special_point ?? false,
+      notes: s.notes
+    }));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Upsert route stop to Supabase
+ */
+export async function upsertRouteStopToSupabase(stop: RouteStop): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('route_stops').upsert({
+      id: stop.id,
+      name: stop.name,
+      city: stop.city,
+      landmark: stop.landmark,
+      address: stop.address,
+      maps_url: stop.mapsUrl,
+      stop_order: stop.order,
+      time_offset_mins: stop.timeOffsetMins,
+      is_active: stop.isActive,
+      is_special_point: stop.isSpecialPoint ?? false,
+      notes: stop.notes || null
     });
     return !error;
   } catch {

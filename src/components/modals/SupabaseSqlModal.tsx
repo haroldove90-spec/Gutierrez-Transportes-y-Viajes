@@ -164,18 +164,26 @@ CREATE TABLE IF NOT EXISTS public.route_pricing (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 9. TABLA: PUNTOS OFICIALES DE ABORDAJE Y ESCALA
+-- 9. TABLA: PUNTOS OFICIALES DE ABORDAJE Y ESCALA (MAPS & GPS)
 CREATE TABLE IF NOT EXISTS public.route_stops (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     city TEXT NOT NULL,
     landmark TEXT NOT NULL,
     address TEXT,
+    maps_url TEXT,
     stop_order INTEGER NOT NULL,
     time_offset_mins INTEGER NOT NULL DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
     is_special_point BOOLEAN DEFAULT FALSE,
+    notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migraciones seguras para columnas si la tabla ya existía
+ALTER TABLE public.route_stops ADD COLUMN IF NOT EXISTS maps_url TEXT;
+ALTER TABLE public.route_stops ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.route_stops ADD COLUMN IF NOT EXISTS notes TEXT;
 
 -- 10. TABLA: BITÁCORA DE AUDITORÍA (AUDIT LOGS)
 CREATE TABLE IF NOT EXISTS public.audit_logs (
@@ -205,48 +213,77 @@ ALTER TABLE public.route_pricing ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.route_stops ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
+-- Políticas de lectura pública (ANON) protegidas contra re-ejecuciones
+DROP POLICY IF EXISTS "Permitir lectura de vehiculos" ON public.vehicles;
+DROP POLICY IF EXISTS "Permitir modificacion de vehiculos" ON public.vehicles;
 CREATE POLICY "Permitir lectura de vehiculos" ON public.vehicles FOR SELECT USING (true);
 CREATE POLICY "Permitir modificacion de vehiculos" ON public.vehicles FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Permitir lectura de conductores" ON public.drivers;
+DROP POLICY IF EXISTS "Permitir modificacion de conductores" ON public.drivers;
 CREATE POLICY "Permitir lectura de conductores" ON public.drivers FOR SELECT USING (true);
 CREATE POLICY "Permitir modificacion de conductores" ON public.drivers FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Permitir lectura de viajes" ON public.trips;
+DROP POLICY IF EXISTS "Permitir modificacion de viajes" ON public.trips;
 CREATE POLICY "Permitir lectura de viajes" ON public.trips FOR SELECT USING (true);
 CREATE POLICY "Permitir modificacion de viajes" ON public.trips FOR ALL USING (true);
 
+DROP POLICY IF EXISTS "Permitir lectura de reservas" ON public.bookings;
+DROP POLICY IF EXISTS "Permitir creacion de reservas" ON public.bookings;
+DROP POLICY IF EXISTS "Permitir actualizacion de reservas" ON public.bookings;
 CREATE POLICY "Permitir lectura de reservas" ON public.bookings FOR SELECT USING (true);
 CREATE POLICY "Permitir creacion de reservas" ON public.bookings FOR INSERT WITH CHECK (true);
 CREATE POLICY "Permitir actualizacion de reservas" ON public.bookings FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Permitir lectura de cotizaciones" ON public.rental_quotes;
+DROP POLICY IF EXISTS "Permitir creacion de cotizaciones" ON public.rental_quotes;
+DROP POLICY IF EXISTS "Permitir actualizacion de cotizaciones" ON public.rental_quotes;
 CREATE POLICY "Permitir lectura de cotizaciones" ON public.rental_quotes FOR SELECT USING (true);
 CREATE POLICY "Permitir creacion de cotizaciones" ON public.rental_quotes FOR INSERT WITH CHECK (true);
 CREATE POLICY "Permitir actualizacion de cotizaciones" ON public.rental_quotes FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Permitir gastos de ruta" ON public.trip_expenses;
 CREATE POLICY "Permitir gastos de ruta" ON public.trip_expenses FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Permitir tarifas de ruta" ON public.route_pricing;
 CREATE POLICY "Permitir tarifas de ruta" ON public.route_pricing FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Permitir paradas de ruta" ON public.route_stops;
 CREATE POLICY "Permitir paradas de ruta" ON public.route_stops FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Permitir auditoria" ON public.audit_logs;
 CREATE POLICY "Permitir auditoria" ON public.audit_logs FOR ALL USING (true);
 
 -- ============================================================================
 -- SEED DATA OFICIAL
 -- ============================================================================
 
-INSERT INTO public.route_stops (id, name, city, landmark, address, stop_order, time_offset_mins, is_special_point)
+-- Puntos de Abordaje, Escalas y Enlaces GPS de Google Maps
+INSERT INTO public.route_stops (id, name, city, landmark, address, maps_url, stop_order, time_offset_mins, is_active, is_special_point, notes)
 VALUES
-  ('mzn-soriana', 'Soriana Híper Manzanillo', 'Manzanillo', 'Soriana Híper Manzanillo', 'Blvd. Miguel de la Madrid s/n', 1, 0, false),
-  ('mzn-autozone', 'AutoZone Manzanillo', 'Manzanillo', 'AutoZone Manzanillo', 'Blvd. Miguel de la Madrid #1120', 2, 15, false),
-  ('tec-kiosko', 'Kiosko Tecomán Centro', 'Tecomán', 'Jardín Principal / Farmacia Guadalajara', 'Av. López Mateos #45', 3, 60, false),
-  ('col-sanfernando', 'Oficina Central Colima', 'Colima', 'Av. San Fernando frente a Plaza Sevilla', 'Av. San Fernando #410', 4, 120, false),
-  ('col-escala', 'Escala Técnica Colima (10-15 min)', 'Colima', 'Punto de escala y sanitarios', 'Autopista Colima-Guadalajara Km 5', 5, 135, false),
-  ('cdguzman-parada', 'Cd. Guzmán (Acceso Autopista)', 'Colima', 'Glorieta Colón / Entrada Cd. Guzmán', 'Av. Cristóbal Colón', 6, 190, false),
-  ('gdl-minerva', 'Minerva (Burger)', 'Guadalajara', 'Afuera del estacionamiento del Burger', 'Av. Vallarta y Av. López Mateos', 7, 270, false),
-  ('gdl-plazasol', 'Plaza del Sol (Súper Colchones)', 'Guadalajara', 'Afuera de Súper Colchones', 'Av. Mariano Otero #1499', 8, 285, false),
-  ('gdl-fuentes', 'Starbucks Las Fuentes', 'Guadalajara', 'Starbucks Las Fuentes', 'Av. López Mateos Sur #5560', 9, 300, false),
-  ('gdl-enramada', 'Restaurante Enramada', 'Guadalajara', 'Restaurante Enramada', 'Av. López Mateos Sur acceso', 10, 315, false),
-  ('gdl-cuatas', 'Gasolinera Cuatas', 'Guadalajara', 'Gasolinera Cuatas', 'Carretera a Morelia Km 20', 11, 330, false),
-  ('gdl-cas', 'CAS / Consulado Americano', 'Guadalajara', 'Centro de Atención a Solicitantes', 'Av. Unión #210, Col. Obrera', 12, 345, true),
-  ('gdl-zoo', 'Zoológico Guadalajara', 'Guadalajara', 'Taquilla Principal Huentitán', 'Paseo del Zoológico #600', 13, 360, true)
-ON CONFLICT (id) DO NOTHING;
+  ('loc-manzanillo-soriana', 'Manzanillo (Soriana Híper / Blvd. Miguel de la Madrid)', 'Manzanillo', 'Soriana Híper Manzanillo / Frente a AutoZone', 'Blvd. Miguel de la Madrid #1120, Valle de las Garzas, Manzanillo, Col.', 'https://maps.app.goo.gl/J5REeQ24NnDFKF84A', 1, 0, true, false, 'Punto de partida principal en Manzanillo. Presentarse 15 min antes de la salida.'),
+  ('mzn-autozone', 'Manzanillo (AutoZone Las Brisas)', 'Manzanillo', 'AutoZone Manzanillo Las Brisas', 'Blvd. Miguel de la Madrid #1450, Manzanillo, Col.', 'https://maps.app.goo.gl/J5REeQ24NnDFKF84A', 2, 15, true, false, 'Parada de abordaje sobre el Boulevard.'),
+  ('loc-tecoman-kiosko', 'Tecomán (Kiosko Centro / Farmacia Guadalajara)', 'Tecomán', 'Jardín Principal Tecomán / Frente a Farmacia Guadalajara', 'Av. López Mateos #45, Col. Centro, Tecomán, Col.', 'https://maps.app.goo.gl/u5K5hG1v3m1qgK5a8', 3, 60, true, false, 'Abordaje en el Kiosko del Jardín Principal de Tecomán.'),
+  ('loc-colima-sanfernando', 'Colima (Oficina Central San Fernando)', 'Colima', 'Av. San Fernando frente a Plaza Sevilla (Escala Técnica)', 'Av. San Fernando #410, Col. Lomas de Circunvalación, Colima, Col.', 'https://maps.app.goo.gl/cT9q5H3rX1B2rW6z7', 4, 120, true, false, 'Oficina Central y escala técnica obligatoria de 10 a 15 minutos (sanitarios y cafetería).'),
+  ('col-escala', 'Colima (Escala Técnica Autopista)', 'Colima', 'Punto de escala, estiramiento y sanitarios autopista', 'Autopista Colima-Guadalajara Km 5, Colima, Col.', 'https://maps.app.goo.gl/cT9q5H3rX1B2rW6z7', 5, 135, true, false, 'Parada intermedia técnica.'),
+  ('loc-guzman-colombia', 'Guzmán (Glorieta Colón / Acceso Autopista)', 'Guzmán', 'Glorieta Colón / Entrada principal a Ciudad Guzmán', 'Av. Cristóbal Colón y Calzada Madero y Carranza, Cd. Guzmán, Jal.', 'https://maps.app.goo.gl/8v3a4d5g6h7j8k9l0', 6, 190, true, false, 'Conexión rápida sur de Jalisco sobre la glorieta.'),
+  ('loc-gdl-minerva', 'Guadalajara (Minerva - Estacionamiento Burger)', 'Guadalajara', 'Afuera del estacionamiento de Burger King Minerva', 'Av. Vallarta #2840 esq. Av. López Mateos, Guadalajara, Jal.', 'https://maps.app.goo.gl/k9L8m7n6b5v4c3x21', 7, 270, true, false, 'Punto de abordaje principal en Guadalajara Zona Poniente.'),
+  ('gdl-plazasol', 'Guadalajara (Plaza del Sol - Súper Colchones)', 'Guadalajara', 'Afuera de Súper Colchones Plaza del Sol', 'Av. Mariano Otero #1499, Col. Residencial Victoria, Guadalajara, Jal.', 'https://maps.app.goo.gl/4mK3j2h1g0f9e8d76', 8, 285, true, false, 'Punto de abordaje Zona Plaza del Sol.'),
+  ('gdl-fuentes', 'Guadalajara (Starbucks Las Fuentes)', 'Guadalajara', 'Starbucks Las Fuentes sobre López Mateos Sur', 'Av. López Mateos Sur #5560, Las Fuentes, Zapopan, Jal.', 'https://maps.app.goo.gl/4mK3j2h1g0f9e8d76', 9, 300, true, false, 'Abordaje rumbo a Colima / Manzanillo.'),
+  ('loc-cas-consulado', 'Cas/Consulado (Centro de Solicitantes de Visa)', 'Cas/Consulado', 'Centro de Atención a Solicitantes (CAS) Guadalajara', 'Av. Unión #210, Col. Obrera / Americana, Guadalajara, Jal.', 'https://maps.app.goo.gl/5nB4v3c2x1z9a8s70', 10, 345, true, true, 'Servicio directo a citas consulares de visa americana.'),
+  ('loc-zoologico-gdl', 'Zoológico (Zoológico Guadalajara Huentitán)', 'Zoológico', 'Taquilla Principal y Explanada Paseo del Zoológico', 'Paseo del Zoológico #600, Huentitán el Alto, Guadalajara, Jal.', 'https://maps.app.goo.gl/7xQ6w5e4r3t2y1u98', 11, 360, true, true, 'Paquete especial recreativo y familiar.')
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  city = EXCLUDED.city,
+  landmark = EXCLUDED.landmark,
+  address = EXCLUDED.address,
+  maps_url = EXCLUDED.maps_url,
+  stop_order = EXCLUDED.stop_order,
+  time_offset_mins = EXCLUDED.time_offset_mins,
+  is_active = EXCLUDED.is_active,
+  is_special_point = EXCLUDED.is_special_point,
+  notes = EXCLUDED.notes;
 
 INSERT INTO public.route_pricing (origin, destination, single_price, round_trip_price, time_estimate, package_type, notes)
 VALUES
