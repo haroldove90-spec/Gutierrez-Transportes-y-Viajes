@@ -344,9 +344,9 @@ INSERT INTO public.trips (
   occupied_seats_count, total_revenue, status, current_scale
 )
 VALUES
-  ('trip-101', 'Manzanillo ➔ Guadalajara (GDL)', 'Manzanillo', 'Guadalajara (GDL)', CURRENT_DATE, '06:30 AM', '11:00 AM', 'drv-01', 'Efraín Martínez Cruz', 'veh-01', 'Unidad 01 (Sprinter)', 370, 19, 4, 1480, 'in_progress', 'Escala en Colima (Oficina Central)'),
-  ('trip-102', 'Colima ➔ CAS / Consulado Americano GDL', 'Colima', 'CAS / Consulado Americano', CURRENT_DATE, '08:30 AM', '11:45 AM', 'drv-02', 'Rosendo Navarro', 'veh-02', 'Unidad 07 (Sprinter)', 340, 19, 2, 680, 'scheduled', 'Directo sin escalas'),
-  ('trip-103', 'Colima ➔ Guadalajara (GDL)', 'Colima', 'Guadalajara (GDL)', CURRENT_DATE, '09:00 AM', '11:30 AM', 'drv-03', 'Eduardo Morales', 'veh-03', 'Unidad 12 (Hiace)', 279, 14, 2, 558, 'scheduled', 'Parada en Cd. Guzmán')
+  ('trip-101', 'Manzanillo ➔ Guadalajara (GDL)', 'Manzanillo', 'Guadalajara (GDL)', CURRENT_DATE, '06:30 AM', '11:00 AM', 'drv-01', 'Efraín Martínez Cruz', 'veh-sp20-01', 'Unidad 01 (Sprinter)', 370, 20, 4, 1480, 'in_progress', 'Escala en Colima (Oficina Central)'),
+  ('trip-102', 'Colima ➔ CAS / Consulado Americano GDL', 'Colima', 'CAS / Consulado Americano', CURRENT_DATE, '08:30 AM', '11:45 AM', 'drv-02', 'Rosendo Navarro', 'veh-hi14-01', 'Unidad 02 (Hiace)', 340, 14, 2, 680, 'scheduled', 'Directo sin escalas'),
+  ('trip-103', 'Colima ➔ Guadalajara (GDL)', 'Colima', 'Guadalajara (GDL)', CURRENT_DATE, '09:00 AM', '11:30 AM', 'drv-03', 'Eduardo Morales', 'veh-hi14-02', 'Unidad 03 (Hiace)', 279, 14, 2, 558, 'scheduled', 'Parada en Cd. Guzmán')
 ON CONFLICT (id) DO NOTHING;
 `;
 
