@@ -79,7 +79,7 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
                 >
                   {drivers.map(d => (
                     <option key={d.id} value={d.id}>
-                      {d.name} ({d.status.toUpperCase()} • Rating: {d.rating}★)
+                      {d.name} • Cel: {d.phone} ({d.status === 'available' ? 'Disponible' : 'En servicio'})
                     </option>
                   ))}
                 </select>

@@ -121,9 +121,16 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
             />
             <div>
               <h3 className="text-base md:text-lg font-black text-white leading-tight">{currentDriver.name}</h3>
-              <p className="text-xs md:text-sm text-neutral-400 font-mono mt-0.5">
-                Lic. Federal {currentDriver.licenseNumber} • Tel: {currentDriver.phone}
-              </p>
+              <div className="flex items-center gap-1.5 text-xs md:text-sm font-mono mt-1">
+                <a 
+                  href={`tel:${currentDriver.phone.replace(/[\s+]/g, '')}`}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-neutral-800/90 hover:bg-neutral-800 text-orange-400 hover:text-orange-300 rounded-lg border border-neutral-700/70 transition-colors"
+                  title="Llamar o contactar al chofer"
+                >
+                  <Phone className="w-3.5 h-3.5 shrink-0" />
+                  <span className="font-bold">{currentDriver.phone}</span>
+                </a>
+              </div>
             </div>
           </div>
           <div className="text-left sm:text-right">

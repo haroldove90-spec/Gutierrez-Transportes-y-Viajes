@@ -293,13 +293,22 @@ VALUES
   ('veh-03', 'Toyota Hiace Gran Confort 12', 'JAL-883-C', 14, 'hiace', 'active', 'drv-03', 75, 62100)
 ON CONFLICT (id) DO NOTHING;
 
--- Conductores Iniciales
+-- Conductores Oficiales (7 Operadores)
 INSERT INTO public.drivers (id, name, phone, license_type, status, rating, emergency_contact)
 VALUES
-  ('drv-01', 'Don Carlos Mendoza', '312-319-8822', 'Federal Tipo B (Pasajeros)', 'on_trip', 4.9, 'Esposa: Sra. Elena (312-102-9900)'),
-  ('drv-02', 'Javier "Javi" Ramos', '312-554-1290', 'Federal Tipo B (Pasajeros)', 'available', 4.8, 'Hermano: Pedro Ramos (312-404-1122)'),
-  ('drv-03', 'Manuel Arriaga', '314-228-4491', 'Federal Tipo B (Pasajeros)', 'available', 5.0, 'Hija: Lucía Arriaga (314-889-1022)')
-ON CONFLICT (id) DO NOTHING;
+  ('drv-01', 'Efraín Martínez Cruz', '+52 314 109 4725', 'Cel: +52 314 109 4725', 'in_service', 4.95, 'Contacto Operativo'),
+  ('drv-02', 'Rosendo Navarro', '+52 33 1735 4281', 'Cel: +52 33 1735 4281', 'available', 4.88, 'Contacto Operativo'),
+  ('drv-03', 'Eduardo Morales', '+52 33 2633 5014', 'Cel: +52 33 2633 5014', 'available', 4.92, 'Contacto Operativo'),
+  ('drv-04', 'Omar Salvador Álvarez', '+52 312 113 6284', 'Cel: +52 312 113 6284', 'in_service', 4.85, 'Contacto Operativo'),
+  ('drv-05', 'José Antonio Gutiérrez Ochoa', '+52 33 3326 3521', 'Cel: +52 33 3326 3521', 'available', 5.0, 'Contacto Operativo'),
+  ('drv-06', 'Antonio Guerrero Troncoso', '+52 312 298 4953', 'Cel: +52 312 298 4953', 'available', 4.80, 'Contacto Operativo'),
+  ('drv-07', 'Adán Daryan Ayala Méndez', '+52 312 120 6564', 'Cel: +52 312 120 6564', 'available', 4.90, 'Contacto Operativo')
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  phone = EXCLUDED.phone,
+  license_type = EXCLUDED.license_type,
+  status = EXCLUDED.status,
+  rating = EXCLUDED.rating;
 
 -- Corridas Iniciales
 INSERT INTO public.trips (
@@ -308,7 +317,7 @@ INSERT INTO public.trips (
   occupied_seats_count, total_revenue, status, current_scale
 )
 VALUES
-  ('trip-101', 'Manzanillo ➔ Guadalajara (GDL)', 'Manzanillo', 'Guadalajara (GDL)', CURRENT_DATE, '06:30 AM', '11:00 AM', 'drv-01', 'Don Carlos Mendoza', 'veh-01', 'Unidad 04 (Sprinter)', 370, 19, 4, 1480, 'in_progress', 'Escala en Colima (Oficina Central)'),
-  ('trip-102', 'Colima ➔ CAS / Consulado Americano GDL', 'Colima', 'CAS / Consulado Americano', CURRENT_DATE, '08:30 AM', '11:45 AM', 'drv-02', 'Javier Ramos', 'veh-02', 'Unidad 07 (Sprinter)', 340, 19, 2, 680, 'scheduled', 'Directo sin escalas'),
-  ('trip-103', 'Colima ➔ Guadalajara (GDL)', 'Colima', 'Guadalajara (GDL)', CURRENT_DATE, '09:00 AM', '11:30 AM', 'drv-03', 'Manuel Arriaga', 'veh-03', 'Unidad 12 (Hiace)', 279, 14, 2, 558, 'scheduled', 'Parada en Cd. Guzmán')
+  ('trip-101', 'Manzanillo ➔ Guadalajara (GDL)', 'Manzanillo', 'Guadalajara (GDL)', CURRENT_DATE, '06:30 AM', '11:00 AM', 'drv-01', 'Efraín Martínez Cruz', 'veh-01', 'Unidad 01 (Sprinter)', 370, 19, 4, 1480, 'in_progress', 'Escala en Colima (Oficina Central)'),
+  ('trip-102', 'Colima ➔ CAS / Consulado Americano GDL', 'Colima', 'CAS / Consulado Americano', CURRENT_DATE, '08:30 AM', '11:45 AM', 'drv-02', 'Rosendo Navarro', 'veh-02', 'Unidad 07 (Sprinter)', 340, 19, 2, 680, 'scheduled', 'Directo sin escalas'),
+  ('trip-103', 'Colima ➔ Guadalajara (GDL)', 'Colima', 'Guadalajara (GDL)', CURRENT_DATE, '09:00 AM', '11:30 AM', 'drv-03', 'Eduardo Morales', 'veh-03', 'Unidad 12 (Hiace)', 279, 14, 2, 558, 'scheduled', 'Parada en Cd. Guzmán')
 ON CONFLICT (id) DO NOTHING;

@@ -479,7 +479,7 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                     >
                       {drivers.map(drv => (
                         <option key={drv.id} value={drv.id}>
-                          {drv.name} ({drv.status === 'available' ? 'Disponible' : 'En Ruta'})
+                          {drv.name} • Cel: {drv.phone} ({drv.status === 'available' ? 'Disponible' : 'En Ruta'})
                         </option>
                       ))}
                     </select>
@@ -624,7 +624,7 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                         >
                           {drivers.map(d => (
                             <option key={d.id} value={d.id}>
-                              {d.name} ({d.status === 'available' ? 'Disponible' : 'En Ruta'})
+                              {d.name} • Cel: {d.phone} ({d.status === 'available' ? 'Disponible' : 'En Ruta'})
                             </option>
                           ))}
                         </select>

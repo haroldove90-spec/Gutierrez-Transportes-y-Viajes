@@ -61,8 +61,8 @@ export interface Driver {
   id: string;
   name: string;
   phone: string;
-  licenseNumber: string;
-  licenseExpiry: string;
+  licenseNumber?: string;
+  licenseExpiry?: string;
   status: 'available' | 'in_service' | 'off_duty' | 'resting';
   rating: number;
   avatar: string;
