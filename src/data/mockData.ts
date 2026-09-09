@@ -210,11 +210,10 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     model: 'Mercedes-Benz Sprinter 20 Pax', 
     plate: '48-RB-9X', 
     capacity: 20, 
-    status: 'in_route', 
+    status: 'active', 
     odometer: 114200, 
     nextServiceKm: 120000, 
     lastServiceDate: '2026-08-15', 
-    driverId: 'drv-01',
     image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/sprinterde21pasajeros.png'
   },
   // 4 Toyota Hiace 14 pasajeros
@@ -228,7 +227,6 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     odometer: 72400, 
     nextServiceKm: 75000, 
     lastServiceDate: '2026-08-20', 
-    driverId: 'drv-02',
     image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png'
   },
   { 
@@ -241,7 +239,6 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     odometer: 68900, 
     nextServiceKm: 70000, 
     lastServiceDate: '2026-08-22', 
-    driverId: 'drv-03',
     image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png'
   },
   { 
@@ -250,11 +247,10 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     model: 'Toyota Hiace Gran Confort 14 Pax', 
     plate: '31-TA-7M', 
     capacity: 14, 
-    status: 'reserved_rent', 
+    status: 'active', 
     odometer: 84100, 
     nextServiceKm: 90000, 
     lastServiceDate: '2026-08-10', 
-    driverId: 'drv-04',
     image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png'
   },
   { 
@@ -267,7 +263,6 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     odometer: 59300, 
     nextServiceKm: 65000, 
     lastServiceDate: '2026-08-28', 
-    driverId: 'drv-05',
     image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png'
   },
   // 2 Toyota Hiace 11 pasajeros
@@ -281,7 +276,6 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     odometer: 45200, 
     nextServiceKm: 50000, 
     lastServiceDate: '2026-08-12', 
-    driverId: 'drv-06',
     image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede12pasajeros.png'
   },
   { 
@@ -290,7 +284,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     model: 'Toyota Hiace Turismo VIP 11 Pax', 
     plate: '15-TC-3K', 
     capacity: 11, 
-    status: 'maintenance', 
+    status: 'active', 
     odometer: 41800, 
     nextServiceKm: 45000, 
     lastServiceDate: '2026-08-05',
@@ -307,7 +301,6 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     odometer: 63500, 
     nextServiceKm: 70000, 
     lastServiceDate: '2026-08-19', 
-    driverId: 'drv-07',
     image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/fordtransitde18pasajeros.png'
   }
 ];
@@ -319,10 +312,9 @@ export const INITIAL_DRIVERS: Driver[] = [
     phone: '+52 314 109 4725', 
     licenseNumber: '+52 314 109 4725', 
     licenseExpiry: '2028-12-31', 
-    status: 'in_service', 
+    status: 'available', 
     rating: 4.95, 
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', 
-    currentVehicleId: 'veh-sp20-01' 
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
   },
   { 
     id: 'drv-02', 
@@ -332,8 +324,7 @@ export const INITIAL_DRIVERS: Driver[] = [
     licenseExpiry: '2028-12-31', 
     status: 'available', 
     rating: 4.88, 
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', 
-    currentVehicleId: 'veh-hi14-01' 
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
   },
   { 
     id: 'drv-03', 
@@ -343,8 +334,7 @@ export const INITIAL_DRIVERS: Driver[] = [
     licenseExpiry: '2028-12-31', 
     status: 'available', 
     rating: 4.92, 
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80', 
-    currentVehicleId: 'veh-hi14-02' 
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'
   },
   { 
     id: 'drv-04', 
@@ -352,10 +342,9 @@ export const INITIAL_DRIVERS: Driver[] = [
     phone: '+52 312 113 6284', 
     licenseNumber: '+52 312 113 6284', 
     licenseExpiry: '2028-12-31', 
-    status: 'in_service', 
+    status: 'available', 
     rating: 4.85, 
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80', 
-    currentVehicleId: 'veh-hi14-03' 
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80'
   },
   { 
     id: 'drv-05', 
@@ -365,8 +354,7 @@ export const INITIAL_DRIVERS: Driver[] = [
     licenseExpiry: '2028-12-31', 
     status: 'available', 
     rating: 5.0, 
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80', 
-    currentVehicleId: 'veh-hi14-04' 
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80'
   },
   { 
     id: 'drv-06', 
@@ -376,8 +364,7 @@ export const INITIAL_DRIVERS: Driver[] = [
     licenseExpiry: '2028-12-31', 
     status: 'available', 
     rating: 4.80, 
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80', 
-    currentVehicleId: 'veh-hi11-01' 
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80'
   },
   { 
     id: 'drv-07', 
@@ -387,8 +374,7 @@ export const INITIAL_DRIVERS: Driver[] = [
     licenseExpiry: '2028-12-31', 
     status: 'available', 
     rating: 4.90, 
-    avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80', 
-    currentVehicleId: 'veh-tr18-01' 
+    avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80'
   }
 ];
 
@@ -563,15 +549,13 @@ export function generateSprinterSeats(totalSeats: number = 20): Seat[] {
       
       // Standard seat
       if (num <= totalSeats) {
-        const isPreSold = num === 3 || num === 4 || num === 7 || num === 8 || num === 14;
         seats.push({
           id: `seat-${num}`,
           number: num,
           row: r,
           col: c,
           type: 'standard',
-          status: isPreSold ? 'sold' : 'available',
-          passengerName: isPreSold ? (num === 3 ? 'María Elena Torres' : num === 4 ? 'Raúl Gómez' : 'Pasajero Reservado') : undefined,
+          status: 'available',
         });
         num++;
       }
@@ -603,14 +587,13 @@ export function generateHiace14Seats(): Seat[] {
         continue;
       }
       if (num <= 14) {
-        const isPreSold = num === 2 || num === 5;
         seats.push({
           id: `seat-${num}`,
           number: num,
           row: r,
           col: c,
           type: 'standard',
-          status: isPreSold ? 'sold' : 'available',
+          status: 'available',
         });
         num++;
       }
@@ -638,14 +621,13 @@ export function generateHiace11Seats(): Seat[] {
         continue;
       }
       if (num <= 11) {
-        const isPreSold = num === 2 || num === 6;
         seats.push({
           id: `seat-${num}`,
           number: num,
           row: r,
           col: c,
           type: 'standard',
-          status: isPreSold ? 'sold' : 'available',
+          status: 'available',
         });
         num++;
       }
@@ -673,14 +655,13 @@ export function generateTransitSeats(): Seat[] {
         continue;
       }
       if (num <= 18) {
-        const isPreSold = num === 1 || num === 5 || num === 9;
         seats.push({
           id: `seat-${num}`,
           number: num,
           row: r,
           col: c,
           type: 'standard',
-          status: isPreSold ? 'sold' : 'available',
+          status: 'available',
         });
         num++;
       }
@@ -689,49 +670,51 @@ export function generateTransitSeats(): Seat[] {
   return seats;
 }
 
+const todayStr = new Date().toISOString().substring(0, 10);
+
 export const INITIAL_TRIPS: TripSchedule[] = [
   {
     id: 'trip-101',
     routeTitle: 'Manzanillo ⇄ Guadalajara (Troncal & CAS)',
     origin: 'Manzanillo',
     destination: 'CAS / Consulado GDL',
-    date: '2026-09-02',
+    date: todayStr,
     departureTime: '06:30 AM',
     estimatedArrival: '11:30 AM',
     vehicleId: 'veh-sp20-01',
     driverId: 'drv-01',
-    status: 'in_transit',
+    status: 'scheduled',
     currentScale: 'Colima (San Fernando)',
     seats: generateSprinterSeats(20),
     stops: ROUTE_STOPS,
     basePrice: 450,
-    occupiedSeatsCount: 14,
-    totalRevenue: 5420,
+    occupiedSeatsCount: 0,
+    totalRevenue: 0,
   },
   {
     id: 'trip-102',
     routeTitle: 'Colima ⇄ Guadalajara (La Minerva)',
     origin: 'Colima',
     destination: 'Guadalajara (Minerva)',
-    date: '2026-09-02',
+    date: todayStr,
     departureTime: '09:00 AM',
     estimatedArrival: '11:30 AM',
     vehicleId: 'veh-hi14-01',
     driverId: 'drv-02',
-    status: 'boarding',
+    status: 'scheduled',
     currentScale: 'Oficina Gutiérrez Colima',
     seats: generateHiace14Seats(),
     stops: ROUTE_STOPS.filter(s => s.city !== 'Manzanillo' && s.city !== 'Tecomán'),
     basePrice: 279,
-    occupiedSeatsCount: 9,
-    totalRevenue: 2511,
+    occupiedSeatsCount: 0,
+    totalRevenue: 0,
   },
   {
     id: 'trip-103',
     routeTitle: 'Manzanillo ⇄ Zoológico Guadalajara',
     origin: 'Manzanillo',
     destination: 'Zoológico Guadalajara',
-    date: '2026-09-02',
+    date: todayStr,
     departureTime: '07:00 AM',
     estimatedArrival: '12:30 PM',
     vehicleId: 'veh-hi14-02',
@@ -740,15 +723,15 @@ export const INITIAL_TRIPS: TripSchedule[] = [
     seats: generateHiace14Seats(),
     stops: ROUTE_STOPS,
     basePrice: 500,
-    occupiedSeatsCount: 6,
-    totalRevenue: 3000,
+    occupiedSeatsCount: 0,
+    totalRevenue: 0,
   },
   {
     id: 'trip-104',
     routeTitle: 'Guadalajara ⇄ Manzanillo (Troncal Retorno)',
     origin: 'Guadalajara (Minerva)',
     destination: 'Manzanillo',
-    date: '2026-09-02',
+    date: todayStr,
     departureTime: '04:00 PM',
     estimatedArrival: '08:30 PM',
     vehicleId: 'veh-sp20-01',
@@ -757,362 +740,16 @@ export const INITIAL_TRIPS: TripSchedule[] = [
     seats: generateSprinterSeats(20),
     stops: [...ROUTE_STOPS].reverse(),
     basePrice: 370,
-    occupiedSeatsCount: 11,
-    totalRevenue: 4070,
+    occupiedSeatsCount: 0,
+    totalRevenue: 0,
   }
 ];
 
-export const INITIAL_BOOKINGS: Booking[] = [
-  {
-    id: 'TG-9824',
-    tripId: 'trip-101',
-    passengerName: 'María Elena Torres Valdés',
-    passengerPhone: '314-889-1022',
-    passengerEmail: 'elena.torres@gmail.com',
-    origin: 'Manzanillo',
-    destination: 'CAS / Consulado Americano',
-    boardingPoint: 'Soriana Híper Manzanillo',
-    dropoffPoint: 'CAS / Consulado Americano',
-    date: '2026-09-02',
-    departureTime: '06:30 AM',
-    seatNumbers: [3],
-    unitNumber: 'Unidad 04 (Sprinter)',
-    totalAmount: 450,
-    paymentMethod: 'card',
-    paymentStatus: 'paid',
-    source: 'web',
-    tripType: 'sencillo',
-    packageType: 'consulado',
-    qrCodeData: 'TG-9824-MZN-CAS-SEAT3-20260902',
-    createdAt: '2026-09-01 14:20',
-    checkInStatus: 'checked_in',
-    checkInTime: '06:22 AM',
-    checkInLocation: 'Soriana Híper Manzanillo',
-    addons: { pet: false, parcel: false }
-  },
-  {
-    id: 'TG-9825',
-    tripId: 'trip-101',
-    passengerName: 'Raúl Gómez Vizcaíno',
-    passengerPhone: '312-301-4455',
-    passengerEmail: 'rgomez_viz@hotmail.com',
-    origin: 'Colima',
-    destination: 'CAS / Consulado Americano',
-    boardingPoint: 'Oficina Central Colima (Av. San Fernando)',
-    dropoffPoint: 'CAS / Consulado Americano',
-    date: '2026-09-02',
-    departureTime: '08:30 AM',
-    seatNumbers: [4],
-    unitNumber: 'Unidad 04 (Sprinter)',
-    totalAmount: 340,
-    paymentMethod: 'spei',
-    paymentStatus: 'paid',
-    source: 'whatsapp',
-    tripType: 'sencillo',
-    packageType: 'consulado',
-    qrCodeData: 'TG-9825-COL-CAS-SEAT4-20260902',
-    createdAt: '2026-09-01 16:45',
-    checkInStatus: 'pending',
-    addons: { parcel: true, parcelDescription: 'Sobre con Documentos Notariales', parcelFee: 150 }
-  },
-  {
-    id: 'TG-9826',
-    tripId: 'trip-102',
-    passengerName: 'Sofía Navarro Cruz',
-    passengerPhone: '312-998-0114',
-    passengerEmail: 'sofia.navarro@outlook.com',
-    origin: 'Colima',
-    destination: 'Guadalajara (GDL)',
-    boardingPoint: 'Escala Técnica Colima (10-15 min)',
-    dropoffPoint: 'Minerva (Burger)',
-    date: '2026-09-02',
-    departureTime: '09:00 AM',
-    seatNumbers: [7, 8],
-    unitNumber: 'Unidad 07 (Sprinter)',
-    totalAmount: 520,
-    paymentMethod: 'cash_counter',
-    paymentStatus: 'paid',
-    source: 'counter',
-    tripType: 'redondo',
-    returnDate: '2026-09-04',
-    packageType: 'estandar',
-    qrCodeData: 'TG-9826-COL-GDL-SEAT78-20260902',
-    createdAt: '2026-09-01 17:10',
-    checkInStatus: 'pending',
-    addons: { pet: false }
-  }
-];
-
-export const INITIAL_EXPENSES: TripExpense[] = [
-  {
-    id: 'exp-01',
-    tripId: 'trip-101',
-    vehicleId: 'veh-01',
-    driverId: 'drv-01',
-    type: 'fuel',
-    amount: 1450,
-    date: '2026-09-02 06:10',
-    location: 'Gasolinera PEMEX Manzanillo Salagua',
-    liters: 62.5,
-    ticketFolio: 'F-88912',
-    receiptImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=300&auto=format&fit=crop&q=80',
-    notes: 'Tanque lleno diésel inicio de jornada',
-    status: 'approved'
-  },
-  {
-    id: 'exp-02',
-    tripId: 'trip-101',
-    vehicleId: 'veh-01',
-    driverId: 'drv-01',
-    type: 'toll',
-    amount: 380,
-    date: '2026-09-02 07:45',
-    location: 'Caseta Cuyutlán & Acatlán de Juárez',
-    ticketFolio: 'TAG-449102',
-    notes: 'Cruce autopista Manzanillo - Colima',
-    status: 'approved'
-  },
-  {
-    id: 'exp-03',
-    tripId: 'trip-101',
-    vehicleId: 'veh-01',
-    driverId: 'drv-01',
-    type: 'viatics',
-    amount: 250,
-    date: '2026-09-02 08:30',
-    location: 'Colima Parador Los Arcos',
-    notes: 'Alimentos y café para operador en escala',
-    status: 'pending_audit'
-  }
-];
-
-export const INITIAL_RENTAL_QUOTES: RentalQuote[] = [
-  {
-    id: 'COT-2026-081',
-    clientName: 'Lic. Fernando Ochoa (Colegio Terranova)',
-    clientPhone: '312-314-9900',
-    clientEmail: 'eventos@colegioterranova.edu.mx',
-    origin: 'Colima',
-    destination: 'Puerto Vallarta, Jalisco',
-    departureDate: '2026-09-12 06:00',
-    returnDate: '2026-09-14 18:00',
-    paxCount: 18,
-    vehicleModel: 'Mercedes-Benz Sprinter 20 Pax',
-    includesDriver: true,
-    subtotal: 17400,
-    estimatedFuel: 3800,
-    estimatedTolls: 1450,
-    driverFee: 2400,
-    totalPrice: 25050,
-    advancePaymentRequired: 7515,
-    advancePaid: 7515,
-    balanceRemaining: 17535,
-    status: 'reserved',
-    assignedVehicleId: 'veh-sp20-01',
-    assignedDriverId: 'drv-01',
-    notes: 'Viaje académico. Unidad bloqueada en calendario con chofer Efraín Martínez Cruz.',
-    createdAt: '2026-08-28'
-  },
-  {
-    id: 'COT-2026-082',
-    clientName: 'Familia Barreto Michel',
-    clientPhone: '314-112-8877',
-    clientEmail: 'barreto.familia@gmail.com',
-    origin: 'Manzanillo',
-    destination: 'Mazamitla Pueblo Mágico',
-    departureDate: '2026-09-18 07:00',
-    returnDate: '2026-09-20 16:00',
-    paxCount: 12,
-    vehicleModel: 'Toyota Hiace Gran Confort 14 Pax',
-    includesDriver: true,
-    subtotal: 12000,
-    estimatedFuel: 2600,
-    estimatedTolls: 980,
-    driverFee: 1800,
-    totalPrice: 17380,
-    advancePaymentRequired: 5214,
-    advancePaid: 0,
-    balanceRemaining: 17380,
-    status: 'followup_24h',
-    assignedVehicleId: 'veh-hi14-01',
-    assignedDriverId: 'drv-02',
-    notes: 'Cotización enviada por WhatsApp. Alerta de seguimiento activa.',
-    createdAt: '2026-09-01'
-  },
-  {
-    id: 'COT-2026-083',
-    clientName: 'Ing. Alejandro Solórzano (Renta Auto Sin Chofer)',
-    clientPhone: '314-333-2190',
-    clientEmail: 'asolorzano@aduanasolorzano.com',
-    origin: 'Manzanillo',
-    destination: 'Guadalajara / Zapopan',
-    departureDate: '2026-09-08 05:00',
-    returnDate: '2026-09-10 20:00',
-    paxCount: 4,
-    vehicleModel: 'Jetta VW ($1,300/día sin chofer)',
-    includesDriver: false,
-    subtotal: 3900,
-    estimatedFuel: 0,
-    estimatedTolls: 0,
-    driverFee: 0,
-    totalPrice: 3900,
-    advancePaymentRequired: 1170,
-    advancePaid: 1170,
-    balanceRemaining: 2730,
-    status: 'reserved',
-    notes: 'Renta particular 3 días sin chofer ($1,300/día). Depósito en garantía cubierto.',
-    createdAt: '2026-08-30'
-  }
-];
-
-export const INITIAL_INVOICES: InvoiceCFDI[] = [
-  {
-    id: 'FAC-4091',
-    bookingId: 'TG-9824',
-    clientName: 'MARIA ELENA TORRES VALDES',
-    rfc: 'TOVM8403158X1',
-    taxRegime: '612 - Personas Físicas con Actividades Empresariales',
-    cfdiUsage: 'G03 - Gastos en general',
-    postalCode: '28200',
-    email: 'elena.torres@gmail.com',
-    subtotal: 387.93,
-    iva: 62.07,
-    total: 450.00,
-    status: 'generated',
-    uuid: '4E72B198-10AA-4D6C-98BC-2109884F19A2',
-    issuedAt: '2026-09-01 14:30'
-  },
-  {
-    id: 'FAC-4092',
-    rentalId: 'COT-2026-081',
-    clientName: 'INSTITUTO EDUCATIVO TERRANOVA SC',
-    rfc: 'IET990812KM4',
-    taxRegime: '601 - General de Ley Personas Morales',
-    cfdiUsage: 'G03 - Gastos en general',
-    postalCode: '28017',
-    email: 'facturacion@colegioterranova.edu.mx',
-    subtotal: 6245.69,
-    iva: 999.31,
-    total: 7245.00,
-    status: 'generated',
-    uuid: '8A11CD34-55B1-4A8E-BF09-9023414A0812',
-    issuedAt: '2026-08-28 11:15'
-  }
-];
-
-export const INITIAL_AUDIT_LOGS: AuditLog[] = [
-  {
-    id: 'aud-101',
-    timestamp: '2026-09-01 17:15:00',
-    userName: 'Laura Montes (Secretaría)',
-    userRole: 'secretaria',
-    action: 'EMISION_BOLETO_VENTANILLA',
-    entity: 'Booking',
-    entityId: 'TG-9826',
-    previousValue: 'Asiento Libre (7, 8)',
-    newValue: 'Asiento Vendido ($540 MXN)',
-    ipAddress: '187.190.22.10 (Mostrador Colima)'
-  },
-  {
-    id: 'aud-102',
-    timestamp: '2026-09-01 16:30:22',
-    userName: 'Ing. Gabriel Gutiérrez (Dirección)',
-    userRole: 'director',
-    action: 'AUTORIZACION_CORTESIA',
-    entity: 'Booking',
-    entityId: 'TG-9799',
-    previousValue: 'Tarifa Regular $370',
-    newValue: 'Cortesía 100% (Apoyo Familiar)',
-    ipAddress: '189.201.88.94 (Oficina Ejecutiva)'
-  },
-  {
-    id: 'aud-103',
-    timestamp: '2026-09-01 15:40:11',
-    userName: 'Ing. Ramón Velázquez (Taller)',
-    userRole: 'operaciones',
-    action: 'BLOQUEO_UNIDAD_MANTENIMIENTO',
-    entity: 'Vehicle',
-    entityId: 'veh-05 (Unidad 12)',
-    previousValue: 'Estatus: Activo',
-    newValue: 'Estatus: En Taller (Cambio de Frenos y Balatas)',
-    ipAddress: '187.190.22.11 (Taller Mecánico)'
-  },
-  {
-    id: 'aud-104',
-    timestamp: '2026-09-01 14:22:05',
-    userName: 'Sistema Web (Autoservicio)',
-    userRole: 'pasajero',
-    action: 'BLOQUEO_TEMPORAL_ASIENTO',
-    entity: 'Seat',
-    entityId: 'Trip 101 - Seat 3',
-    previousValue: 'Disponible',
-    newValue: 'Bloqueado Temporal (10 min Pessimistic Lock)',
-    ipAddress: '201.144.90.14'
-  }
-];
-
-export const INITIAL_EXCEPTIONS: ExceptionRequest[] = [
-  {
-    id: 'exc-01',
-    bookingId: 'TG-9780',
-    requestedBy: 'Laura Montes (Secretaría)',
-    type: 'refund',
-    amount: 370,
-    reason: 'Pasajero con justificante médico IMSS. Solicita reembolso del 80%.',
-    status: 'pending',
-    createdAt: '2026-09-01 15:10'
-  },
-  {
-    id: 'exc-02',
-    bookingId: 'TG-9788',
-    requestedBy: 'Laura Montes (Secretaría)',
-    type: 'courtesy',
-    amount: 450,
-    reason: 'Convenio con Fundación Trasplante CAS GDL para traslado de paciente.',
-    status: 'approved',
-    approvedBy: 'Dirección General',
-    createdAt: '2026-08-31 10:20'
-  }
-];
-
-export const INITIAL_CHARTER_ASSIGNMENTS: CharterAssignment[] = [
-  {
-    id: 'charter-01',
-    folio: 'TUR-2026-084',
-    clientName: 'Familia Ochoa Cárdenas',
-    clientPhone: '+52 312 155 9210',
-    origin: 'Colima, Col.',
-    destination: 'Mazamitla & Tapalpa, Jal. (Tour Pueblos Mágicos 3 Días)',
-    vehicleId: 'veh-hi14-03',
-    unitNumber: 'Unidad 04 (Hiace 14 Pax)',
-    driverId: 'drv-04',
-    driverName: 'Omar Salvador Álvarez',
-    driverPhone: '+52 312 113 6284',
-    startDate: '2026-09-08',
-    endDate: '2026-09-10',
-    totalAmount: 14500,
-    status: 'active',
-    notes: 'Servicio particular privado con chofer. Unidad bloqueada para venta de ruta.',
-    createdAt: '2026-09-05'
-  },
-  {
-    id: 'charter-02',
-    folio: 'TUR-2026-085',
-    clientName: 'Grupo Médico Hospital Puerta de Hierro',
-    clientPhone: '+52 33 2210 4488',
-    origin: 'Guadalajara, Jal.',
-    destination: 'Manzanillo (Convención Médica Hotel Barceló Karmina)',
-    vehicleId: 'veh-sp20-01',
-    unitNumber: 'Unidad 01 (Sprinter 20 Pax)',
-    driverId: 'drv-01',
-    driverName: 'Efraín Martínez Cruz',
-    driverPhone: '+52 314 109 4725',
-    startDate: '2026-09-12',
-    endDate: '2026-09-15',
-    totalAmount: 28800,
-    status: 'upcoming',
-    notes: 'Traslado ejecutivo redondo con traslados locales en bahía.',
-    createdAt: '2026-09-06'
-  }
-];
+export const INITIAL_BOOKINGS: Booking[] = [];
+export const INITIAL_EXPENSES: TripExpense[] = [];
+export const INITIAL_RENTAL_QUOTES: RentalQuote[] = [];
+export const INITIAL_INVOICES: InvoiceCFDI[] = [];
+export const INITIAL_AUDIT_LOGS: AuditLog[] = [];
+export const INITIAL_EXCEPTIONS: ExceptionRequest[] = [];
+export const INITIAL_CHARTER_ASSIGNMENTS: CharterAssignment[] = [];
 

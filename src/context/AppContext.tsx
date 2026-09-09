@@ -86,6 +86,7 @@ interface AppContextType {
   assignDriverToCharter: (data: Omit<CharterAssignment, 'id' | 'folio' | 'createdAt' | 'status'>) => CharterAssignment;
   releaseVehicleFromTourContract: (vehicleId: string) => boolean;
   completeCharterAssignment: (charterId: string) => boolean;
+  clearAllTestData: () => void;
   
   // Secretary & CRM
   createRentalQuote: (quoteData: Omit<RentalQuote, 'id' | 'createdAt' | 'status' | 'balanceRemaining'>) => RentalQuote;
@@ -133,7 +134,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [trips, setTrips] = useState<TripSchedule[]>(INITIAL_TRIPS);
   const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
     try {
-      const saved = localStorage.getItem('gutierrez_vehicles_v2');
+      // Clear legacy test cache
+      localStorage.removeItem('gutierrez_vehicles_v2');
+      const saved = localStorage.getItem('gutierrez_vehicles_v3');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -143,7 +146,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     return INITIAL_VEHICLES;
   });
-  const [drivers, setDrivers] = useState<Driver[]>(INITIAL_DRIVERS);
+  const [drivers, setDrivers] = useState<Driver[]>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_drivers_v3');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Error loading cached drivers', e);
+    }
+    return INITIAL_DRIVERS;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_vehicles_v3', JSON.stringify(vehicles));
+    } catch (e) {
+      console.error('Error persisting vehicles', e);
+    }
+  }, [vehicles]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_drivers_v3', JSON.stringify(drivers));
+    } catch (e) {
+      console.error('Error persisting drivers', e);
+    }
+  }, [drivers]);
+
   const [rentalCars, setRentalCars] = useState<RentalCar[]>(() => {
     try {
       const saved = localStorage.getItem('gutierrez_rental_cars_v2');
@@ -164,7 +195,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [exceptions, setExceptions] = useState<ExceptionRequest[]>(INITIAL_EXCEPTIONS);
   const [charterAssignments, setCharterAssignments] = useState<CharterAssignment[]>(() => {
     try {
-      const saved = localStorage.getItem('gutierrez_charter_assignments_v1');
+      // Clear legacy test cache
+      localStorage.removeItem('gutierrez_charter_assignments_v1');
+      const saved = localStorage.getItem('gutierrez_charter_assignments_v2');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -177,7 +210,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     try {
-      localStorage.setItem('gutierrez_charter_assignments_v1', JSON.stringify(charterAssignments));
+      localStorage.setItem('gutierrez_charter_assignments_v2', JSON.stringify(charterAssignments));
     } catch (e) {
       console.error('Error persisting charter assignments', e);
     }
@@ -530,29 +563,59 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const assignDriverToVehicle = (driverId: string, vehicleId: string, forceOverride: boolean = true): boolean => {
-    // Check if vehicle in maintenance
     const vehicle = vehicles.find(v => v.id === vehicleId);
-    if (vehicle?.status === 'maintenance') {
-      showNotification('No se puede asignar: El vehículo está en mantenimiento.', 'error');
+    if (!vehicle) {
+      showNotification('No se encontró la unidad vehicular seleccionada.', 'error');
+      return false;
+    }
+
+    if (vehicle.status === 'maintenance') {
+      showNotification('No se puede asignar: La unidad está fuera de servicio en taller mecánico.', 'error');
       return false;
     }
 
     const driver = drivers.find(d => d.id === driverId);
-    if (!driver) return false;
+    if (!driver) {
+      showNotification('No se encontró el operador seleccionado.', 'error');
+      return false;
+    }
 
-    // If driver is already in service and forceOverride is false
-    if ((driver.status === 'in_service' || driver.status === 'charter_service') && driver.currentVehicleId !== vehicleId && !forceOverride) {
+    if (!forceOverride && (driver.status === 'in_service' || driver.status === 'charter_service') && driver.currentVehicleId !== vehicleId) {
       showNotification('Conflicto: El chofer ya tiene un servicio activo asignado.', 'error');
       return false;
     }
 
-    // Unassign driver from any previous vehicle if reassigning
-    if (driver.currentVehicleId && driver.currentVehicleId !== vehicleId) {
-      setVehicles(prev => prev.map(v => v.id === driver.currentVehicleId ? { ...v, driverId: undefined } : v));
+    const previousDriverOnVehicleId = vehicle.driverId;
+    const previousVehicleOfDriverId = driver.currentVehicleId;
+
+    // 1. Si la unidad objetivo ya tenía otro chofer asignado, liberar a ese chofer anterior
+    if (previousDriverOnVehicleId && previousDriverOnVehicleId !== driverId) {
+      setDrivers(prev => prev.map(d => d.id === previousDriverOnVehicleId ? {
+        ...d,
+        currentVehicleId: undefined,
+        status: 'available',
+        currentServiceType: 'none',
+        charterDetails: undefined
+      } : d));
     }
 
-    // Assign to new vehicle
-    setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, driverId } : v));
+    // 2. Si el chofer ya estaba asignado a otra unidad anterior, liberar esa unidad previa
+    if (previousVehicleOfDriverId && previousVehicleOfDriverId !== vehicleId) {
+      setVehicles(prev => prev.map(v => v.id === previousVehicleOfDriverId ? {
+        ...v,
+        driverId: undefined
+      } : v));
+    }
+
+    // 3. Asignar el chofer a la unidad objetivo
+    setVehicles(prev => prev.map(v => v.id === vehicleId ? {
+      ...v,
+      driverId,
+      status: v.status === 'tour_contract' ? 'active' : v.status,
+      tourContractDetails: undefined
+    } : v));
+
+    // 4. Actualizar estado del chofer con su nueva unidad
     setDrivers(prev => prev.map(d => d.id === driverId ? { 
       ...d, 
       currentVehicleId: vehicleId, 
@@ -561,8 +624,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       charterDetails: undefined
     } : d));
 
-    addAuditEntry('DESPACHO_ASIGNACION', 'Fleet', vehicleId, 'Reasignación', `Chofer: ${driver.name} a ${vehicle?.unitNumber}`);
-    showNotification(`Unidad ${vehicle?.unitNumber} asignada con éxito a ${driver.name}`, 'success');
+    // 5. SINCRONIZACIÓN ATÓMICA DE ITINERARIOS (TRIPS):
+    // Todas las salidas/corridas programadas para esta unidad se asignan inmediatamente al chofer
+    setTrips(prev => prev.map(t => {
+      if (t.vehicleId === vehicleId) {
+        return { ...t, driverId };
+      }
+      // Si el itinerario tenía este chofer pero en su unidad anterior, desvincular chofer de esa corrida
+      if (t.driverId === driverId && previousVehicleOfDriverId && t.vehicleId === previousVehicleOfDriverId) {
+        return { ...t, driverId: undefined };
+      }
+      return t;
+    }));
+
+    addAuditEntry(
+      'DESPACHO_ASIGNACION',
+      'Fleet',
+      vehicleId,
+      previousDriverOnVehicleId || 'Sin asignar',
+      `Operador: ${driver.name} asignado a ${vehicle.unitNumber}`
+    );
+    showNotification(`¡Asignación exitosa! ${driver.name} quedó asignado a la ${vehicle.unitNumber}.`, 'success');
     return true;
   };
 
@@ -570,14 +652,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const driver = drivers.find(d => d.id === driverId);
     if (!driver) return false;
 
-    // Release from vehicle if assigned
-    if (driver.currentVehicleId) {
-      setVehicles(prev => prev.map(v => v.id === driver.currentVehicleId ? { 
+    const previousVehicleId = driver.currentVehicleId;
+
+    // Liberar la unidad vehicular si estaba asignada
+    if (previousVehicleId) {
+      setVehicles(prev => prev.map(v => v.id === previousVehicleId ? { 
         ...v, 
         driverId: undefined,
         status: v.status === 'tour_contract' ? 'active' : v.status,
         tourContractDetails: undefined
       } : v));
+
+      // Desvincular de los viajes programados de esa unidad
+      setTrips(prev => prev.map(t => {
+        if (t.vehicleId === previousVehicleId && t.driverId === driverId) {
+          return { ...t, driverId: undefined };
+        }
+        return t;
+      }));
     }
 
     setDrivers(prev => prev.map(d => d.id === driverId ? {
