@@ -53,6 +53,8 @@ export const DriverAssignmentsSchedule: React.FC = () => {
     destination: '',
     startDate: new Date().toISOString().substring(0, 10),
     endDate: new Date(Date.now() + 86400000 * 2).toISOString().substring(0, 10),
+    startTime: '08:00',
+    returnTime: '20:00',
     totalAmount: 12000,
     notes: 'Servicio particular privado con chofer incluido.'
   });
@@ -84,6 +86,8 @@ export const DriverAssignmentsSchedule: React.FC = () => {
       driverPhone: driver.phone,
       startDate: charterForm.startDate,
       endDate: charterForm.endDate,
+      startTime: charterForm.startTime,
+      returnTime: charterForm.returnTime,
       totalAmount: Number(charterForm.totalAmount),
       notes: charterForm.notes
     });
@@ -96,6 +100,8 @@ export const DriverAssignmentsSchedule: React.FC = () => {
       destination: '',
       startDate: new Date().toISOString().substring(0, 10),
       endDate: new Date(Date.now() + 86400000 * 2).toISOString().substring(0, 10),
+      startTime: '08:00',
+      returnTime: '20:00',
       totalAmount: 12000,
       notes: 'Servicio particular privado con chofer incluido.'
     });
@@ -425,9 +431,9 @@ export const DriverAssignmentsSchedule: React.FC = () => {
                       </div>
 
                       <div>
-                        <span className="text-neutral-400 uppercase font-bold text-[10px]">Fechas de Viaje:</span>
+                        <span className="text-neutral-400 uppercase font-bold text-[10px]">Fechas & Horarios:</span>
                         <p className="font-black text-neutral-900 text-sm mt-0.5">
-                          {assignment.startDate} al {assignment.endDate}
+                          {assignment.startDate} {assignment.startTime && <span className="text-purple-700 font-mono text-xs">({assignment.startTime})</span>} al {assignment.endDate} {assignment.returnTime && <span className="text-purple-700 font-mono text-xs">({assignment.returnTime})</span>}
                         </p>
                         <p className="text-neutral-500 text-[10px] mt-0.5 truncate">
                           {assignment.notes || 'Sin observaciones'}
@@ -499,6 +505,17 @@ export const DriverAssignmentsSchedule: React.FC = () => {
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <h4 className="font-black text-base text-neutral-900 truncate">{v.unitNumber}</h4>
                           <span className="text-xs text-neutral-500 font-mono font-bold">({v.plate})</span>
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                            v.category === 'auto' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                            v.category === 'camion' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                            v.category === 'autobus' ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' :
+                            'bg-blue-100 text-blue-800 border border-blue-200'
+                          }`}>
+                            {v.category === 'auto' ? '🚗 Auto' :
+                             v.category === 'camion' ? '🚚 Camión' :
+                             v.category === 'autobus' ? '🚌 Autobús' :
+                             '🚐 Van'}
+                          </span>
                         </div>
                         <p className="text-xs text-neutral-600 mt-0.5">{v.model} • {v.capacity} Pax</p>
                         <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
@@ -705,42 +722,84 @@ export const DriverAssignmentsSchedule: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-black text-neutral-700 uppercase tracking-wider">
-                    Fecha de Salida
-                  </label>
-                  <input
-                    type="date"
-                    value={charterForm.startDate}
-                    onChange={e => setCharterForm({ ...charterForm, startDate: e.target.value })}
-                    className="w-full mt-1 p-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900"
-                    required
-                  />
+              {/* Fechas y Horarios de Salida y Regreso */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-neutral-50 p-4 rounded-2xl border border-neutral-200">
+                <div className="space-y-3">
+                  <span className="text-xs font-black text-purple-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-purple-600" /> Salida del Viaje
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] font-bold text-neutral-600 uppercase">
+                        Fecha Salida
+                      </label>
+                      <input
+                        type="date"
+                        value={charterForm.startDate}
+                        onChange={e => setCharterForm({ ...charterForm, startDate: e.target.value })}
+                        className="w-full mt-1 p-2.5 bg-white border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-neutral-600 uppercase">
+                        Hora Salida
+                      </label>
+                      <input
+                        type="time"
+                        value={charterForm.startTime}
+                        onChange={e => setCharterForm({ ...charterForm, startTime: e.target.value })}
+                        className="w-full mt-1 p-2.5 bg-white border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs"
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-black text-neutral-700 uppercase tracking-wider">
-                    Fecha de Regreso
-                  </label>
-                  <input
-                    type="date"
-                    value={charterForm.endDate}
-                    onChange={e => setCharterForm({ ...charterForm, endDate: e.target.value })}
-                    className="w-full mt-1 p-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900"
-                    required
-                  />
+                <div className="space-y-3">
+                  <span className="text-xs font-black text-purple-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-purple-600" /> Regreso del Viaje
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] font-bold text-neutral-600 uppercase">
+                        Fecha Regreso
+                      </label>
+                      <input
+                        type="date"
+                        value={charterForm.endDate}
+                        onChange={e => setCharterForm({ ...charterForm, endDate: e.target.value })}
+                        className="w-full mt-1 p-2.5 bg-white border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold text-neutral-600 uppercase">
+                        Hora Regreso
+                      </label>
+                      <input
+                        type="time"
+                        value={charterForm.returnTime}
+                        onChange={e => setCharterForm({ ...charterForm, returnTime: e.target.value })}
+                        className="w-full mt-1 p-2.5 bg-white border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs"
+                        required
+                      />
+                    </div>
+                  </div>
                 </div>
+              </div>
 
-                <div>
-                  <label className="text-xs font-black text-neutral-700 uppercase tracking-wider">
-                    Precio Total Acordado (MXN)
-                  </label>
+              <div>
+                <label className="text-xs font-black text-neutral-700 uppercase tracking-wider">
+                  Precio Total Acordado (MXN)
+                </label>
+                <div className="relative mt-1">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-emerald-600">$</span>
                   <input
                     type="number"
                     value={charterForm.totalAmount}
                     onChange={e => setCharterForm({ ...charterForm, totalAmount: Number(e.target.value) })}
-                    className="w-full mt-1 p-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900"
+                    className="w-full pl-8 pr-4 py-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-black text-emerald-700 text-base"
                     required
                   />
                 </div>

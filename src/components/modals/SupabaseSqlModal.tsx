@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS public.vehicles (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ALTER TABLE public.vehicles ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE public.vehicles ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'van';
 
 -- 3. TABLA: CONDUCTORES / OPERADORES
 CREATE TABLE IF NOT EXISTS public.drivers (
@@ -218,6 +219,29 @@ CREATE TABLE IF NOT EXISTS public.driver_alarms (
     triggered_by TEXT DEFAULT 'Administración / Despacho Central'
 );
 
+-- 12. TABLA: ASIGNACIONES DE CHARTER / VIAJES ESPECIALES
+CREATE TABLE IF NOT EXISTS public.charter_assignments (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL DEFAULT 'charter',
+    client_name TEXT NOT NULL,
+    service_title TEXT NOT NULL,
+    origin TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    vehicle_id TEXT NOT NULL,
+    unit_number TEXT NOT NULL,
+    driver_id TEXT NOT NULL,
+    driver_name TEXT NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    start_time TEXT DEFAULT '08:00 AM',
+    return_time TEXT DEFAULT '06:00 PM',
+    passengers_count INTEGER DEFAULT 14,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.charter_assignments ADD COLUMN IF NOT EXISTS start_time TEXT DEFAULT '08:00 AM';
+ALTER TABLE public.charter_assignments ADD COLUMN IF NOT EXISTS return_time TEXT DEFAULT '06:00 PM';
+
 -- ============================================================================
 -- POLÍTICAS DE SEGURIDAD (ROW LEVEL SECURITY - RLS)
 -- ============================================================================
@@ -232,6 +256,7 @@ ALTER TABLE public.route_pricing ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.route_stops ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.driver_alarms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.charter_assignments ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de lectura pública (ANON) protegidas contra re-ejecuciones
 DROP POLICY IF EXISTS "Permitir lectura de vehiculos" ON public.vehicles;
@@ -295,7 +320,7 @@ VALUES
   ('loc-colima-sanfernando', 'Colima (Oficina Central San Fernando)', 'Colima', 'Av. San Fernando frente a Plaza Sevilla (Escala Técnica)', 'Av. San Fernando #410, Col. Lomas de Circunvalación, Colima, Col.', 'https://maps.app.goo.gl/cT9q5H3rX1B2rW6z7', 4, 120, true, false, 'Oficina Central y escala técnica obligatoria de 10 a 15 minutos (sanitarios y cafetería).'),
   ('col-escala', 'Colima (Escala Técnica Autopista)', 'Colima', 'Punto de escala, estiramiento y sanitarios autopista', 'Autopista Colima-Guadalajara Km 5, Colima, Col.', 'https://maps.app.goo.gl/cT9q5H3rX1B2rW6z7', 5, 135, true, false, 'Parada intermedia técnica.'),
   ('loc-guzman-colombia', 'Guzmán (Glorieta Colón / Acceso Autopista)', 'Guzmán', 'Glorieta Colón / Entrada principal a Ciudad Guzmán', 'Av. Cristóbal Colón y Calzada Madero y Carranza, Cd. Guzmán, Jal.', 'https://maps.app.goo.gl/8v3a4d5g6h7j8k9l0', 6, 190, true, false, 'Conexión rápida sur de Jalisco sobre la glorieta.'),
-  ('loc-gdl-minerva', 'Guadalajara (Minerva - Estacionamiento Burger)', 'Guadalajara', 'Afuera del estacionamiento de Burger King Minerva', 'Av. Vallarta #2840 esq. Av. López Mateos, Guadalajara, Jal.', 'https://maps.app.goo.gl/k9L8m7n6b5v4c3x21', 7, 270, true, false, 'Punto de abordaje principal en Guadalajara Zona Poniente.'),
+  ('loc-gdl-minerva', 'Guadalajara (Minerva - Estacionamiento Burger)', 'Guadalajara', 'Afuera del estacionamiento de Burger King Minerva', 'Av. Vallarta #2840 esq. Av. López Mateos, Guadalajara, Jal.', 'https://maps.app.goo.gl/Ji9UMZtn3uwVphgu8', 7, 270, true, false, 'Punto de abordaje principal en Guadalajara Zona Poniente.'),
   ('gdl-plazasol', 'Guadalajara (Plaza del Sol - Súper Colchones)', 'Guadalajara', 'Afuera de Súper Colchones Plaza del Sol', 'Av. Mariano Otero #1499, Col. Residencial Victoria, Guadalajara, Jal.', 'https://maps.app.goo.gl/4mK3j2h1g0f9e8d76', 8, 285, true, false, 'Punto de abordaje Zona Plaza del Sol.'),
   ('gdl-fuentes', 'Guadalajara (Starbucks Las Fuentes)', 'Guadalajara', 'Starbucks Las Fuentes sobre López Mateos Sur', 'Av. López Mateos Sur #5560, Las Fuentes, Zapopan, Jal.', 'https://maps.app.goo.gl/4mK3j2h1g0f9e8d76', 9, 300, true, false, 'Abordaje rumbo a Colima / Manzanillo.'),
   ('loc-cas-consulado', 'Cas/Consulado (Centro de Solicitantes de Visa)', 'Cas/Consulado', 'Centro de Atención a Solicitantes (CAS) Guadalajara', 'Av. Unión #210, Col. Obrera / Americana, Guadalajara, Jal.', 'https://maps.app.goo.gl/5nB4v3c2x1z9a8s70', 10, 345, true, true, 'Servicio directo a citas consulares de visa americana.'),

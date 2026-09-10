@@ -618,10 +618,19 @@ export const RouteLocationsManager: React.FC = () => {
 
               {/* Google Maps URL */}
               <div className="bg-emerald-50/60 p-4 rounded-2xl border-2 border-emerald-200 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-black text-emerald-900 uppercase tracking-wider">
-                    Enlace de Google Maps (URL / Compartir)
-                  </label>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <label className="block text-xs font-black text-emerald-900 uppercase tracking-wider">
+                      Enlace de Google Maps (URL / Compartir)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setFormMapsUrl('https://maps.app.goo.gl/Ji9UMZtn3uwVphgu8')}
+                      className="text-[10px] bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold px-2 py-0.5 rounded-md cursor-pointer transition-all border border-emerald-300"
+                    >
+                      Pegar link de prueba
+                    </button>
+                  </div>
                   {formMapsUrl && (
                     <a
                       href={formMapsUrl.startsWith('http') ? formMapsUrl : `https://${formMapsUrl}`}
@@ -637,14 +646,14 @@ export const RouteLocationsManager: React.FC = () => {
                 <div className="relative">
                   <input
                     type="url"
-                    placeholder="https://maps.app.goo.gl/J5REeQ24NnDFKF84A"
+                    placeholder="https://maps.app.goo.gl/Ji9UMZtn3uwVphgu8"
                     value={formMapsUrl}
                     onChange={e => setFormMapsUrl(e.target.value)}
                     className="w-full p-3.5 bg-white border-2 border-emerald-300 rounded-xl font-mono text-xs md:text-sm font-bold text-neutral-900 focus:outline-none focus:border-emerald-600"
                   />
                 </div>
                 <p className="text-[11px] text-emerald-800 leading-tight">
-                  💡 Pega el link corto o largo de Google Maps (ej. <strong>https://maps.app.goo.gl/J5REeQ24NnDFKF84A</strong>). Al hacer clic desde su celular, el pasajero o conductor abrirá la app nativa de mapas con la ruta exacta.
+                  💡 Pega el link corto o largo de Google Maps (ej. <strong>https://maps.app.goo.gl/Ji9UMZtn3uwVphgu8</strong>). Al hacer clic desde su celular, el pasajero o conductor abrirá la app nativa de mapas con la ruta exacta.
                 </p>
               </div>
 

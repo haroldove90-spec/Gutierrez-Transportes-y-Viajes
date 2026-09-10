@@ -44,12 +44,15 @@ export interface Seat {
   ticketId?: string;
 }
 
+export type VehicleCategory = 'van' | 'auto' | 'camion' | 'autobus';
+
 export interface Vehicle {
   id: string;
   unitNumber: string;
-  model: string; // 'Mercedes-Benz Sprinter' | 'Toyota Hiace' | 'Ford Transit'
+  model: string; // 'Mercedes-Benz Sprinter' | 'Toyota Hiace' | 'Ford Transit' | 'Irizar i6' etc.
   plate: string;
   capacity: number; // 20, 14, 18, etc.
+  category?: VehicleCategory; // 'van' | 'auto' | 'camion' | 'autobus'
   status: 'active' | 'in_route' | 'maintenance' | 'reserved_rent' | 'tour_contract';
   odometer: number;
   nextServiceKm: number;
@@ -62,6 +65,8 @@ export interface Vehicle {
     destination: string;
     startDate: string;
     endDate: string;
+    startTime?: string;
+    returnTime?: string;
     notes?: string;
   };
 }
@@ -83,6 +88,8 @@ export interface Driver {
     destination: string;
     startDate: string;
     endDate: string;
+    startTime?: string;
+    returnTime?: string;
     notes?: string;
   };
 }
@@ -101,6 +108,8 @@ export interface CharterAssignment {
   driverPhone: string;
   startDate: string;
   endDate: string;
+  startTime?: string; // Hora de salida (ej. 08:00 AM)
+  returnTime?: string; // Hora de regreso (ej. 20:00 PM)
   totalAmount: number;
   status: 'active' | 'upcoming' | 'completed' | 'cancelled';
   notes?: string;

@@ -562,7 +562,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
               <MapPin className="w-5 h-5 text-orange-600" /> Punto de Abordaje y Pasajero
             </span>
 
-            {/* Boarding & Dropoff Stop Pickers with Exact Physical Landmarks */}
+            {/* Boarding & Dropoff Stop Pickers with Exact Physical Landmarks and Google Maps Links */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider">
@@ -579,6 +579,38 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                     </option>
                   ))}
                 </select>
+
+                {/* Live Boarding Location & Google Maps Link Preview */}
+                {(() => {
+                  const currentStop = routeStops.find(s => 
+                    selectedBoardingStop.includes(s.name) || 
+                    selectedBoardingStop === `${s.city}: ${s.name} (${s.landmark})`
+                  );
+                  if (!currentStop) return null;
+                  return (
+                    <div className="mt-2 p-3 bg-neutral-50 rounded-2xl border border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                      <div className="min-w-0">
+                        <p className="font-black text-neutral-900 flex items-center gap-1.5 truncate">
+                          <MapPin className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                          {currentStop.landmark}
+                        </p>
+                        <p className="text-neutral-500 text-[11px] mt-0.5 truncate">{currentStop.address}</p>
+                      </div>
+                      {currentStop.mapsUrl && (
+                        <a
+                          href={currentStop.mapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-xs transition-all shrink-0 cursor-pointer"
+                        >
+                          <Navigation className="w-3.5 h-3.5" />
+                          <span>Ver en Google Maps</span>
+                          <ExternalLink className="w-3 h-3 opacity-80" />
+                        </a>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div>
@@ -596,6 +628,38 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                     </option>
                   ))}
                 </select>
+
+                {/* Live Dropoff Location & Google Maps Link Preview */}
+                {(() => {
+                  const currentStop = routeStops.find(s => 
+                    selectedDropoffStop.includes(s.name) || 
+                    selectedDropoffStop === `${s.city}: ${s.name} (${s.landmark})`
+                  );
+                  if (!currentStop) return null;
+                  return (
+                    <div className="mt-2 p-3 bg-neutral-50 rounded-2xl border border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                      <div className="min-w-0">
+                        <p className="font-black text-neutral-900 flex items-center gap-1.5 truncate">
+                          <MapPin className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                          {currentStop.landmark}
+                        </p>
+                        <p className="text-neutral-500 text-[11px] mt-0.5 truncate">{currentStop.address}</p>
+                      </div>
+                      {currentStop.mapsUrl && (
+                        <a
+                          href={currentStop.mapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black shadow-xs transition-all shrink-0 cursor-pointer"
+                        >
+                          <Navigation className="w-3.5 h-3.5" />
+                          <span>Ver en Google Maps</span>
+                          <ExternalLink className="w-3 h-3 opacity-80" />
+                        </a>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 

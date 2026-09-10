@@ -81,6 +81,9 @@ interface AppContextType {
   approveExpense: (expenseId: string) => void;
   
   // Operations & Maintenance & Agenda de Servicios
+  addVehicle: (vehicleData: Omit<Vehicle, 'id'>) => Vehicle;
+  updateVehicle: (id: string, updates: Partial<Vehicle>) => boolean;
+  deleteVehicle: (id: string) => boolean;
   toggleVehicleMaintenance: (vehicleId: string, reason?: string) => void;
   assignDriverToVehicle: (driverId: string, vehicleId: string, forceOverride?: boolean) => boolean;
   releaseDriverFromService: (driverId: string, reason?: string) => boolean;
@@ -179,7 +182,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const saved = localStorage.getItem('gutierrez_vehicles_v3');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const loaded = parsed.map((v: any) => {
+            const matched = INITIAL_VEHICLES.find(iv => iv.id === v.id);
+            return {
+              ...v,
+              category: v.category || matched?.category || 'van'
+            };
+          });
+          // Also include new model examples if not yet in user cache
+          INITIAL_VEHICLES.forEach(iv => {
+            if (!loaded.some((lv: any) => lv.id === iv.id)) {
+              loaded.push(iv);
+            }
+          });
+          return loaded;
+        }
       }
     } catch (e) {
       console.warn('Error loading cached vehicles', e);
@@ -220,7 +238,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const saved = localStorage.getItem('gutierrez_rental_cars_v2');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const merged = [...parsed];
+          OFFICIAL_RENTAL_CARS.forEach(official => {
+            if (!merged.some(c => c.id === official.id)) {
+              merged.push(official);
+            }
+          });
+          return merged;
+        }
       }
     } catch (e) {
       console.warn('Error loading cached rental cars', e);
@@ -262,7 +288,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const saved = localStorage.getItem('gutierrez_route_stops_v1');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((s: RouteStop) => {
+            if (s.id === 'loc-gdl-minerva' && (!s.mapsUrl || s.mapsUrl.includes('k9L8m7n6b5v4c3x21'))) {
+              return { ...s, mapsUrl: 'https://maps.app.goo.gl/Ji9UMZtn3uwVphgu8' };
+            }
+            return s;
+          });
+        }
       }
     } catch (e) {
       console.error('Error loading saved route stops', e);
@@ -851,6 +884,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Gasto aprobado y conciliado.', 'success');
   };
 
+  const addVehicle = (vehicleData: Omit<Vehicle, 'id'>): Vehicle => {
+    const newVehicle: Vehicle = {
+      ...vehicleData,
+      id: `veh-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      category: vehicleData.category || 'van',
+      status: vehicleData.status || 'active'
+    };
+    setVehicles(prev => [newVehicle, ...prev]);
+    addAuditEntry('ALTA_UNIDAD_FLOTILLA', 'Vehicle', newVehicle.id, 'n/a', `${newVehicle.unitNumber} (${newVehicle.category})`);
+    showNotification(`Nueva unidad "${newVehicle.unitNumber}" dada de alta en el sistema.`, 'success');
+    return newVehicle;
+  };
+
+  const updateVehicle = (id: string, updates: Partial<Vehicle>): boolean => {
+    let updated = false;
+    setVehicles(prev => prev.map(v => {
+      if (v.id === id) {
+        updated = true;
+        return { ...v, ...updates };
+      }
+      return v;
+    }));
+    if (updated) {
+      addAuditEntry('EDICION_UNIDAD_FLOTILLA', 'Vehicle', id, 'modificado', JSON.stringify(updates));
+      showNotification('Unidad actualizada correctamente.', 'success');
+    }
+    return updated;
+  };
+
+  const deleteVehicle = (id: string): boolean => {
+    const target = vehicles.find(v => v.id === id);
+    if (!target) return false;
+    setVehicles(prev => prev.filter(v => v.id !== id));
+    addAuditEntry('BAJA_UNIDAD_FLOTILLA', 'Vehicle', id, 'eliminado', `${target.unitNumber} - ${target.model}`);
+    showNotification(`Unidad "${target.unitNumber}" dada de baja del sistema.`, 'info');
+    return true;
+  };
+
   const toggleVehicleMaintenance = (vehicleId: string, reason?: string) => {
     const vehicle = vehicles.find(v => v.id === vehicleId);
     if (!vehicle) return;
@@ -1047,6 +1118,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         destination: data.destination,
         startDate: data.startDate,
         endDate: data.endDate,
+        startTime: data.startTime,
+        returnTime: data.returnTime,
         notes: data.notes
       }
     } : v));
@@ -1063,6 +1136,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         destination: data.destination,
         startDate: data.startDate,
         endDate: data.endDate,
+        startTime: data.startTime,
+        returnTime: data.returnTime,
         notes: data.notes
       }
     } : d));
@@ -1076,9 +1151,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       driverId: data.driverId,
       type: 'new_trip_assigned',
       title: '🌴 NUEVO SERVICIO TURÍSTICO ASIGNADO',
-      message: `El Administrador te ha asignado al viaje especial hacia ${data.destination} para ${data.clientName}. Fechas: ${data.startDate} al ${data.endDate}. Unidad: ${data.unitNumber}.`,
+      message: `El Administrador te ha asignado al viaje especial hacia ${data.destination} para ${data.clientName}. Fechas: ${data.startDate} (${data.startTime || '08:00'}) al ${data.endDate} (${data.returnTime || '20:00'}). Unidad: ${data.unitNumber}.`,
       unitNumber: data.unitNumber,
-      routeDetails: `Viaje Especial a ${data.destination}`,
+      routeDetails: `Viaje Especial a ${data.destination} (Salida: ${data.startTime || '08:00'} - Regreso: ${data.returnTime || '20:00'})`,
       createdAt: new Date().toISOString(),
       status: 'active',
       triggeredBy: 'Administración / Despacho'
@@ -1428,6 +1503,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateTripStatus,
         addExpense,
         approveExpense,
+        addVehicle,
+        updateVehicle,
+        deleteVehicle,
         toggleVehicleMaintenance,
         assignDriverToVehicle,
         releaseDriverFromService,

@@ -45,7 +45,7 @@ export const RentalCatalog: React.FC<RentalCatalogProps> = ({ onSelectCarForQuot
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar bg-neutral-100 p-4 md:p-6 lg:p-8 space-y-6">
+    <div className="flex-1 flex flex-col overflow-y-auto bg-neutral-100 p-4 md:p-6 lg:p-8 space-y-6">
       
       {/* Hero Header */}
       <div className="bg-neutral-950 text-white rounded-3xl p-6 md:p-8 border border-neutral-800 shadow-xl relative overflow-hidden">
@@ -148,11 +148,34 @@ export const RentalCatalog: React.FC<RentalCatalogProps> = ({ onSelectCarForQuot
         </div>
       </div>
 
-      {/* Rental Cars Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredCars.map((car) => (
+      {/* Van Fleet Information Banner */}
+      {filterCategory === 'van' && (
+        <div className="bg-orange-50 border-2 border-orange-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-600 text-white flex items-center justify-center font-black text-xl shrink-0 shadow-xs">
+              🚐
+            </div>
+            <div>
+              <h4 className="font-black text-sm text-neutral-900">
+                Flotilla Oficial Completa: Las 4 Camionetas de Pasajeros
+              </h4>
+              <p className="text-xs text-neutral-600 font-medium">
+                1. Toyota Hiace (14 Pax) • 2. Toyota Hiace (11 Pax) • 3. Ford Transit (18 Pax) • 4. Mercedes-Benz Sprinter (20 Pax)
+              </p>
+            </div>
+          </div>
+          <span className="text-xs font-black bg-orange-600 text-white px-3 py-1.5 rounded-full shrink-0 shadow-xs">
+            4 de 4 Camionetas Visibles
+          </span>
+        </div>
+      )}
+
+      {/* Rental Cars Grid - 4 Columns when viewing Vans for all-in-one view */}
+      <div className={`grid gap-6 ${filterCategory === 'van' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+        {filteredCars.map((car, idx) => (
           <div 
             key={car.id}
+            id={`rental-card-${car.id}`}
             className="bg-white rounded-3xl border border-neutral-200 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
           >
             {/* Image Header with Badges */}
@@ -172,6 +195,11 @@ export const RentalCatalog: React.FC<RentalCatalogProps> = ({ onSelectCarForQuot
                 <span className="bg-orange-600 text-white text-[11px] font-black px-2.5 py-1 rounded-full">
                   {car.category}
                 </span>
+                {filterCategory === 'van' && (
+                  <span className="bg-black/80 text-orange-400 border border-orange-400/40 text-[10px] font-black px-2 py-0.5 rounded-full">
+                    {idx + 1} de 4
+                  </span>
+                )}
               </div>
 
               <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between text-white">
