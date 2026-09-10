@@ -21,26 +21,26 @@ export const OFFICIAL_EXPERIENCE_YEARS = 18;
 
 export const OFFICIAL_PRICING: RoutePricing[] = [
   // Origen: Manzanillo
-  { origin: 'Manzanillo', destination: 'Guadalajara (GDL)', singlePrice: 370, roundTripPrice: 720, timeEstimate: '4.5 hrs', notes: 'Salida diaria troncal. Escala de 10-15 min en Colima.', packageType: 'estandar' },
-  { origin: 'Manzanillo', destination: 'Tecomán', singlePrice: 60, timeEstimate: '1 hr', notes: 'Conexión directa costa-valle.', packageType: 'intermedio' },
-  { origin: 'Manzanillo', destination: 'Colima', singlePrice: 120, roundTripPrice: 210, timeEstimate: '2 hrs', notes: 'Escala técnica y conexión estatal.', packageType: 'intermedio' },
-  { origin: 'Manzanillo', destination: 'CAS / Consulado Americano', singlePrice: 450, roundTripPrice: 850, timeEstimate: '5 hrs', notes: 'Traslado directo a citas consulares y visados.', packageType: 'consulado' },
-  { origin: 'Manzanillo', destination: 'Zoológico de GDL', singlePrice: 500, roundTripPrice: 920, timeEstimate: '5.5 hrs', notes: 'Paquete especial y turístico familiar.', packageType: 'zoologico' },
+  { id: 'fare-mzn-gdl', origin: 'Manzanillo', destination: 'Guadalajara (GDL)', singlePrice: 370, roundTripPrice: 720, timeEstimate: '4.5 hrs', notes: 'Salida diaria troncal. Escala de 10-15 min en Colima.', packageType: 'estandar', isActive: true },
+  { id: 'fare-mzn-tec', origin: 'Manzanillo', destination: 'Tecomán', singlePrice: 60, timeEstimate: '1 hr', notes: 'Conexión directa costa-valle.', packageType: 'intermedio', isActive: true },
+  { id: 'fare-mzn-col', origin: 'Manzanillo', destination: 'Colima', singlePrice: 120, roundTripPrice: 210, timeEstimate: '2 hrs', notes: 'Escala técnica y conexión estatal.', packageType: 'intermedio', isActive: true },
+  { id: 'fare-mzn-cas', origin: 'Manzanillo', destination: 'CAS / Consulado Americano', singlePrice: 450, roundTripPrice: 850, timeEstimate: '5 hrs', notes: 'Traslado directo a citas consulares y visados.', packageType: 'consulado', isActive: true },
+  { id: 'fare-mzn-zoo', origin: 'Manzanillo', destination: 'Zoológico de GDL', singlePrice: 500, roundTripPrice: 920, timeEstimate: '5.5 hrs', notes: 'Paquete especial y turístico familiar.', packageType: 'zoologico', isActive: true },
 
   // Origen: Tecomán
-  { origin: 'Tecomán', destination: 'Colima', singlePrice: 60, timeEstimate: '45 mins', notes: 'Conexión regional directa.', packageType: 'intermedio' },
-  { origin: 'Tecomán', destination: 'Guadalajara (GDL)', singlePrice: 330, timeEstimate: '3.5 hrs', notes: 'Salida diaria directa hacia GDL.', packageType: 'estandar' },
-  { origin: 'Tecomán', destination: 'CAS / Consulado Americano', singlePrice: 400, roundTripPrice: 780, timeEstimate: '4 hrs', notes: 'Paquete de traslado para citas consulares.', packageType: 'consulado' },
+  { id: 'fare-tec-col', origin: 'Tecomán', destination: 'Colima', singlePrice: 60, timeEstimate: '45 mins', notes: 'Conexión regional directa.', packageType: 'intermedio', isActive: true },
+  { id: 'fare-tec-gdl', origin: 'Tecomán', destination: 'Guadalajara (GDL)', singlePrice: 330, timeEstimate: '3.5 hrs', notes: 'Salida diaria directa hacia GDL.', packageType: 'estandar', isActive: true },
+  { id: 'fare-tec-cas', origin: 'Tecomán', destination: 'CAS / Consulado Americano', singlePrice: 400, roundTripPrice: 780, timeEstimate: '4 hrs', notes: 'Paquete de traslado para citas consulares.', packageType: 'consulado', isActive: true },
 
   // Origen: Colima
-  { origin: 'Colima', destination: 'Guadalajara (GDL)', singlePrice: 279, roundTripPrice: 520, timeEstimate: '2.5 hrs', notes: 'Salida directa a Minerva y Plaza del Sol.', packageType: 'estandar' },
-  { origin: 'Colima', destination: 'Cd. Guzmán', singlePrice: 130, timeEstimate: '1.2 hrs', notes: 'Conexión sur de Jalisco.', packageType: 'intermedio' },
-  { origin: 'Colima', destination: 'CAS / Consulado Americano', singlePrice: 340, roundTripPrice: 650, timeEstimate: '3 hrs', notes: 'Servicio especializado para citas de visa.', packageType: 'consulado' },
-  { origin: 'Colima', destination: 'Zoológico de GDL', singlePrice: 400, roundTripPrice: 780, timeEstimate: '3.5 hrs', notes: 'Paquete turístico y recreativo familiar.', packageType: 'zoologico' },
+  { id: 'fare-col-gdl', origin: 'Colima', destination: 'Guadalajara (GDL)', singlePrice: 279, roundTripPrice: 520, timeEstimate: '2.5 hrs', notes: 'Salida directa a Minerva y Plaza del Sol.', packageType: 'estandar', isActive: true },
+  { id: 'fare-col-guz', origin: 'Colima', destination: 'Cd. Guzmán', singlePrice: 130, timeEstimate: '1.2 hrs', notes: 'Conexión sur de Jalisco.', packageType: 'intermedio', isActive: true },
+  { id: 'fare-col-cas', origin: 'Colima', destination: 'CAS / Consulado Americano', singlePrice: 340, roundTripPrice: 650, timeEstimate: '3 hrs', notes: 'Servicio especializado para citas de visa.', packageType: 'consulado', isActive: true },
+  { id: 'fare-col-zoo', origin: 'Colima', destination: 'Zoológico de GDL', singlePrice: 400, roundTripPrice: 780, timeEstimate: '3.5 hrs', notes: 'Paquete turístico y recreativo familiar.', packageType: 'zoologico', isActive: true },
 
   // Origen: Cd. Guzmán
-  { origin: 'Cd. Guzmán', destination: 'Guadalajara (GDL)', singlePrice: 170, roundTripPrice: 330, timeEstimate: '1.8 hrs', notes: 'Salida ágil por autopista.', packageType: 'estandar' },
-  { origin: 'Cd. Guzmán', destination: 'CAS / Consulado Americano', singlePrice: 240, roundTripPrice: 450, timeEstimate: '2.2 hrs', notes: 'Servicio directo a trámites consulares.', packageType: 'consulado' },
+  { id: 'fare-guz-gdl', origin: 'Cd. Guzmán', destination: 'Guadalajara (GDL)', singlePrice: 170, roundTripPrice: 330, timeEstimate: '1.8 hrs', notes: 'Salida ágil por autopista.', packageType: 'estandar', isActive: true },
+  { id: 'fare-guz-cas', origin: 'Cd. Guzmán', destination: 'CAS / Consulado Americano', singlePrice: 240, roundTripPrice: 450, timeEstimate: '2.2 hrs', notes: 'Servicio directo a trámites consulares.', packageType: 'consulado', isActive: true },
 ];
 
 export const ROUTE_STOPS: RouteStop[] = [
@@ -56,6 +56,7 @@ export const ROUTE_STOPS: RouteStop[] = [
     timeOffsetMins: 0, 
     isActive: true,
     isSpecialPoint: false,
+    farePrice: 370,
     notes: 'Punto de partida principal en Manzanillo. Presentarse 15 min antes de la salida.'
   },
   { 
@@ -69,6 +70,7 @@ export const ROUTE_STOPS: RouteStop[] = [
     timeOffsetMins: 15, 
     isActive: true,
     isSpecialPoint: false,
+    farePrice: 370,
     notes: 'Parada de abordaje sobre el Boulevard.'
   },
   
@@ -84,6 +86,7 @@ export const ROUTE_STOPS: RouteStop[] = [
     timeOffsetMins: 60, 
     isActive: true,
     isSpecialPoint: false,
+    farePrice: 330,
     notes: 'Abordaje en el Kiosko del Jardín Principal de Tecomán.'
   },
   
@@ -99,6 +102,7 @@ export const ROUTE_STOPS: RouteStop[] = [
     timeOffsetMins: 120, 
     isActive: true,
     isSpecialPoint: false,
+    farePrice: 279,
     notes: 'Oficina Central y escala técnica obligatoria de 10 a 15 minutos (sanitarios y cafetería).'
   },
   { 
@@ -112,6 +116,7 @@ export const ROUTE_STOPS: RouteStop[] = [
     timeOffsetMins: 135, 
     isActive: true,
     isSpecialPoint: false,
+    farePrice: 279,
     notes: 'Parada intermedia técnica.'
   },
 
@@ -127,6 +132,7 @@ export const ROUTE_STOPS: RouteStop[] = [
     timeOffsetMins: 190, 
     isActive: true,
     isSpecialPoint: false,
+    farePrice: 170,
     notes: 'Conexión rápida sur de Jalisco sobre la glorieta.'
   },
 
@@ -142,6 +148,7 @@ export const ROUTE_STOPS: RouteStop[] = [
     timeOffsetMins: 270, 
     isActive: true,
     isSpecialPoint: false,
+    farePrice: 370,
     notes: 'Punto de abordaje principal en Guadalajara Zona Poniente.'
   },
   { 
@@ -155,6 +162,7 @@ export const ROUTE_STOPS: RouteStop[] = [
     timeOffsetMins: 285, 
     isActive: true,
     isSpecialPoint: false,
+    farePrice: 370,
     notes: 'Punto de abordaje Zona Plaza del Sol.'
   },
   { 
@@ -168,6 +176,7 @@ export const ROUTE_STOPS: RouteStop[] = [
     timeOffsetMins: 300, 
     isActive: true,
     isSpecialPoint: false,
+    farePrice: 370,
     notes: 'Abordaje rumbo a Colima / Manzanillo.'
   },
 
@@ -183,6 +192,7 @@ export const ROUTE_STOPS: RouteStop[] = [
     timeOffsetMins: 345, 
     isActive: true,
     isSpecialPoint: true,
+    farePrice: 450,
     notes: 'Servicio directo a citas consulares de visa americana.'
   },
 
@@ -198,6 +208,7 @@ export const ROUTE_STOPS: RouteStop[] = [
     timeOffsetMins: 360, 
     isActive: true,
     isSpecialPoint: true,
+    farePrice: 500,
     notes: 'Paquete especial recreativo y familiar.'
   },
 ];

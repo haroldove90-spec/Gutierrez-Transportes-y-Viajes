@@ -19,7 +19,8 @@ import {
   Navigation,
   CheckCircle2,
   X,
-  Sparkles
+  Sparkles,
+  DollarSign
 } from 'lucide-react';
 
 const BASE_7_CITIES = [
@@ -63,6 +64,7 @@ export const RouteLocationsManager: React.FC = () => {
   const [formTimeOffset, setFormTimeOffset] = useState(0);
   const [formIsActive, setFormIsActive] = useState(true);
   const [formIsSpecial, setFormIsSpecial] = useState(false);
+  const [formFarePrice, setFormFarePrice] = useState<number | ''>('');
   const [formNotes, setFormNotes] = useState('');
 
   // Delete confirmation modal
@@ -84,6 +86,7 @@ export const RouteLocationsManager: React.FC = () => {
     setFormTimeOffset(0);
     setFormIsActive(true);
     setFormIsSpecial(false);
+    setFormFarePrice('');
     setFormNotes('');
     setIsModalOpen(true);
   };
@@ -109,6 +112,7 @@ export const RouteLocationsManager: React.FC = () => {
     setFormTimeOffset(stop.timeOffsetMins);
     setFormIsActive(stop.isActive);
     setFormIsSpecial(!!stop.isSpecialPoint);
+    setFormFarePrice(stop.farePrice !== undefined ? stop.farePrice : '');
     setFormNotes(stop.notes || '');
     setIsModalOpen(true);
   };
@@ -144,6 +148,7 @@ export const RouteLocationsManager: React.FC = () => {
         timeOffsetMins: Number(formTimeOffset),
         isActive: formIsActive,
         isSpecialPoint: formIsSpecial,
+        farePrice: formFarePrice === '' ? undefined : Number(formFarePrice),
         notes: formNotes.trim() || undefined
       });
     } else {
@@ -157,6 +162,7 @@ export const RouteLocationsManager: React.FC = () => {
         timeOffsetMins: Number(formTimeOffset),
         isActive: formIsActive,
         isSpecialPoint: formIsSpecial,
+        farePrice: formFarePrice === '' ? undefined : Number(formFarePrice),
         notes: formNotes.trim() || undefined
       });
     }
@@ -391,6 +397,18 @@ export const RouteLocationsManager: React.FC = () => {
                       <span className="bg-neutral-900 text-white px-2.5 py-1 rounded-xl text-xs font-black uppercase tracking-wider">
                         {stop.city}
                       </span>
+
+                      {/* Fare Price Badge */}
+                      {stop.farePrice !== undefined && stop.farePrice > 0 ? (
+                        <span className="bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1 shadow-xs">
+                          <DollarSign className="w-3.5 h-3.5 text-amber-700" />
+                          ${stop.farePrice.toLocaleString('es-MX')} MXN
+                        </span>
+                      ) : (
+                        <span className="bg-neutral-100 text-neutral-600 border border-neutral-200 px-2.5 py-1 rounded-xl text-xs font-medium flex items-center gap-1">
+                          Tarifa Base
+                        </span>
+                      )}
 
                       {/* Special Point Badge */}
                       {stop.isSpecialPoint && (
@@ -687,6 +705,28 @@ export const RouteLocationsManager: React.FC = () => {
                     className="w-full p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900 focus:outline-none focus:border-orange-500"
                   />
                 </div>
+              </div>
+
+              {/* Boarding Point Custom Price */}
+              <div className="bg-amber-50/60 p-4 rounded-2xl border border-amber-200">
+                <label className="block text-xs font-black text-amber-900 uppercase tracking-wider mb-1">
+                  Tarifa / Precio Específico de este Punto ($ MXN)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 font-bold">$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="Dejar vacío para usar la tarifa base de la ruta"
+                    value={formFarePrice}
+                    onChange={e => setFormFarePrice(e.target.value === '' ? '' : Number(e.target.value))}
+                    className="w-full pl-8 pr-3.5 py-3 bg-white border-2 border-neutral-200 rounded-2xl font-black text-neutral-900 focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+                <p className="text-[11px] text-amber-800 mt-1 font-medium">
+                  Si defines un precio aquí, se cobrará esta cantidad exacta cuando el pasajero elija abordar en este punto (ej. $450 CAS, $500 Zoológico, $370 Manzanillo, etc.).
+                </p>
               </div>
 
               {/* Checkboxes: Active & Special Point */}

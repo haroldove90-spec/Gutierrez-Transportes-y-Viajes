@@ -12,6 +12,7 @@ import {
   ExceptionRequest, 
   Seat, 
   RouteStop, 
+  RoutePricing,
   RentalCar, 
   CharterAssignment,
   DriverAlarm
@@ -37,6 +38,9 @@ import {
   fetchBookingsFromSupabase,
   fetchRouteStopsFromSupabase,
   upsertRouteStopToSupabase,
+  fetchRoutePricingsFromSupabase,
+  upsertRoutePricingToSupabase,
+  deleteRoutePricingFromSupabase,
   saveBookingToSupabase,
   updateBookingCheckInInSupabase,
   saveRentalQuoteToSupabase
@@ -108,6 +112,14 @@ interface AppContextType {
   toggleRouteStopStatus: (id: string) => boolean;
   deleteRouteStop: (id: string) => boolean;
   resetRouteStopsToDefault: () => void;
+
+  // Route Pricings / Tarifas Oficiales (Admin configurable)
+  routePricings: RoutePricing[];
+  addRoutePricing: (pricingData: Omit<RoutePricing, 'id'>) => RoutePricing;
+  updateRoutePricing: (id: string, updated: Partial<RoutePricing>) => boolean;
+  toggleRoutePricingStatus: (id: string) => boolean;
+  deleteRoutePricing: (id: string) => boolean;
+  resetRoutePricingsToDefault: () => void;
 
   // Fleet Image Management (Admin configurable)
   updateVehicleImage: (vehicleId: string, newImageUrl: string) => void;
@@ -310,6 +322,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error('Error persisting route stops', e);
     }
   }, [routeStops]);
+
+  // Route Pricings / Tarifas Oficiales (Admin configurable)
+  const [routePricings, setRoutePricings] = useState<RoutePricing[]>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_route_pricings_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Error loading saved route pricings', e);
+    }
+    return OFFICIAL_PRICING;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_route_pricings_v1', JSON.stringify(routePricings));
+    } catch (e) {
+      console.error('Error persisting route pricings', e);
+    }
+  }, [routePricings]);
 
   const [selectedTripId, setSelectedTripId] = useState<string | null>('trip-101');
   const [tempLockedSeats, setTempLockedSeats] = useState<{ tripId: string; seatNumbers: number[]; expiresAt: number } | null>(null);
@@ -602,10 +638,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSupabaseMessage(res.error);
       } else if (res.connected) {
         setSupabaseMessage('Conectado a Supabase PostgreSQL');
-        const [cloudTrips, cloudBookings, cloudStops] = await Promise.all([
+        const [cloudTrips, cloudBookings, cloudStops, cloudPricings] = await Promise.all([
           fetchTripsFromSupabase(),
           fetchBookingsFromSupabase(),
-          fetchRouteStopsFromSupabase()
+          fetchRouteStopsFromSupabase(),
+          fetchRoutePricingsFromSupabase()
         ]);
         if (cloudTrips && cloudTrips.length > 0) {
           setTrips(cloudTrips);
@@ -615,6 +652,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
         if (cloudStops && cloudStops.length > 0) {
           setRouteStops(cloudStops);
+        }
+        if (cloudPricings && cloudPricings.length > 0) {
+          setRoutePricings(cloudPricings);
         }
       }
     } catch {
@@ -1388,6 +1428,82 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Catálogo restablecido a las ubicaciones oficiales base.', 'info');
   };
 
+  // Route Pricing Management (Tarifas Oficiales)
+  const addRoutePricing = (pricingData: Omit<RoutePricing, 'id'>): RoutePricing => {
+    const newPricing: RoutePricing = {
+      ...pricingData,
+      id: `fare-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      isActive: pricingData.isActive !== undefined ? pricingData.isActive : true
+    };
+    setRoutePricings(prev => [...prev, newPricing]);
+    upsertRoutePricingToSupabase(newPricing).catch(() => {});
+    addAuditEntry('CREACION_TARIFA', 'RoutePricing', newPricing.id!, 'n/a', `${newPricing.origin} a ${newPricing.destination} ($${newPricing.singlePrice})`);
+    showNotification(`Tarifa ${newPricing.origin} ⇄ ${newPricing.destination} guardada con éxito.`, 'success');
+    return newPricing;
+  };
+
+  const updateRoutePricing = (id: string, updated: Partial<RoutePricing>): boolean => {
+    let found = false;
+    let targetPricing: RoutePricing | null = null;
+    setRoutePricings(prev => prev.map(p => {
+      if (p.id === id) {
+        found = true;
+        const merged = { ...p, ...updated };
+        targetPricing = merged;
+        return merged;
+      }
+      return p;
+    }));
+    if (found && targetPricing) {
+      upsertRoutePricingToSupabase(targetPricing).catch(() => {});
+      addAuditEntry('ACTUALIZACION_TARIFA', 'RoutePricing', id, 'modificado', JSON.stringify(updated));
+      showNotification('Tarifa de ruta actualizada correctamente.', 'success');
+    }
+    return found;
+  };
+
+  const toggleRoutePricingStatus = (id: string): boolean => {
+    let newStatus = false;
+    let routeName = '';
+    let targetPricing: RoutePricing | null = null;
+    setRoutePricings(prev => prev.map(p => {
+      if (p.id === id) {
+        newStatus = p.isActive === false ? true : false;
+        routeName = `${p.origin} ⇄ ${p.destination}`;
+        const merged = { ...p, isActive: newStatus };
+        targetPricing = merged;
+        return merged;
+      }
+      return p;
+    }));
+    if (targetPricing) {
+      upsertRoutePricingToSupabase(targetPricing).catch(() => {});
+    }
+    addAuditEntry('ESTADO_TARIFA', 'RoutePricing', id, newStatus ? 'activo' : 'inactivo', routeName);
+    showNotification(
+      newStatus ? `Tarifa "${routeName}" ACTIVADA` : `Tarifa "${routeName}" DESACTIVADA`,
+      newStatus ? 'success' : 'info'
+    );
+    return true;
+  };
+
+  const deleteRoutePricing = (id: string): boolean => {
+    const target = routePricings.find(p => p.id === id);
+    setRoutePricings(prev => prev.filter(p => p.id !== id));
+    deleteRoutePricingFromSupabase(id).catch(() => {});
+    addAuditEntry('ELIMINACION_TARIFA', 'RoutePricing', id, 'eliminado', target ? `${target.origin} a ${target.destination}` : id);
+    showNotification('Tarifa eliminada del catálogo.', 'info');
+    return true;
+  };
+
+  const resetRoutePricingsToDefault = () => {
+    setRoutePricings(OFFICIAL_PRICING);
+    try {
+      localStorage.removeItem('gutierrez_route_pricings_v1');
+    } catch (e) {}
+    showNotification('Tarifas restablecidas a los valores oficiales base.', 'info');
+  };
+
   const updateVehicleImage = (vehicleId: string, newImageUrl: string) => {
     setVehicles(prev => {
       const updated = prev.map(v => v.id === vehicleId ? { ...v, image: newImageUrl } : v);
@@ -1524,6 +1640,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleRouteStopStatus,
         deleteRouteStop,
         resetRouteStopsToDefault,
+        routePricings,
+        addRoutePricing,
+        updateRoutePricing,
+        toggleRoutePricingStatus,
+        deleteRoutePricing,
+        resetRoutePricingsToDefault,
         updateVehicleImage,
         updateRentalCarImage,
         activeTicket,

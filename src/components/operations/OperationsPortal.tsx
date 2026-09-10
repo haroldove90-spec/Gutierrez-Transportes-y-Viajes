@@ -22,6 +22,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { RouteLocationsManager } from '../common/RouteLocationsManager';
+import { RouteFaresManager } from '../common/RouteFaresManager';
 import { DriverAssignmentsSchedule } from './DriverAssignmentsSchedule';
 import { Vehicle, VehicleCategory } from '../../types';
 
@@ -542,6 +543,13 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Tab: Gestión de Tarifas y Precios */}
+      {activeTab === 'fares_manager' && (
+        <div className="max-w-6xl mx-auto w-full">
+          <RouteFaresManager />
         </div>
       )}
 

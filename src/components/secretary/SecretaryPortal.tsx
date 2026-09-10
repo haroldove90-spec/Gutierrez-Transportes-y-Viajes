@@ -33,6 +33,8 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
     drivers,
     rentalCars,
     quotes, 
+    routePricings,
+    routeStops,
     createRentalQuote, 
     convertQuoteToReservation, 
     createBooking, 
@@ -104,15 +106,26 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
 
     const trip = trips.find(t => t.id === counterTripId) || trips[0];
     
-    // Look up official pricing
-    const matchedPricing = OFFICIAL_PRICING.find(
+    // Look up dynamic active pricing
+    const activePricings = routePricings.filter(p => p.isActive !== false);
+    const matchedPricing = activePricings.find(
       p => (p.origin.toLowerCase().includes(trip.origin.toLowerCase().split(' ')[0]) || trip.origin.toLowerCase().includes(p.origin.toLowerCase())) &&
            (p.destination.toLowerCase().includes(trip.destination.toLowerCase().split(' ')[0]) || trip.destination.toLowerCase().includes(p.destination.toLowerCase()))
     );
 
-    const price = (counterTripType === 'redondo' && matchedPricing?.roundTripPrice) 
+    // Look up if selected boarding stop has custom farePrice set by admin
+    const matchedBoardingStop = routeStops.find(s => 
+      counterBoardingPoint.includes(s.name) || 
+      counterBoardingPoint === `${s.city}: ${s.name} (${s.landmark})`
+    );
+
+    const basePrice = (counterTripType === 'redondo' && matchedPricing?.roundTripPrice) 
       ? matchedPricing.roundTripPrice 
       : (matchedPricing?.singlePrice || trip.basePrice);
+
+    const price = (matchedBoardingStop?.farePrice && matchedBoardingStop.farePrice > 0)
+      ? (counterTripType === 'redondo' ? (matchedBoardingStop.farePrice * 2 - 20) : matchedBoardingStop.farePrice)
+      : basePrice;
 
     const newBooking = createBooking({
       tripId: trip.id,
@@ -261,9 +274,9 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                   onChange={e => setCounterBoardingPoint(e.target.value)}
                   className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900 text-xs md:text-sm"
                 >
-                  {ROUTE_STOPS.map(stop => (
+                  {routeStops.filter(s => s.isActive).map(stop => (
                     <option key={stop.id} value={`${stop.city}: ${stop.name} (${stop.landmark})`}>
-                      {stop.city} — {stop.name} [{stop.landmark}]
+                      {stop.city} — {stop.name} [{stop.landmark}] {stop.farePrice ? `(Tarifa: $${stop.farePrice} MXN)` : ''}
                     </option>
                   ))}
                 </select>
@@ -343,12 +356,33 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                 </div>
               </div>
 
-              <button
-                type="submit"
-                className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-sm md:text-base shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-              >
-                <ShieldCheck className="w-5 h-5" /> Emitir Pasaje Inmediato
-              </button>
+              {(() => {
+                const trip = trips.find(t => t.id === counterTripId) || trips[0];
+                const activePricings = routePricings.filter(p => p.isActive !== false);
+                const matchedPricing = trip ? activePricings.find(
+                  p => (p.origin.toLowerCase().includes(trip.origin.toLowerCase().split(' ')[0]) || trip.origin.toLowerCase().includes(p.origin.toLowerCase())) &&
+                       (p.destination.toLowerCase().includes(trip.destination.toLowerCase().split(' ')[0]) || trip.destination.toLowerCase().includes(p.destination.toLowerCase()))
+                ) : null;
+                const matchedBoardingStop = routeStops.find(s => 
+                  counterBoardingPoint.includes(s.name) || 
+                  counterBoardingPoint === `${s.city}: ${s.name} (${s.landmark})`
+                );
+                const basePrice = (counterTripType === 'redondo' && matchedPricing?.roundTripPrice) 
+                  ? matchedPricing.roundTripPrice 
+                  : (matchedPricing?.singlePrice || trip?.basePrice || 480);
+                const livePrice = (matchedBoardingStop?.farePrice && matchedBoardingStop.farePrice > 0)
+                  ? (counterTripType === 'redondo' ? (matchedBoardingStop.farePrice * 2 - 20) : matchedBoardingStop.farePrice)
+                  : basePrice;
+
+                return (
+                  <button
+                    type="submit"
+                    className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-sm md:text-base shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                  >
+                    <ShieldCheck className="w-5 h-5" /> Emitir Pasaje Inmediato — ${livePrice} MXN
+                  </button>
+                );
+              })()}
             </form>
           </div>
         </div>

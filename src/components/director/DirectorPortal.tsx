@@ -9,6 +9,7 @@ import {
   MapPin
 } from 'lucide-react';
 import { RouteLocationsManager } from '../common/RouteLocationsManager';
+import { RouteFaresManager } from '../common/RouteFaresManager';
 import { FleetPhotosManager } from './FleetPhotosManager';
 import { DriverAssignmentsSchedule } from '../operations/DriverAssignmentsSchedule';
 import { Camera, CalendarDays } from 'lucide-react';
@@ -286,6 +287,13 @@ export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab, setAc
       {/* Tab: Gestión de Flotilla y Fotos */}
       {activeTab === 'fleet_photos' && (
         <FleetPhotosManager />
+      )}
+
+      {/* Tab: Gestión Integral de Tarifas y Precios Oficiales */}
+      {activeTab === 'fares_manager' && (
+        <div className="max-w-6xl mx-auto w-full">
+          <RouteFaresManager />
+        </div>
       )}
 
       {/* Tab 5: Configuración de Puntos de Partida y Ubicaciones GPS */}

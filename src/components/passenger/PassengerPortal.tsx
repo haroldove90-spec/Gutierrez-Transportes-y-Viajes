@@ -38,6 +38,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
     trips, 
     bookings, 
     routeStops,
+    routePricings,
     selectedTripId, 
     setSelectedTripId, 
     tempLockedSeats, 
@@ -71,17 +72,22 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
 
   const selectedTrip = trips.find(t => t.id === selectedTripId) || trips[0];
 
+  // Active pricings managed by admin
+  const activePricings = useMemo(() => {
+    return routePricings.filter(p => p.isActive !== false);
+  }, [routePricings]);
+
   // Dynamic available destinations for chosen origin
   const availableDestinations = useMemo(() => {
-    const list = OFFICIAL_PRICING
+    const list = activePricings
       .filter(p => p.origin.toLowerCase() === origin.toLowerCase())
       .map(p => p.destination);
     return list.length > 0 ? list : ['Guadalajara (GDL)', 'Colima'];
-  }, [origin]);
+  }, [origin, activePricings]);
 
   const handleOriginChange = (newOrigin: string) => {
     setOrigin(newOrigin);
-    const validDests = OFFICIAL_PRICING
+    const validDests = activePricings
       .filter(p => p.origin.toLowerCase() === newOrigin.toLowerCase())
       .map(p => p.destination);
     if (validDests.length > 0 && !validDests.includes(destination)) {
@@ -90,17 +96,28 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
   };
 
   // Calculate pricing based on origin and destination
-  const matchedPricing: RoutePricing = OFFICIAL_PRICING.find(
+  const matchedPricing: RoutePricing = activePricings.find(
     p => p.origin.toLowerCase() === origin.toLowerCase() &&
          p.destination.toLowerCase() === destination.toLowerCase()
-  ) || OFFICIAL_PRICING.find(
+  ) || activePricings.find(
     p => (p.origin.toLowerCase().includes(origin.toLowerCase().split(' ')[0]) || origin.toLowerCase().includes(p.origin.toLowerCase())) &&
          (p.destination.toLowerCase().includes(destination.toLowerCase().split(' ')[0]) || destination.toLowerCase().includes(p.destination.toLowerCase()))
   ) || { origin, destination, singlePrice: selectedTrip.basePrice, roundTripPrice: selectedTrip.basePrice * 2 - 20, timeEstimate: '4 hrs', notes: 'Ruta directa troncal' };
 
-  const unitPrice = (tripType === 'redondo' && matchedPricing.roundTripPrice) 
+  // Check if chosen boarding stop has a specific price assigned by admin
+  const matchedBoardingStop = routeStops.find(s => 
+    selectedBoardingStop.includes(s.name) || 
+    selectedBoardingStop === `${s.city}: ${s.name} (${s.landmark})`
+  );
+
+  const baseUnitPrice = (tripType === 'redondo' && matchedPricing.roundTripPrice) 
     ? matchedPricing.roundTripPrice 
     : matchedPricing.singlePrice;
+
+  // If the boarding stop has an explicit farePrice set by admin, apply it!
+  const unitPrice = (matchedBoardingStop?.farePrice && matchedBoardingStop.farePrice > 0)
+    ? (tripType === 'redondo' ? (matchedBoardingStop.farePrice * 2 - 20) : matchedBoardingStop.farePrice)
+    : baseUnitPrice;
 
   const parcelFee = hasParcel ? (origin.includes('Manzanillo') ? 250 : 150) : 0;
   const petFee = hasPet ? (origin.includes('Manzanillo') ? 250 : 150) : 0;
@@ -575,7 +592,7 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                 >
                   {routeStops.filter(s => s.isActive).map(stop => (
                     <option key={stop.id} value={`${stop.city}: ${stop.name} (${stop.landmark})`}>
-                      {stop.city}: {stop.name} — {stop.landmark}
+                      {stop.city}: {stop.name} — {stop.landmark} {stop.farePrice ? `(Tarifa: $${stop.farePrice} MXN)` : ''}
                     </option>
                   ))}
                 </select>
@@ -860,13 +877,23 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
           </div>
 
           <div className="space-y-3">
-            {OFFICIAL_PRICING.map((item, idx) => (
+            {activePricings.map((item, idx) => (
               <div key={idx} className="bg-white rounded-2xl p-4 border-2 border-neutral-200 shadow-xs flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2 text-sm md:text-base font-black text-neutral-900">
                     <span>{item.origin}</span>
                     <span className="text-orange-600">➔</span>
                     <span>{item.destination}</span>
+                    {item.packageType === 'cas_visa' && (
+                      <span className="text-[10px] font-black bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md ml-1">
+                        CAS Visa
+                      </span>
+                    )}
+                    {item.packageType === 'zoologico' && (
+                      <span className="text-[10px] font-black bg-teal-100 text-teal-800 px-2 py-0.5 rounded-md ml-1">
+                        Zoológico
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs md:text-sm text-neutral-500 font-medium mt-0.5">{item.notes} • ~{item.timeEstimate}</p>
                 </div>
@@ -901,9 +928,16 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                 <div key={stop.id} className="p-4 bg-neutral-50 rounded-2xl border-2 border-neutral-200 space-y-2 flex flex-col justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-black bg-neutral-900 text-white px-2 py-0.5 rounded-md uppercase">
-                        {stop.city}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-black bg-neutral-900 text-white px-2 py-0.5 rounded-md uppercase">
+                          {stop.city}
+                        </span>
+                        {stop.farePrice !== undefined && stop.farePrice > 0 && (
+                          <span className="text-xs font-black bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md">
+                            ${stop.farePrice} MXN
+                          </span>
+                        )}
+                      </div>
                       {stop.isSpecialPoint && (
                         <span className="text-[10px] font-black bg-purple-100 text-purple-800 px-2 py-0.5 rounded-md">
                           ⭐ Especial

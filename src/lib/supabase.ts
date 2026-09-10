@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Booking, TripSchedule, RentalQuote, RouteStop } from '../types';
+import { Booking, TripSchedule, RentalQuote, RouteStop, RoutePricing } from '../types';
 import { ROUTE_STOPS } from '../data/mockData';
 
 // Fallback configuration provided by user
@@ -268,6 +268,7 @@ export async function fetchRouteStopsFromSupabase(): Promise<RouteStop[] | null>
       timeOffsetMins: s.time_offset_mins,
       isActive: s.is_active ?? true,
       isSpecialPoint: s.is_special_point ?? false,
+      farePrice: s.fare_price ? Number(s.fare_price) : undefined,
       notes: s.notes
     }));
   } catch {
@@ -291,8 +292,71 @@ export async function upsertRouteStopToSupabase(stop: RouteStop): Promise<boolea
       time_offset_mins: stop.timeOffsetMins,
       is_active: stop.isActive,
       is_special_point: stop.isSpecialPoint ?? false,
+      fare_price: stop.farePrice ?? null,
       notes: stop.notes || null
     });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch route pricings / tarifas from Supabase
+ */
+export async function fetchRoutePricingsFromSupabase(): Promise<RoutePricing[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('route_pricings')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (error || !data || data.length === 0) return null;
+
+    return data.map((p: any) => ({
+      id: p.id,
+      origin: p.origin,
+      destination: p.destination,
+      singlePrice: Number(p.single_price),
+      roundTripPrice: p.round_trip_price ? Number(p.round_trip_price) : undefined,
+      timeEstimate: p.time_estimate || '2.5 hrs',
+      notes: p.notes || '',
+      packageType: p.package_type || 'estandar',
+      isActive: p.is_active ?? true
+    }));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Upsert route pricing to Supabase
+ */
+export async function upsertRoutePricingToSupabase(pricing: RoutePricing): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('route_pricings').upsert({
+      id: pricing.id || `fare-${pricing.origin.toLowerCase().replace(/\s+/g, '')}-${pricing.destination.toLowerCase().replace(/\s+/g, '')}`,
+      origin: pricing.origin,
+      destination: pricing.destination,
+      single_price: pricing.singlePrice,
+      round_trip_price: pricing.roundTripPrice ?? null,
+      time_estimate: pricing.timeEstimate,
+      notes: pricing.notes || null,
+      package_type: pricing.packageType || 'estandar',
+      is_active: pricing.isActive !== undefined ? pricing.isActive : true
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Delete route pricing from Supabase
+ */
+export async function deleteRoutePricingFromSupabase(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('route_pricings').delete().eq('id', id);
     return !error;
   } catch {
     return false;

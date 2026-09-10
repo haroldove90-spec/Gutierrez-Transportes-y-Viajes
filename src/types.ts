@@ -18,10 +18,12 @@ export interface RouteStop {
   timeOffsetMins: number;
   isActive: boolean; // Control para activar/desactivar punto de partida
   isSpecialPoint?: boolean; // CAS, Zoológico
+  farePrice?: number; // Precio / Tarifa específica asignada a este punto de abordaje ($ MXN)
   notes?: string;
 }
 
 export interface RoutePricing {
+  id?: string;
   origin: string;
   destination: string;
   singlePrice: number;
@@ -29,6 +31,7 @@ export interface RoutePricing {
   timeEstimate: string;
   notes: string;
   packageType?: 'estandar' | 'consulado' | 'zoologico' | 'intermedio';
+  isActive?: boolean;
 }
 
 export interface Seat {
