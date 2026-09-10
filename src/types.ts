@@ -276,3 +276,19 @@ export interface ExceptionRequest {
   createdAt: string;
   approvedBy?: string;
 }
+
+export interface DriverAlarm {
+  id: string;
+  driverId: string;
+  tripId?: string;
+  type: 'two_hour_reminder' | 'admin_manual_wake' | 'new_trip_assigned';
+  title: string;
+  message: string;
+  routeDetails?: string;
+  unitNumber?: string;
+  departureTime?: string;
+  createdAt: string;
+  status: 'active' | 'acknowledged';
+  acknowledgedAt?: string;
+  triggeredBy: string;
+}

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { 
   UserRole, 
   TripSchedule, 
@@ -9,11 +9,12 @@ import {
   RentalQuote, 
   InvoiceCFDI, 
   AuditLog, 
-  ExceptionRequest,
-  Seat,
-  RouteStop,
-  RentalCar,
-  CharterAssignment
+  ExceptionRequest, 
+  Seat, 
+  RouteStop, 
+  RentalCar, 
+  CharterAssignment,
+  DriverAlarm
 } from '../types';
 import {
   INITIAL_TRIPS,
@@ -113,7 +114,17 @@ interface AppContextType {
   activeTicket: Booking | null;
   setActiveTicket: (booking: Booking | null) => void;
   
-  // Notifications
+  // Notifications & Driver Alarms (Despertador / Recordatorio 2h)
+  driverAlarms: DriverAlarm[];
+  activeAlarm: DriverAlarm | null;
+  sendManualWakeUpAlarm: (driverId: string, tripId?: string, note?: string) => boolean;
+  acknowledgeAlarm: (alarmId: string) => void;
+  dismissActiveAlarmModal: () => void;
+  soundPermissionGranted: boolean;
+  requestSoundAndNotificationPermission: () => Promise<boolean>;
+  playAlarmSoundTest: () => void;
+  stopAlarmSound: () => void;
+
   notification: { message: string; type: 'success' | 'error' | 'info' } | null;
   showNotification: (message: string, type?: 'success' | 'error' | 'info') => void;
 
@@ -123,6 +134,35 @@ interface AppContextType {
   showSupabaseModal: boolean;
   setShowSupabaseModal: (show: boolean) => void;
   syncWithSupabase: () => Promise<void>;
+}
+
+export const ALARM_AUDIO_URL = 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/sonidos/u_k9wiszrfee-notify-169186%20(1).mp3';
+
+export function parseDepartureTimeToDate(dateStr: string, timeStr: string): Date | null {
+  try {
+    if (!dateStr || !timeStr) return null;
+    const parts = dateStr.split('-');
+    if (parts.length < 3) return null;
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+
+    const cleanTime = timeStr.trim().toUpperCase();
+    const isPM = cleanTime.includes('PM');
+    const isAM = cleanTime.includes('AM');
+    const numPart = cleanTime.replace('AM', '').replace('PM', '').trim();
+    const timeComponents = numPart.split(':');
+    let hours = parseInt(timeComponents[0], 10);
+    const minutes = timeComponents.length > 1 ? parseInt(timeComponents[1], 10) : 0;
+
+    if (isNaN(hours)) return null;
+    if (isPM && hours < 12) hours += 12;
+    if (isAM && hours === 12) hours = 0;
+
+    return new Date(year, month, day, hours, minutes, 0, 0);
+  } catch (e) {
+    return null;
+  }
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -242,6 +282,278 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tempLockedSeats, setTempLockedSeats] = useState<{ tripId: string; seatNumbers: number[]; expiresAt: number } | null>(null);
   const [activeTicket, setActiveTicket] = useState<Booking | null>(INITIAL_BOOKINGS[0]);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  // Driver Alarms & Despertador State
+  const [driverAlarms, setDriverAlarms] = useState<DriverAlarm[]>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_driver_alarms_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Error loading driver alarms', e);
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_driver_alarms_v1', JSON.stringify(driverAlarms));
+    } catch (e) {}
+  }, [driverAlarms]);
+
+  const [activeAlarm, setActiveAlarm] = useState<DriverAlarm | null>(null);
+  const [soundPermissionGranted, setSoundPermissionGranted] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      return Notification.permission === 'granted';
+    }
+    return false;
+  });
+
+  const alarmAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    try {
+      const audio = new Audio(ALARM_AUDIO_URL);
+      audio.loop = true;
+      audio.volume = 1.0;
+      audio.preload = 'auto';
+      alarmAudioRef.current = audio;
+    } catch (e) {
+      console.warn('Audio initialization warning', e);
+    }
+
+    return () => {
+      if (alarmAudioRef.current) {
+        alarmAudioRef.current.pause();
+        alarmAudioRef.current = null;
+      }
+    };
+  }, []);
+
+  const startAlarmSound = () => {
+    try {
+      if (!alarmAudioRef.current) {
+        const audio = new Audio(ALARM_AUDIO_URL);
+        audio.loop = true;
+        audio.volume = 1.0;
+        alarmAudioRef.current = audio;
+      }
+      const audio = alarmAudioRef.current;
+      audio.currentTime = 0;
+      audio.loop = true;
+      audio.volume = 1.0;
+      audio.play().catch(e => {
+        console.warn('Autoplay prevented by browser, manual touch required:', e);
+      });
+    } catch (e) {
+      console.error('Error starting alarm audio:', e);
+    }
+
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([1000, 500, 1000, 500, 1000]);
+      } catch (e) {}
+    }
+  };
+
+  const stopAlarmSound = () => {
+    try {
+      if (alarmAudioRef.current) {
+        alarmAudioRef.current.pause();
+        alarmAudioRef.current.currentTime = 0;
+      }
+    } catch (e) {}
+
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(0);
+      } catch (e) {}
+    }
+  };
+
+  const playAlarmSoundTest = () => {
+    startAlarmSound();
+    showNotification('🔔 Probando sonido de alarma oficial. Sonará durante 5 segundos...', 'info');
+    setTimeout(() => {
+      if (!activeAlarm) {
+        stopAlarmSound();
+      }
+    }, 5000);
+  };
+
+  const requestSoundAndNotificationPermission = async (): Promise<boolean> => {
+    try {
+      if (alarmAudioRef.current) {
+        alarmAudioRef.current.volume = 1.0;
+        alarmAudioRef.current.currentTime = 0;
+        const p = alarmAudioRef.current.play();
+        if (p !== undefined) {
+          p.then(() => {
+            setTimeout(() => {
+              if (!activeAlarm) {
+                alarmAudioRef.current?.pause();
+                alarmAudioRef.current!.currentTime = 0;
+              }
+            }, 600);
+          }).catch(err => {
+            console.warn('Audio pre-unlock warning:', err);
+          });
+        }
+      }
+
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        const permission = await Notification.requestPermission();
+        const granted = permission === 'granted';
+        setSoundPermissionGranted(granted);
+        if (granted) {
+          showNotification('¡Notificaciones y sonido de alarma habilitados en este dispositivo!', 'success');
+          return true;
+        } else {
+          showNotification('Permiso del navegador denegado. La alerta flotante en pantalla seguirá activa.', 'info');
+        }
+      } else {
+        setSoundPermissionGranted(true);
+      }
+    } catch (e) {
+      console.error('Error requesting permissions:', e);
+    }
+    return false;
+  };
+
+  const acknowledgeAlarm = (alarmId: string) => {
+    stopAlarmSound();
+    setDriverAlarms(prev => prev.map(a => a.id === alarmId ? {
+      ...a,
+      status: 'acknowledged',
+      acknowledgedAt: new Date().toISOString()
+    } : a));
+    if (activeAlarm?.id === alarmId) {
+      setActiveAlarm(null);
+    }
+    showNotification('¡Alarma apagada con éxito! Has confirmado asistencia y conocimiento de tu viaje.', 'success');
+    addAuditEntry('ALARMA_DESPERTADOR_APAGADA', 'DriverAlarm', alarmId, undefined, 'Chofer apagó la alarma y confirmó asistencia.');
+  };
+
+  const dismissActiveAlarmModal = () => {
+    if (activeAlarm) {
+      acknowledgeAlarm(activeAlarm.id);
+    } else {
+      stopAlarmSound();
+    }
+  };
+
+  const sendManualWakeUpAlarm = (driverId: string, tripId?: string, note?: string): boolean => {
+    const driver = drivers.find(d => d.id === driverId);
+    if (!driver) {
+      showNotification('No se encontró el operador seleccionado.', 'error');
+      return false;
+    }
+
+    const trip = trips.find(t => t.id === tripId) || trips.find(t => t.driverId === driverId);
+    const veh = vehicles.find(v => v.id === (trip?.vehicleId || driver.currentVehicleId));
+
+    const newAlarm: DriverAlarm = {
+      id: `alarm-manual-${driverId}-${Date.now()}`,
+      driverId,
+      tripId: trip?.id,
+      type: 'admin_manual_wake',
+      title: '🚨 DESPERTADOR URGENTE DE ADMINISTRACIÓN',
+      message: note || `La Administración ha activado esta alarma sonora en tu celular. ¡Despierta y confirma inmediatamente tu salida del viaje a ${trip?.destination || 'Ruta'}!`,
+      routeDetails: trip?.routeTitle,
+      unitNumber: veh?.unitNumber,
+      departureTime: trip?.departureTime,
+      createdAt: new Date().toISOString(),
+      status: 'active',
+      triggeredBy: 'Administración / Despacho Central'
+    };
+
+    setDriverAlarms(prev => [newAlarm, ...prev]);
+    setActiveAlarm(newAlarm);
+    startAlarmSound();
+
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(newAlarm.title, {
+          body: newAlarm.message,
+          icon: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/sprinterde21pasajeros.png',
+          requireInteraction: true
+        });
+      } catch (e) {}
+    }
+
+    addAuditEntry(
+      'ALARMA_DESPERTADOR_DISPARADA',
+      'Driver',
+      driverId,
+      undefined,
+      `Alarma despertador manual enviada a ${driver.name} por Administración.`
+    );
+
+    showNotification(`¡Alarma despertador enviada con sonido a ${driver.name}!`, 'success');
+    return true;
+  };
+
+  // Temporizador preventivo: Alarma automática 2 horas antes de la salida del viaje
+  useEffect(() => {
+    const checkUpcomingTrips = () => {
+      const now = new Date();
+
+      trips.forEach(trip => {
+        if (!trip.driverId || (trip.status !== 'scheduled' && trip.status !== 'boarding')) {
+          return;
+        }
+
+        const departureDate = parseDepartureTimeToDate(trip.date, trip.departureTime);
+        if (!departureDate) return;
+
+        const diffMinutes = (departureDate.getTime() - now.getTime()) / (1000 * 60);
+
+        // Si faltan 2 horas o menos (entre 0 y 120 minutos)
+        if (diffMinutes <= 120 && diffMinutes >= -15) {
+          setDriverAlarms(prev => {
+            const alreadyExists = prev.some(
+              a => a.driverId === trip.driverId && a.tripId === trip.id && a.type === 'two_hour_reminder'
+            );
+            if (alreadyExists) return prev;
+
+            const veh = vehicles.find(v => v.id === trip.vehicleId);
+            const newAlarm: DriverAlarm = {
+              id: `alarm-2h-${trip.id}-${trip.driverId}-${Date.now()}`,
+              driverId: trip.driverId,
+              tripId: trip.id,
+              type: 'two_hour_reminder',
+              title: '⏰ RECORDATORIO: TU VIAJE SALE EN MENOS DE 2 HORAS',
+              message: `Atención: Tu viaje de las ${trip.departureTime} en la ${veh?.unitNumber || 'unidad asignada'} está próximo a salir. Ruta: ${trip.routeTitle}. Confirma que estás despierto.`,
+              routeDetails: trip.routeTitle,
+              unitNumber: veh?.unitNumber,
+              departureTime: trip.departureTime,
+              createdAt: new Date().toISOString(),
+              status: 'active',
+              triggeredBy: 'Sistema Automático (2h antes)'
+            };
+
+            setActiveAlarm(newAlarm);
+            startAlarmSound();
+
+            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+              try {
+                new Notification(newAlarm.title, {
+                  body: newAlarm.message,
+                  icon: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/sprinterde21pasajeros.png',
+                  requireInteraction: true
+                });
+              } catch (e) {}
+            }
+
+            return [newAlarm, ...prev];
+          });
+        }
+      });
+    };
+
+    checkUpcomingTrips();
+    const timer = setInterval(checkUpcomingTrips, 25000);
+    return () => clearInterval(timer);
+  }, [trips, vehicles]);
 
   // Supabase State
   const [supabaseConnected, setSupabaseConnected] = useState<boolean>(false);
@@ -637,6 +949,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return t;
     }));
 
+    // 6. Notificación y Alarma de Despacho Inmediata al Chofer
+    const assignAlarm: DriverAlarm = {
+      id: `alarm-assign-${driverId}-${Date.now()}`,
+      driverId,
+      type: 'new_trip_assigned',
+      title: '🚐 NUEVA UNIDAD Y VIAJE ASIGNADO',
+      message: `El Administrador te ha asignado la unidad ${vehicle.unitNumber} (${vehicle.model}, Placas ${vehicle.plate}). Revisa tus horarios de salida programados en tu panel.`,
+      unitNumber: vehicle.unitNumber,
+      createdAt: new Date().toISOString(),
+      status: 'active',
+      triggeredBy: 'Administración / Despacho Central'
+    };
+
+    setDriverAlarms(prev => [assignAlarm, ...prev]);
+    setActiveAlarm(assignAlarm);
+    startAlarmSound();
+
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(assignAlarm.title, {
+          body: assignAlarm.message,
+          icon: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/sprinterde21pasajeros.png',
+          requireInteraction: true
+        });
+      } catch (e) {}
+    }
+
     addAuditEntry(
       'DESPACHO_ASIGNACION',
       'Fleet',
@@ -644,7 +983,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       previousDriverOnVehicleId || 'Sin asignar',
       `Operador: ${driver.name} asignado a ${vehicle.unitNumber}`
     );
-    showNotification(`¡Asignación exitosa! ${driver.name} quedó asignado a la ${vehicle.unitNumber}.`, 'success');
+    showNotification(`¡Asignación exitosa! ${driver.name} quedó asignado a la ${vehicle.unitNumber} y fue notificado.`, 'success');
     return true;
   };
 
@@ -730,6 +1069,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 3. Registrar en la agenda de asignaciones
     setCharterAssignments(prev => [newAssignment, ...prev]);
+
+    // 4. Notificación y Alarma de Despacho Inmediata al Chofer
+    const charterAlarm: DriverAlarm = {
+      id: `alarm-charter-${data.driverId}-${Date.now()}`,
+      driverId: data.driverId,
+      type: 'new_trip_assigned',
+      title: '🌴 NUEVO SERVICIO TURÍSTICO ASIGNADO',
+      message: `El Administrador te ha asignado al viaje especial hacia ${data.destination} para ${data.clientName}. Fechas: ${data.startDate} al ${data.endDate}. Unidad: ${data.unitNumber}.`,
+      unitNumber: data.unitNumber,
+      routeDetails: `Viaje Especial a ${data.destination}`,
+      createdAt: new Date().toISOString(),
+      status: 'active',
+      triggeredBy: 'Administración / Despacho'
+    };
+
+    setDriverAlarms(prev => [charterAlarm, ...prev]);
+    setActiveAlarm(charterAlarm);
+    startAlarmSound();
+
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(charterAlarm.title, {
+          body: charterAlarm.message,
+          icon: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/sprinterde21pasajeros.png',
+          requireInteraction: true
+        });
+      } catch (e) {}
+    }
 
     addAuditEntry(
       'ASIGNACION_VIAJE_TURISTICO_PARTICULAR',
@@ -1083,6 +1450,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateRentalCarImage,
         activeTicket,
         setActiveTicket,
+        driverAlarms,
+        activeAlarm,
+        sendManualWakeUpAlarm,
+        acknowledgeAlarm,
+        dismissActiveAlarmModal,
+        soundPermissionGranted,
+        requestSoundAndNotificationPermission,
+        playAlarmSoundTest,
+        stopAlarmSound,
         notification,
         showNotification,
         supabaseConnected,

@@ -201,6 +201,23 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
     ip_address TEXT DEFAULT '187.190.22.84'
 );
 
+-- 11. TABLA: ALARMAS Y DESPERTADOR PARA CHOFERES (RECORDATORIO 2H Y MANUAL ADMIN)
+CREATE TABLE IF NOT EXISTS public.driver_alarms (
+    id TEXT PRIMARY KEY,
+    driver_id TEXT NOT NULL,
+    trip_id TEXT,
+    type TEXT NOT NULL, -- 'two_hour_reminder' | 'admin_manual_wake' | 'new_trip_assigned'
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    route_details TEXT,
+    unit_number TEXT,
+    departure_time TEXT,
+    status TEXT DEFAULT 'active', -- 'active' | 'acknowledged'
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    acknowledged_at TIMESTAMPTZ,
+    triggered_by TEXT DEFAULT 'Administración / Despacho Central'
+);
+
 -- ============================================================================
 -- POLÍTICAS DE SEGURIDAD (ROW LEVEL SECURITY - RLS)
 -- ============================================================================
@@ -214,6 +231,7 @@ ALTER TABLE public.trip_expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.route_pricing ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.route_stops ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.driver_alarms ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de lectura pública (ANON) protegidas contra re-ejecuciones
 DROP POLICY IF EXISTS "Permitir lectura de vehiculos" ON public.vehicles;
@@ -256,6 +274,13 @@ CREATE POLICY "Permitir paradas de ruta" ON public.route_stops FOR ALL USING (tr
 
 DROP POLICY IF EXISTS "Permitir auditoria" ON public.audit_logs;
 CREATE POLICY "Permitir auditoria" ON public.audit_logs FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Permitir lectura de alarmas chofer" ON public.driver_alarms;
+DROP POLICY IF EXISTS "Permitir insercion de alarmas chofer" ON public.driver_alarms;
+DROP POLICY IF EXISTS "Permitir actualizacion de alarmas chofer" ON public.driver_alarms;
+CREATE POLICY "Permitir lectura de alarmas chofer" ON public.driver_alarms FOR SELECT USING (true);
+CREATE POLICY "Permitir insercion de alarmas chofer" ON public.driver_alarms FOR INSERT WITH CHECK (true);
+CREATE POLICY "Permitir actualizacion de alarmas chofer" ON public.driver_alarms FOR UPDATE USING (true);
 
 -- ============================================================================
 -- SEED DATA OFICIAL

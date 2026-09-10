@@ -14,7 +14,9 @@ import {
   Plus, 
   ShieldAlert,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  BellRing,
+  Volume2
 } from 'lucide-react';
 import { Vehicle, Driver } from '../../types';
 
@@ -28,10 +30,17 @@ export const DriverAssignmentsSchedule: React.FC = () => {
     assignDriverToCharter,
     releaseVehicleFromTourContract,
     completeCharterAssignment,
-    trips
+    trips,
+    sendManualWakeUpAlarm,
+    playAlarmSoundTest,
+    driverAlarms
   } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState<'schedule' | 'charters' | 'quick_reassign'>('schedule');
+
+  // Modal para Despertador Manual
+  const [wakeUpModalDriverId, setWakeUpModalDriverId] = useState<string | null>(null);
+  const [wakeUpNote, setWakeUpNote] = useState<string>('¡Operador, despierta! Tienes un viaje programado por salir. Confirma de inmediato tu asistencia.');
 
   // Modal para Asignar Viaje Turístico Particular
   const [showCharterModal, setShowCharterModal] = useState<boolean>(false);
@@ -272,42 +281,63 @@ export const DriverAssignmentsSchedule: React.FC = () => {
                         </p>
                       </div>
                     )}
+
+                    {/* Estado de Alarma Despertador si está sonando */}
+                    {driverAlarms.some(a => a.driverId === driver.id && a.status === 'active') && (
+                      <div className="p-2.5 bg-red-600 text-white rounded-xl text-xs font-black flex items-center justify-between animate-pulse">
+                        <span className="flex items-center gap-1.5">
+                          <BellRing className="w-4 h-4" /> ¡ALARMA SONANDO EN SU CELULAR!
+                        </span>
+                        <span className="text-[10px] bg-red-900/80 px-2 py-0.5 rounded uppercase">Sin apagar</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Botones de Acción Directa */}
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    <button
-                      onClick={() => {
-                        setSelectedDriverForCharter(driver.id);
-                        if (driver.currentVehicleId) {
-                          setSelectedVehicleForCharter(driver.currentVehicleId);
-                        }
-                        setShowCharterModal(true);
-                      }}
-                      className="py-2.5 px-3 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <Palmtree className="w-3.5 h-3.5 text-purple-600" /> Asignar Viaje Particular
-                    </button>
-
-                    {!isAvailable ? (
-                      <button
-                        onClick={() => releaseDriverFromService(driver.id, 'Liberación manual por administración')}
-                        className="py-2.5 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                        title="Libera al chofer para que pase a estatus Disponible y quite cualquier bloqueo de servicio"
-                      >
-                        <UserX className="w-3.5 h-3.5 text-red-600" /> Liberar a Disponible
-                      </button>
-                    ) : (
+                  <div className="space-y-2 pt-1">
+                    <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => {
-                          setReassignDriverId(driver.id);
-                          setShowReassignModal(true);
+                          setSelectedDriverForCharter(driver.id);
+                          if (driver.currentVehicleId) {
+                            setSelectedVehicleForCharter(driver.currentVehicleId);
+                          }
+                          setShowCharterModal(true);
                         }}
-                        className="py-2.5 px-3 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="py-2.5 px-3 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <Bus className="w-3.5 h-3.5 text-orange-400" /> Asignar a Ruta
+                        <Palmtree className="w-3.5 h-3.5 text-purple-600" /> Asignar Particular
                       </button>
-                    )}
+
+                      {!isAvailable ? (
+                        <button
+                          onClick={() => releaseDriverFromService(driver.id, 'Liberación manual por administración')}
+                          className="py-2.5 px-3 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                          title="Libera al chofer para que pase a estatus Disponible y quite cualquier bloqueo de servicio"
+                        >
+                          <UserX className="w-3.5 h-3.5 text-red-600" /> Liberar
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setReassignDriverId(driver.id);
+                            setShowReassignModal(true);
+                          }}
+                          className="py-2.5 px-3 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <Bus className="w-3.5 h-3.5 text-orange-400" /> Asignar Ruta
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Botón de Despertador Manual de Administración */}
+                    <button
+                      onClick={() => setWakeUpModalDriverId(driver.id)}
+                      className="w-full py-2.5 px-3 bg-linear-to-r from-red-600 to-amber-600 hover:from-red-700 hover:to-amber-700 text-white rounded-xl font-black text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98"
+                      title="Enviar alarma sonora despertador ineludible al celular de este chofer"
+                    >
+                      <BellRing className="w-4 h-4 animate-bounce" /> 🚨 Sonar Despertador al Celular
+                    </button>
                   </div>
                 </div>
               );
@@ -510,25 +540,37 @@ export const DriverAssignmentsSchedule: React.FC = () => {
                   </div>
 
                   {/* Acciones de la Unidad */}
-                  <div className="flex items-center gap-2 pt-1">
-                    {isCharter ? (
-                      <button
-                        onClick={() => releaseVehicleFromTourContract(v.id)}
-                        className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <CheckCircle2 className="w-4 h-4" /> Desbloquear y Regresar a Rutas
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          setSelectedVehicleForCharter(v.id);
-                          setShowCharterModal(true);
-                        }}
-                        className="w-full py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <Palmtree className="w-3.5 h-3.5 text-purple-600" /> Bloquear para Viaje Particular
-                      </button>
-                    )}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center gap-2">
+                      {isCharter ? (
+                        <button
+                          onClick={() => releaseVehicleFromTourContract(v.id)}
+                          className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-4 h-4" /> Desbloquear
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setSelectedVehicleForCharter(v.id);
+                            setShowCharterModal(true);
+                          }}
+                          className="flex-1 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <Palmtree className="w-3.5 h-3.5 text-purple-600" /> Particular
+                        </button>
+                      )}
+
+                      {assignedDriver && (
+                        <button
+                          onClick={() => setWakeUpModalDriverId(assignedDriver.id)}
+                          className="py-2.5 px-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+                          title={`Sonar despertador inmediato a ${assignedDriver.name}`}
+                        >
+                          <BellRing className="w-3.5 h-3.5 animate-bounce" /> Despertar
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -815,6 +857,123 @@ export const DriverAssignmentsSchedule: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* MODAL 3: Despertador Manual de Administración */}
+      {wakeUpModalDriverId && (() => {
+        const targetDriver = drivers.find(d => d.id === wakeUpModalDriverId);
+        const assignedVeh = vehicles.find(v => v.id === targetDriver?.currentVehicleId);
+        const upcomingTrip = trips.find(t => t.driverId === targetDriver?.id);
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-red-600 space-y-5 my-8 animate-in fade-in zoom-in duration-200">
+              <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-red-600 text-white flex items-center justify-center shadow-lg animate-bounce">
+                    <BellRing className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-100 text-red-800 border border-red-200">
+                      Disparo Forzado
+                    </span>
+                    <h3 className="text-xl font-black text-neutral-900 leading-tight">
+                      Mandar Despertador al Chofer
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setWakeUpModalDriverId(null)}
+                  className="w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 font-black flex items-center justify-center cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {targetDriver && (
+                <div className="bg-neutral-50 rounded-2xl p-4 border border-neutral-200 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-neutral-500 font-bold">Chofer Destinatario:</span>
+                    <span className="font-black text-neutral-900 text-sm">{targetDriver.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-neutral-500 font-bold">Teléfono Celular:</span>
+                    <span className="font-mono font-bold text-neutral-800">{targetDriver.phone}</span>
+                  </div>
+                  {assignedVeh && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-neutral-500 font-bold">Unidad Vehicular:</span>
+                      <span className="font-mono font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
+                        {assignedVeh.unitNumber} ({assignedVeh.model})
+                      </span>
+                    </div>
+                  )}
+                  {upcomingTrip && (
+                    <div className="flex items-center justify-between border-t border-neutral-200 pt-2">
+                      <span className="text-neutral-500 font-bold">Próxima Salida:</span>
+                      <span className="font-bold text-red-600">{upcomingTrip.departureTime} - {upcomingTrip.routeTitle}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="bg-amber-50 border border-amber-300 rounded-2xl p-3 text-xs text-amber-900 space-y-1">
+                <p className="font-bold flex items-center gap-1.5 text-amber-950">
+                  <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+                  ¿Cómo funciona el despertador?
+                </p>
+                <p>
+                  Hará sonar el audio oficial en bucle continuo y desplegará una pantalla de alerta flotante de emergencia en el celular del chofer que no podrá cerrarse hasta que confirme que ya está despierto y listo.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-xs font-black uppercase tracking-wider text-neutral-600 block mb-1">
+                  Mensaje urgente en pantalla para el chofer:
+                </label>
+                <textarea
+                  value={wakeUpNote}
+                  onChange={e => setWakeUpNote(e.target.value)}
+                  rows={2}
+                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 focus:border-red-500 rounded-2xl font-medium text-xs text-neutral-900 focus:outline-none"
+                  placeholder="Escribe instrucciones para el chofer..."
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={playAlarmSoundTest}
+                  className="text-xs text-neutral-600 hover:text-neutral-900 font-bold flex items-center gap-1 cursor-pointer"
+                >
+                  <Volume2 className="w-4 h-4 text-red-500" /> Probar audio oficial
+                </button>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-100">
+                <button
+                  type="button"
+                  onClick={() => setWakeUpModalDriverId(null)}
+                  className="px-5 py-3 rounded-2xl font-black text-neutral-600 hover:bg-neutral-100 cursor-pointer text-xs"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (targetDriver) {
+                      sendManualWakeUpAlarm(targetDriver.id, upcomingTrip?.id, wakeUpNote);
+                      setWakeUpModalDriverId(null);
+                    }
+                  }}
+                  className="px-6 py-3.5 bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-700 hover:to-amber-700 text-white rounded-2xl font-black text-sm shadow-xl flex items-center gap-2 cursor-pointer transition-transform active:scale-95"
+                >
+                  <BellRing className="w-5 h-5 animate-pulse" /> ¡DISPARAR DESPERTADOR AHORA!
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

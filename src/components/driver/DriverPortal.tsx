@@ -15,9 +15,13 @@ import {
   Navigation,
   ExternalLink,
   Compass,
-  Palmtree
+  Palmtree,
+  BellRing,
+  Volume2,
+  AlertTriangle
 } from 'lucide-react';
 import { TripExpense } from '../../types';
+import { DriverWakeUpAlarmModal } from './DriverWakeUpAlarmModal';
 
 interface DriverPortalProps {
   activeTab: string;
@@ -36,7 +40,12 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
     addExpense, 
     updateTripStatus, 
     checkInPassenger, 
-    showNotification 
+    showNotification,
+    driverAlarms,
+    activeAlarm,
+    soundPermissionGranted,
+    requestSoundAndNotificationPermission,
+    playAlarmSoundTest
   } = useApp();
 
   // Current logged in driver for demo
@@ -87,6 +96,58 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar bg-neutral-100 p-4 md:p-6 lg:p-8 space-y-6">
+      {/* Floating Emergency Wake-Up Alarm Modal */}
+      <DriverWakeUpAlarmModal currentDriverId={currentDriver.id} />
+
+      {/* Device Notification & Audio Permission Banner */}
+      <div className="max-w-5xl mx-auto w-full">
+        {!soundPermissionGranted ? (
+          <div className="bg-amber-500 text-neutral-950 p-4 rounded-3xl shadow-lg border-2 border-amber-600 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-black text-amber-400 flex items-center justify-center shrink-0">
+                <BellRing className="w-5 h-5 animate-bounce" />
+              </div>
+              <div>
+                <p className="font-black text-sm uppercase tracking-wide">
+                  Activa el sonido y notificaciones en tu celular
+                </p>
+                <p className="text-xs font-semibold text-neutral-900 mt-0.5">
+                  Requerido para que la alarma de tu viaje suene 2 horas antes y cuando el Administrador te despierte.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={requestSoundAndNotificationPermission}
+                className="px-4 py-2.5 bg-black hover:bg-neutral-800 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow cursor-pointer transition-transform active:scale-95"
+              >
+                🔔 Activar Alarma Sonora
+              </button>
+              <button
+                onClick={playAlarmSoundTest}
+                className="px-3 py-2.5 bg-amber-600/30 hover:bg-amber-600/50 text-neutral-950 font-black text-xs uppercase tracking-wider rounded-xl border border-neutral-900/20 cursor-pointer"
+                title="Probar sonido de alarma MP3"
+              >
+                <Volume2 className="w-4 h-4 inline mr-1" /> Probar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-emerald-950/80 border border-emerald-800 text-emerald-300 px-4 py-2.5 rounded-2xl flex items-center justify-between gap-2 text-xs font-semibold">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span>Dispositivo preparado: Notificaciones y alarma sonora (2h antes y admin) activas.</span>
+            </div>
+            <button
+              onClick={playAlarmSoundTest}
+              className="px-3 py-1 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-[11px] font-bold cursor-pointer transition-colors"
+            >
+              🔊 Probar Sonido
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Top Driver Status Bar */}
       <div className="max-w-5xl mx-auto w-full bg-black text-white p-5 md:p-6 rounded-3xl border-2 border-neutral-800 shadow-md space-y-4">
         {/* Operator Switcher for Demo & Multi-driver device sharing */}
