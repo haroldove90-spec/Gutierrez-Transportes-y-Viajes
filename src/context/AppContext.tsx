@@ -974,6 +974,63 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Foto del vehículo de renta actualizada en catálogo.', 'success');
   };
 
+  const clearAllTestData = () => {
+    // 1. Reset bookings, expenses, quotes, invoices, exceptions, logs, charters
+    setBookings([]);
+    setExpenses([]);
+    setQuotes([]);
+    setInvoices([]);
+    setExceptions([]);
+    setAuditLogs([]);
+    setCharterAssignments([]);
+
+    // 2. Clean localStorage cache
+    try {
+      localStorage.removeItem('gutierrez_vehicles_v2');
+      localStorage.removeItem('gutierrez_vehicles_v3');
+      localStorage.removeItem('gutierrez_drivers_v3');
+      localStorage.removeItem('gutierrez_charter_assignments_v1');
+      localStorage.removeItem('gutierrez_charter_assignments_v2');
+      localStorage.removeItem('gutierrez_bookings');
+      localStorage.removeItem('gutierrez_expenses');
+    } catch (e) {
+      console.warn('Error clearing localStorage', e);
+    }
+
+    // 3. Reset vehicles to fresh state (all active, unassigned)
+    setVehicles(INITIAL_VEHICLES.map(v => ({
+      ...v,
+      driverId: undefined,
+      status: 'active',
+      tourContractDetails: undefined
+    })));
+
+    // 4. Reset drivers to available (unassigned)
+    setDrivers(INITIAL_DRIVERS.map(d => ({
+      ...d,
+      currentVehicleId: undefined,
+      status: 'available',
+      currentServiceType: 'none',
+      charterDetails: undefined
+    })));
+
+    // 5. Reset trips with empty seats
+    setTrips(prev => prev.map(t => ({
+      ...t,
+      status: 'scheduled',
+      occupiedSeatsCount: 0,
+      totalRevenue: 0,
+      seats: t.seats.map(s => ({
+        ...s,
+        status: 'available',
+        passengerName: undefined,
+        bookingId: undefined
+      }))
+    })));
+
+    showNotification('Se han borrado todos los datos de prueba. El sistema está limpio para capturar datos reales.', 'success');
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -1010,6 +1067,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         assignDriverToCharter,
         releaseVehicleFromTourContract,
         completeCharterAssignment,
+        clearAllTestData,
         createRentalQuote,
         convertQuoteToReservation,
         updateQuoteStatus,
