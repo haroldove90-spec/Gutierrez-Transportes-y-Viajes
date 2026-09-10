@@ -100,14 +100,13 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
           title: 'Dirección General',
           badge: 'Control Ejecutivo',
           items: [
-            { id: 'executive', label: 'KPIs en Tiempo Real', icon: <TrendingUp className="w-5 h-5" /> },
+            { id: 'executive', label: 'Métricas', icon: <TrendingUp className="w-5 h-5" /> },
+            { id: 'agenda', label: 'Agenda', icon: <CalendarDays className="w-5 h-5" /> },
+            { id: 'drivers', label: 'Choferes', icon: <Users className="w-5 h-5" /> },
+            { id: 'tours', label: 'Tours', icon: <Palmtree className="w-5 h-5" /> },
             { id: 'fares_manager', label: 'Gestión de Tarifas', icon: <DollarSign className="w-5 h-5" /> },
-            { id: 'charter_schedule', label: 'Agenda Choferes & Tours', icon: <CalendarDays className="w-5 h-5" /> },
-            { id: 'fleet_photos', label: 'Gestión Flotilla & Fotos', icon: <Bus className="w-5 h-5" /> },
-            { id: 'profit_deep', label: 'Rentabilidad Detallada', icon: <Layers className="w-5 h-5" /> },
             { id: 'routes_config', label: 'Puntos de Partida (Maps)', icon: <Map className="w-5 h-5" /> },
-            { id: 'forensic', label: 'Auditoría Forense', icon: <History className="w-5 h-5" /> },
-            { id: 'exceptions', label: 'Aprobación de Cortesías', icon: <ShieldCheck className="w-5 h-5" /> },
+            { id: 'fleet_photos', label: 'Gestión Flotilla & Fotos', icon: <Bus className="w-5 h-5" /> },
           ]
         };
       default:

@@ -84,6 +84,16 @@ interface AppContextType {
   addExpense: (expense: Omit<TripExpense, 'id' | 'status'>) => TripExpense;
   approveExpense: (expenseId: string) => void;
   
+  // Drivers Management (Admin configurable)
+  addDriver: (driverData: Omit<Driver, 'id'>) => Driver;
+  updateDriver: (id: string, updates: Partial<Driver>) => boolean;
+  deleteDriver: (id: string) => boolean;
+
+  // Trips Management (Admin configurable)
+  addTrip: (tripData: Omit<TripSchedule, 'id' | 'seats' | 'occupiedSeatsCount' | 'totalRevenue'>) => TripSchedule;
+  updateTrip: (id: string, updates: Partial<TripSchedule>) => boolean;
+  deleteTrip: (id: string) => boolean;
+
   // Operations & Maintenance & Agenda de Servicios
   addVehicle: (vehicleData: Omit<Vehicle, 'id'>) => Vehicle;
   updateVehicle: (id: string, updates: Partial<Vehicle>) => boolean;
@@ -1135,6 +1145,82 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return true;
   };
 
+  const addDriver = (driverData: Omit<Driver, 'id'>): Driver => {
+    const newDriver: Driver = {
+      ...driverData,
+      id: `drv-${Date.now().toString().slice(-6)}`,
+      rating: driverData.rating || 5.0,
+      avatar: driverData.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      status: driverData.status || 'available'
+    };
+    setDrivers(prev => [newDriver, ...prev]);
+    if (driverData.currentVehicleId) {
+      assignDriverToVehicle(newDriver.id, driverData.currentVehicleId, true);
+    }
+    addAuditEntry('ALTA_CHOFER', 'Driver', newDriver.id, undefined, `Chofer ${newDriver.name} dado de alta.`);
+    showNotification(`Chofer ${newDriver.name} registrado con éxito.`, 'success');
+    return newDriver;
+  };
+
+  const updateDriver = (id: string, updates: Partial<Driver>): boolean => {
+    setDrivers(prev => prev.map(d => d.id === id ? { ...d, ...updates } : d));
+    addAuditEntry('ACTUALIZACION_CHOFER', 'Driver', id, undefined, `Actualización de datos chofer ${id}`);
+    showNotification('Datos del chofer actualizados.', 'success');
+    return true;
+  };
+
+  const deleteDriver = (id: string): boolean => {
+    const driver = drivers.find(d => d.id === id);
+    if (!driver) return false;
+    // Liberar vehículo si estaba asignado
+    if (driver.currentVehicleId) {
+      setVehicles(prev => prev.map(v => v.id === driver.currentVehicleId ? { ...v, driverId: undefined } : v));
+    }
+    setDrivers(prev => prev.filter(d => d.id !== id));
+    addAuditEntry('BAJA_CHOFER', 'Driver', id, driver.name, 'Chofer eliminado del sistema');
+    showNotification(`Chofer ${driver.name} eliminado del sistema.`, 'info');
+    return true;
+  };
+
+  const addTrip = (tripData: Omit<TripSchedule, 'id' | 'seats' | 'occupiedSeatsCount' | 'totalRevenue'>): TripSchedule => {
+    const vehicle = vehicles.find(v => v.id === tripData.vehicleId);
+    const capacity = vehicle?.capacity || 19;
+    const initialSeats: Seat[] = Array.from({ length: capacity }, (_, i) => ({
+      id: `seat-${i + 1}`,
+      number: i + 1,
+      row: Math.floor(i / 3) + 1,
+      col: (i % 3) + 1,
+      type: 'standard',
+      status: 'available'
+    }));
+
+    const newTrip: TripSchedule = {
+      ...tripData,
+      id: `trip-${Date.now()}`,
+      occupiedSeatsCount: 0,
+      totalRevenue: 0,
+      seats: initialSeats,
+      stops: tripData.stops || routeStops.filter(s => s.isActive)
+    };
+
+    setTrips(prev => [...prev, newTrip]);
+    addAuditEntry('PROGRAMACION_VIAJE', 'TripSchedule', newTrip.id, undefined, `${newTrip.routeTitle} - ${newTrip.departureTime}`);
+    showNotification(`Viaje programado con éxito: ${newTrip.routeTitle} (${newTrip.departureTime})`, 'success');
+    return newTrip;
+  };
+
+  const updateTrip = (id: string, updates: Partial<TripSchedule>): boolean => {
+    setTrips(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+    showNotification('Viaje actualizado correctamente.', 'success');
+    return true;
+  };
+
+  const deleteTrip = (id: string): boolean => {
+    setTrips(prev => prev.filter(t => t.id !== id));
+    showNotification('Viaje eliminado de la programación.', 'info');
+    return true;
+  };
+
   const assignDriverToCharter = (data: Omit<CharterAssignment, 'id' | 'folio' | 'createdAt' | 'status'>): CharterAssignment => {
     const charterId = `charter-${Date.now()}`;
     const folio = `TUR-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
@@ -1619,6 +1705,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateTripStatus,
         addExpense,
         approveExpense,
+        addDriver,
+        updateDriver,
+        deleteDriver,
+        addTrip,
+        updateTrip,
+        deleteTrip,
         addVehicle,
         updateVehicle,
         deleteVehicle,
