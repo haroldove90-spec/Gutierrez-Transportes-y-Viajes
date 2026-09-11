@@ -13,7 +13,8 @@ import {
   ArrowRightLeft,
   MapPin,
   Phone,
-  Car
+  Car,
+  Clock
 } from 'lucide-react';
 import { RentalQuote, RentalCar } from '../../types';
 import { ROUTE_STOPS, OFFICIAL_PRICING, OFFICIAL_PHONE, OFFICIAL_WHATSAPP, OFFICIAL_EXPERIENCE_YEARS } from '../../data/mockData';
@@ -59,8 +60,10 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
   const [clientEmail, setClientEmail] = useState('cvaca@hospitalmed.org');
   const [rentalOrigin, setRentalOrigin] = useState('Colima');
   const [rentalDestination, setRentalDestination] = useState('Guadalajara Expo / Cintermex');
-  const [departureDate, setDepartureDate] = useState('2026-09-15 07:00');
-  const [returnDate, setReturnDate] = useState('2026-09-17 19:00');
+  const [departureDate, setDepartureDate] = useState('2026-09-15');
+  const [departureTime, setDepartureTime] = useState('07:00 AM');
+  const [returnDate, setReturnDate] = useState('2026-09-17');
+  const [returnTime, setReturnTime] = useState('19:00 PM');
   const [paxCount, setPaxCount] = useState<number>(14);
   const [rentalDays, setRentalDays] = useState<number>(2);
   const [vehicleModel, setVehicleModel] = useState<string>('Toyota Hiace (14 Pasajeros)');
@@ -163,7 +166,9 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
       origin: rentalOrigin,
       destination: rentalDestination,
       departureDate,
+      departureTime,
       returnDate,
+      returnTime,
       paxCount,
       vehicleModel,
       includesDriver,
@@ -438,6 +443,86 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                 </div>
               </div>
 
+              {/* Horario y Fechas de Inicio y Terminación del Viaje */}
+              <div className="p-4 bg-orange-50/60 rounded-2xl border-2 border-orange-200/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs md:text-sm font-black text-orange-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-orange-600" /> Fechas y Horarios del Viaje
+                  </span>
+                  <span className="text-[11px] font-bold text-orange-700 bg-orange-100 px-2.5 py-0.5 rounded-full">
+                    {rentalDays} {rentalDays === 1 ? 'Día' : 'Días'} de Servicio
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Inicio de Viaje */}
+                  <div className="bg-white p-3 rounded-xl border border-orange-200 shadow-2xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-neutral-800 uppercase flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-orange-600" /> Inicio de Viaje
+                      </span>
+                      <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">Salida</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] font-black text-neutral-500 uppercase block mb-1">Fecha de Inicio</label>
+                        <input
+                          type="date"
+                          required
+                          value={departureDate}
+                          onChange={e => setDepartureDate(e.target.value)}
+                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900 focus:outline-none focus:border-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black text-neutral-500 uppercase block mb-1">Hora de Inicio</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="07:00 AM"
+                          value={departureTime}
+                          onChange={e => setDepartureTime(e.target.value)}
+                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900 focus:outline-none focus:border-orange-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Terminación de Viaje */}
+                  <div className="bg-white p-3 rounded-xl border border-orange-200 shadow-2xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-neutral-800 uppercase flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Terminación de Viaje
+                      </span>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">Regreso</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] font-black text-neutral-500 uppercase block mb-1">Fecha de Fin</label>
+                        <input
+                          type="date"
+                          required
+                          value={returnDate}
+                          onChange={e => setReturnDate(e.target.value)}
+                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900 focus:outline-none focus:border-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black text-neutral-500 uppercase block mb-1">Hora de Fin</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="19:00 PM"
+                          value={returnTime}
+                          onChange={e => setReturnTime(e.target.value)}
+                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900 focus:outline-none focus:border-orange-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Vehicle, Days & Driver Options */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="sm:col-span-2">
@@ -615,6 +700,31 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                   }`}>
                     {q.status.replace('_', ' ')}
                   </span>
+                </div>
+
+                {/* Información del Viaje: Fecha y Hora de Inicio y Fecha y Hora de Terminación */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-orange-50/60 rounded-2xl border border-orange-200/80 text-xs">
+                  <div className="flex items-start gap-2.5">
+                    <Calendar className="w-4 h-4 text-orange-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-[10px] text-neutral-500 uppercase font-black block tracking-wider">Inicio de Viaje</span>
+                      <p className="font-black text-neutral-900 text-xs md:text-sm">{q.departureDate || '15/09/2026'}</p>
+                      <p className="text-orange-700 font-bold flex items-center gap-1 text-[11px] mt-0.5">
+                        <Clock className="w-3 h-3 text-orange-600" /> {q.departureTime || '07:00 AM'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5 sm:border-l sm:border-orange-200/80 sm:pl-3">
+                    <Calendar className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-[10px] text-neutral-500 uppercase font-black block tracking-wider">Terminación de Viaje</span>
+                      <p className="font-black text-neutral-900 text-xs md:text-sm">{q.returnDate || '17/09/2026'}</p>
+                      <p className="text-emerald-700 font-bold flex items-center gap-1 text-[11px] mt-0.5">
+                        <Clock className="w-3 h-3 text-emerald-600" /> {q.returnTime || '19:00 PM'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 bg-neutral-50 p-3 rounded-2xl text-xs md:text-sm">

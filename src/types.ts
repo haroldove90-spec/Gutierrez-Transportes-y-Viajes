@@ -124,9 +124,10 @@ export interface TripSchedule {
   routeTitle: string; // e.g., 'Manzanillo ⇄ Guadalajara (Troncal)'
   origin: string;
   destination: string;
-  date: string;
-  departureTime: string;
-  estimatedArrival: string;
+  date: string; // Fecha de inicio de viaje
+  departureTime: string; // Hora de inicio de viaje
+  endDate?: string; // Fecha de terminación de viaje
+  estimatedArrival: string; // Hora de terminación de viaje
   vehicleId: string;
   driverId: string;
   status: 'scheduled' | 'boarding' | 'in_transit' | 'at_scale' | 'completed' | 'cancelled';
@@ -226,8 +227,10 @@ export interface RentalQuote {
   clientEmail: string;
   origin: string;
   destination: string;
-  departureDate: string;
-  returnDate: string;
+  departureDate: string; // Fecha de inicio de viaje
+  departureTime?: string; // Hora de inicio de viaje
+  returnDate: string; // Fecha de terminación de viaje
+  returnTime?: string; // Hora de terminación de viaje
   paxCount: number;
   vehicleModel: string; // e.g., 'Mercedes Sprinter (20 Pax)', 'Jetta VW', 'Vento VW', etc.
   includesDriver: boolean;

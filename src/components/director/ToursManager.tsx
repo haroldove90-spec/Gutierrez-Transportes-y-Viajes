@@ -289,17 +289,21 @@ export const ToursManager: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Dates & Schedule */}
-                  <div className="grid grid-cols-2 gap-2 mt-4 p-3 bg-neutral-50 rounded-2xl border border-neutral-100 text-xs">
-                    <div>
-                      <span className="text-[10px] text-neutral-400 uppercase font-black block">Salida:</span>
+                  {/* Información del Viaje: Inicio y Terminación */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4 p-3 bg-purple-50/50 rounded-2xl border border-purple-200/80 text-xs">
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] text-neutral-500 uppercase font-black block tracking-wider">Inicio de Viaje</span>
                       <p className="font-black text-neutral-900">{tour.startDate}</p>
-                      <p className="text-neutral-500 font-bold">{tour.startTime || '08:00 AM'}</p>
+                      <p className="text-purple-700 font-bold flex items-center gap-1 text-[11px]">
+                        <Clock className="w-3 h-3 text-purple-600" /> {tour.startTime || '08:00 AM'}
+                      </p>
                     </div>
-                    <div>
-                      <span className="text-[10px] text-neutral-400 uppercase font-black block">Regreso Programado:</span>
+                    <div className="space-y-0.5 sm:border-l sm:border-purple-200/80 sm:pl-3">
+                      <span className="text-[10px] text-neutral-500 uppercase font-black block tracking-wider">Terminación de Viaje</span>
                       <p className="font-black text-neutral-900">{tour.endDate}</p>
-                      <p className="text-neutral-500 font-bold">{tour.returnTime || '20:00 PM'}</p>
+                      <p className="text-emerald-700 font-bold flex items-center gap-1 text-[11px]">
+                        <Clock className="w-3 h-3 text-emerald-600" /> {tour.returnTime || '20:00 PM'}
+                      </p>
                     </div>
                   </div>
 
@@ -421,46 +425,71 @@ export const ToursManager: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Fecha Salida</label>
-                  <input 
-                    type="date"
-                    value={form.startDate}
-                    onChange={e => setForm(prev => ({ ...prev, startDate: e.target.value }))}
-                    required
-                    className="w-full p-2.5 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
+              {/* Horario y Fechas de Inicio y Terminación del Viaje */}
+              <div className="p-3.5 bg-purple-50/60 rounded-2xl border-2 border-purple-200/80 space-y-3">
+                <div className="flex items-center gap-1.5 text-purple-800">
+                  <Calendar className="w-4 h-4 text-purple-600" />
+                  <span className="text-xs font-black uppercase tracking-wider">Fechas y Horarios del Viaje</span>
                 </div>
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Hora Salida</label>
-                  <input 
-                    type="text"
-                    placeholder="08:00 AM"
-                    value={form.startTime}
-                    onChange={e => setForm(prev => ({ ...prev, startTime: e.target.value }))}
-                    className="w-full p-2.5 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Fecha Regreso</label>
-                  <input 
-                    type="date"
-                    value={form.endDate}
-                    onChange={e => setForm(prev => ({ ...prev, endDate: e.target.value }))}
-                    required
-                    className="w-full p-2.5 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Hora Regreso</label>
-                  <input 
-                    type="text"
-                    placeholder="20:00 PM"
-                    value={form.returnTime}
-                    onChange={e => setForm(prev => ({ ...prev, returnTime: e.target.value }))}
-                    className="w-full p-2.5 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Inicio de Viaje */}
+                  <div className="bg-white p-3 rounded-xl border border-purple-200 space-y-2">
+                    <span className="text-xs font-black text-neutral-800 uppercase flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-purple-600" /> Inicio de Viaje
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Fecha de Inicio</label>
+                        <input 
+                          type="date"
+                          value={form.startDate}
+                          onChange={e => setForm(prev => ({ ...prev, startDate: e.target.value }))}
+                          required
+                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Hora de Inicio</label>
+                        <input 
+                          type="text"
+                          placeholder="08:00 AM"
+                          value={form.startTime}
+                          onChange={e => setForm(prev => ({ ...prev, startTime: e.target.value }))}
+                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Terminación de Viaje */}
+                  <div className="bg-white p-3 rounded-xl border border-purple-200 space-y-2">
+                    <span className="text-xs font-black text-neutral-800 uppercase flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Terminación de Viaje
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Fecha de Fin</label>
+                        <input 
+                          type="date"
+                          value={form.endDate}
+                          onChange={e => setForm(prev => ({ ...prev, endDate: e.target.value }))}
+                          required
+                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Hora de Fin</label>
+                        <input 
+                          type="text"
+                          placeholder="20:00 PM"
+                          value={form.returnTime}
+                          onChange={e => setForm(prev => ({ ...prev, returnTime: e.target.value }))}
+                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 

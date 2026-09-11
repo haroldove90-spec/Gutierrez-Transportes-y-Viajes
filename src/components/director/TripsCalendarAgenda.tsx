@@ -45,6 +45,7 @@ export const TripsCalendarAgenda: React.FC = () => {
     destination: 'Guadalajara (GDL)',
     date: today.toISOString().substring(0, 10),
     departureTime: '07:00 AM',
+    endDate: today.toISOString().substring(0, 10),
     estimatedArrival: '11:00 AM',
     vehicleId: vehicles[0]?.id || '',
     driverId: drivers[0]?.id || '',
@@ -94,6 +95,7 @@ export const TripsCalendarAgenda: React.FC = () => {
       origin: t.origin,
       destination: t.destination,
       date: t.date || today.toISOString().substring(0, 10),
+      endDate: t.endDate || t.date || today.toISOString().substring(0, 10),
       time: t.departureTime,
       arrival: t.estimatedArrival,
       vehicleId: t.vehicleId,
@@ -163,6 +165,7 @@ export const TripsCalendarAgenda: React.FC = () => {
       destination: newTripForm.destination,
       date: newTripForm.date,
       departureTime: newTripForm.departureTime,
+      endDate: newTripForm.endDate || newTripForm.date,
       estimatedArrival: newTripForm.estimatedArrival,
       vehicleId: newTripForm.vehicleId,
       driverId: newTripForm.driverId,
@@ -412,15 +415,29 @@ export const TripsCalendarAgenda: React.FC = () => {
                           <h4 className="text-sm md:text-base font-black text-neutral-900 mt-1">
                             {event.origin} ➔ {event.destination}
                           </h4>
-                          <p className="text-xs text-neutral-500 font-bold flex items-center gap-1.5 mt-0.5">
-                            <Clock className="w-3.5 h-3.5 text-orange-600" />
-                            Salida: {event.time} • Estimada: {event.arrival}
-                          </p>
                         </div>
 
                         <span className="text-xs font-black px-2.5 py-1 rounded-xl bg-white border border-neutral-200 text-neutral-900 shrink-0">
                           {event.type === 'route' ? `${event.occupiedSeats} / ${event.capacity} Plazas` : `$${event.revenue.toLocaleString()} MXN`}
                         </span>
+                      </div>
+
+                      {/* Información de Fechas y Horas de Inicio y Terminación */}
+                      <div className="grid grid-cols-2 gap-2 p-2.5 bg-white rounded-xl border border-neutral-200 text-xs">
+                        <div className="space-y-0.5">
+                          <span className="text-[10px] text-neutral-400 uppercase font-black block">Inicio de Viaje</span>
+                          <p className="font-black text-neutral-900">{event.date}</p>
+                          <p className="text-orange-600 font-bold flex items-center gap-1 text-[11px]">
+                            <Clock className="w-3 h-3 text-orange-500" /> {event.time}
+                          </p>
+                        </div>
+                        <div className="space-y-0.5 border-l border-neutral-100 pl-2">
+                          <span className="text-[10px] text-neutral-400 uppercase font-black block">Terminación de Viaje</span>
+                          <p className="font-black text-neutral-900">{event.endDate || event.date}</p>
+                          <p className="text-emerald-600 font-bold flex items-center gap-1 text-[11px]">
+                            <Clock className="w-3 h-3 text-emerald-500" /> {event.arrival}
+                          </p>
+                        </div>
                       </div>
 
                       {/* Vehicle and Driver tags */}
@@ -560,38 +577,85 @@ export const TripsCalendarAgenda: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Fecha</label>
-                  <input 
-                    type="date"
-                    value={newTripForm.date}
-                    onChange={e => setNewTripForm(prev => ({ ...prev, date: e.target.value }))}
-                    required
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
+              {/* Horario y Fechas de Inicio y Terminación del Viaje */}
+              <div className="p-3.5 bg-orange-50/60 rounded-2xl border-2 border-orange-200/80 space-y-3">
+                <div className="flex items-center gap-1.5 text-orange-800">
+                  <CalendarIcon className="w-4 h-4 text-orange-600" />
+                  <span className="text-xs font-black uppercase tracking-wider">Fechas y Horarios del Viaje</span>
                 </div>
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Hora Salida</label>
-                  <input 
-                    type="text"
-                    value={newTripForm.departureTime}
-                    onChange={e => setNewTripForm(prev => ({ ...prev, departureTime: e.target.value }))}
-                    placeholder="07:00 AM"
-                    required
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Inicio de Viaje */}
+                  <div className="bg-white p-3 rounded-xl border border-orange-200 space-y-2">
+                    <span className="text-xs font-black text-neutral-800 uppercase flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-orange-600" /> Inicio de Viaje
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Fecha de Inicio</label>
+                        <input 
+                          type="date"
+                          value={newTripForm.date}
+                          onChange={e => setNewTripForm(prev => ({ ...prev, date: e.target.value }))}
+                          required
+                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Hora de Inicio</label>
+                        <input 
+                          type="text"
+                          value={newTripForm.departureTime}
+                          onChange={e => setNewTripForm(prev => ({ ...prev, departureTime: e.target.value }))}
+                          placeholder="07:00 AM"
+                          required
+                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Terminación de Viaje */}
+                  <div className="bg-white p-3 rounded-xl border border-orange-200 space-y-2">
+                    <span className="text-xs font-black text-neutral-800 uppercase flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Terminación de Viaje
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Fecha de Fin</label>
+                        <input 
+                          type="date"
+                          value={newTripForm.endDate || newTripForm.date}
+                          onChange={e => setNewTripForm(prev => ({ ...prev, endDate: e.target.value }))}
+                          required
+                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Hora de Fin</label>
+                        <input 
+                          type="text"
+                          value={newTripForm.estimatedArrival}
+                          onChange={e => setNewTripForm(prev => ({ ...prev, estimatedArrival: e.target.value }))}
+                          placeholder="11:00 AM"
+                          required
+                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Tarifa Base ($)</label>
-                  <input 
-                    type="number"
-                    value={newTripForm.basePrice}
-                    onChange={e => setNewTripForm(prev => ({ ...prev, basePrice: Number(e.target.value) }))}
-                    required
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
-                </div>
+              </div>
+
+              <div>
+                <label className="block font-black text-neutral-700 mb-1">Tarifa Base por Boleto ($ MXN)</label>
+                <input 
+                  type="number"
+                  value={newTripForm.basePrice}
+                  onChange={e => setNewTripForm(prev => ({ ...prev, basePrice: Number(e.target.value) }))}
+                  required
+                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
