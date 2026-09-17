@@ -22,7 +22,8 @@ import {
   LogOut,
   ChevronRight,
   CalendarDays,
-  Palmtree
+  Palmtree,
+  LayoutGrid
 } from 'lucide-react';
 
 interface SidebarNavProps {
@@ -79,6 +80,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
             { id: 'dispatch', label: 'Despacho & Asignación', icon: <Bus className="w-5 h-5" /> },
             { id: 'charter_schedule', label: 'Agenda & Choferes (Tours)', icon: <CalendarDays className="w-5 h-5" /> },
             { id: 'fares_manager', label: 'Gestión de Tarifas', icon: <DollarSign className="w-5 h-5" /> },
+            { id: 'seat_layouts', label: 'Diagramas de Asientos', icon: <LayoutGrid className="w-5 h-5" /> },
             { id: 'maintenance', label: 'Taller & Kilometraje', icon: <Wrench className="w-5 h-5" /> },
             { id: 'manifests', label: 'Descarga Manifiestos', icon: <FileSpreadsheet className="w-5 h-5" /> },
             { id: 'routes_config', label: 'Puntos de Partida (Maps)', icon: <Map className="w-5 h-5" /> },
@@ -104,6 +106,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
             { id: 'agenda', label: 'Agenda', icon: <CalendarDays className="w-5 h-5" /> },
             { id: 'drivers', label: 'Choferes', icon: <Users className="w-5 h-5" /> },
             { id: 'tours', label: 'Tours', icon: <Palmtree className="w-5 h-5" /> },
+            { id: 'seat_layouts', label: 'Diagramas de Asientos', icon: <LayoutGrid className="w-5 h-5" /> },
             { id: 'fares_manager', label: 'Gestión de Tarifas', icon: <DollarSign className="w-5 h-5" /> },
             { id: 'routes_config', label: 'Puntos de Partida (Maps)', icon: <Map className="w-5 h-5" /> },
             { id: 'fleet_photos', label: 'Gestión Flotilla & Fotos', icon: <Bus className="w-5 h-5" /> },

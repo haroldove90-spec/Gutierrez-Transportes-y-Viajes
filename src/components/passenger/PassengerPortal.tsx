@@ -26,6 +26,7 @@ import { OFFICIAL_PRICING, OFFICIAL_PHONE, OFFICIAL_WHATSAPP, OFFICIAL_EXPERIENC
 import { TripSchedule, Seat, Booking, RoutePricing } from '../../types';
 import { ClientReportModal } from '../modals/ClientReportModal';
 import { RentalCatalog } from '../common/RentalCatalog';
+import { SeatDiagramViewer } from '../common/SeatDiagramViewer';
 
 interface PassengerPortalProps {
   activeTab: string;
@@ -489,7 +490,16 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
               <div>
                 <p className="text-base md:text-lg font-black text-white">{selectedTrip.routeTitle}</p>
-                <p className="text-xs md:text-sm text-neutral-300 font-medium">Salida: {selectedTrip.departureTime} | Fecha: {travelDate}</p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-300 font-medium mt-1">
+                  <span className="flex items-center gap-1 text-orange-400 font-bold">
+                    <Clock className="w-3.5 h-3.5 text-orange-400" />
+                    Salida: {selectedTrip.date || travelDate} a las {selectedTrip.departureTime}
+                  </span>
+                  <span className="text-neutral-500">•</span>
+                  <span className="flex items-center gap-1 text-emerald-400 font-bold">
+                    Llegada: {selectedTrip.endDate || selectedTrip.date || travelDate} a las {selectedTrip.estimatedArrival}
+                  </span>
+                </div>
               </div>
               <button
                 onClick={() => setActiveTab('search')}
@@ -501,77 +511,21 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
           </div>
 
           {/* Seat Map Canvas Container */}
-          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200">
-            <div className="flex flex-wrap items-center justify-between border-b border-neutral-100 pb-3 mb-4 gap-2">
-              <span className="text-sm md:text-base font-black text-neutral-900">
-                {selectedTrip.vehicleId === 'veh-03' ? 'Toyota Hiace (14 Plazas)' : 'Mercedes-Benz Sprinter (19 Plazas)'}
-              </span>
-              <div className="flex items-center gap-3 text-xs md:text-sm font-bold text-neutral-600">
-                <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded-md bg-neutral-100 border border-neutral-300"></span> Libre</span>
-                <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded-md bg-orange-600"></span> Tuyo</span>
-                <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded-md bg-neutral-300"></span> Ocupado</span>
-              </div>
-            </div>
-
-            {/* Vehicle Front Windshield indicator */}
-            <div className="w-32 mx-auto mb-4 bg-neutral-100 text-neutral-600 text-xs font-black text-center py-1 rounded-full uppercase tracking-widest border border-neutral-200">
-              Frente / Chofer
-            </div>
-
-            {/* Grid of Seats */}
-            <div className="max-w-[280px] mx-auto bg-neutral-50 p-4 rounded-3xl border-2 border-neutral-200 space-y-3">
-              {[1, 2, 3, 4, 5, 6].map(rowNum => {
-                const rowSeats = selectedTrip.seats.filter(s => s.row === rowNum);
-                if (rowSeats.length === 0) return null;
-
-                return (
-                  <div key={rowNum} className="grid grid-cols-4 gap-2 justify-items-center">
-                    {rowSeats.map(seat => {
-                      if (seat.type === 'driver') {
-                        return (
-                          <div key={seat.id} className="w-12 h-12 rounded-xl bg-neutral-200 text-neutral-700 flex flex-col items-center justify-center text-[9px] font-black">
-                            <Bus className="w-5 h-5 text-neutral-800" />
-                            Chofer
-                          </div>
-                        );
-                      }
-                      if (seat.type === 'door') {
-                        return (
-                          <div key={seat.id} className="w-12 h-12 rounded-xl border-2 border-dashed border-neutral-300 text-neutral-500 flex items-center justify-center text-[9px] font-bold">
-                            Puerta
-                          </div>
-                        );
-                      }
-                      if (seat.type === 'walkway') {
-                        return <div key={seat.id} className="w-5 h-12"></div>;
-                      }
-
-                      const isSelected = selectedSeatNums.includes(seat.number);
-                      const isSold = seat.status === 'sold' || (seat.status === 'locked' && !isSelected);
-
-                      return (
-                        <button
-                          key={seat.id}
-                          disabled={isSold}
-                          onClick={() => toggleSeatSelection(seat)}
-                          className={`w-12 h-12 rounded-xl font-black text-sm flex flex-col items-center justify-center transition-all shadow-sm cursor-pointer ${
-                            isSelected
-                              ? 'bg-orange-600 text-white scale-105 shadow-md ring-2 ring-orange-400'
-                              : isSold
-                              ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
-                              : 'bg-white text-neutral-900 border-2 border-neutral-300 hover:border-orange-500'
-                          }`}
-                        >
-                          <span className="leading-none">{seat.number}</span>
-                          {isSelected && <Check className="w-3.5 h-3.5 mt-0.5" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <SeatDiagramViewer
+            seats={selectedTrip.seats}
+            selectedSeatNumbers={selectedSeatNums}
+            onSeatClick={(seatNum, seat) => {
+              if (seat) {
+                toggleSeatSelection(seat);
+              } else {
+                const found = selectedTrip.seats.find(s => s.number === seatNum);
+                if (found) toggleSeatSelection(found);
+              }
+            }}
+            interactive={true}
+            title={selectedTrip.vehicleId === 'veh-03' ? 'Diagrama Toyota Hiace (14 Plazas)' : 'Diagrama Mercedes-Benz Sprinter (19 Plazas)'}
+            subtitle="Toca los asientos para seleccionarlos. 🟢 Verde = Libre/Disponible, 🔴 Rojo = Vendido/Ocupado, 🟠 Naranja = Seleccionado"
+          />
 
           {/* Boarding Point & Contact Details Form */}
           <form onSubmit={handleCompleteCheckout} className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-4">

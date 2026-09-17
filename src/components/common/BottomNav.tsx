@@ -19,7 +19,8 @@ import {
   History, 
   Layers,
   CalendarDays,
-  Palmtree
+  Palmtree,
+  LayoutGrid
 } from 'lucide-react';
 
 interface BottomNavProps {
@@ -56,6 +57,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
       case 'operaciones':
         return [
           { id: 'dispatch', label: 'Despacho', icon: <Bus className="w-5 h-5 text-white" /> },
+          { id: 'seat_layouts', label: 'Diagramas', icon: <LayoutGrid className="w-5 h-5 text-white" /> },
           { id: 'fares_manager', label: 'Tarifas', icon: <DollarSign className="w-5 h-5 text-white" /> },
           { id: 'charter_schedule', label: 'Agenda Tours', icon: <CalendarDays className="w-5 h-5 text-white" /> },
           { id: 'maintenance', label: 'Taller & Km', icon: <Wrench className="w-5 h-5 text-white" /> },
@@ -72,6 +74,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
         return [
           { id: 'executive', label: 'Métricas', icon: <TrendingUp className="w-5 h-5 text-white" /> },
           { id: 'agenda', label: 'Agenda', icon: <CalendarDays className="w-5 h-5 text-white" /> },
+          { id: 'seat_layouts', label: 'Diagramas', icon: <LayoutGrid className="w-5 h-5 text-white" /> },
           { id: 'drivers', label: 'Choferes', icon: <Users className="w-5 h-5 text-white" /> },
           { id: 'tours', label: 'Tours', icon: <Palmtree className="w-5 h-5 text-white" /> },
           { id: 'fares_manager', label: 'Tarifas', icon: <DollarSign className="w-5 h-5 text-white" /> },

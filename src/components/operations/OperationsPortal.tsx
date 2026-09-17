@@ -24,6 +24,7 @@ import {
 import { RouteLocationsManager } from '../common/RouteLocationsManager';
 import { RouteFaresManager } from '../common/RouteFaresManager';
 import { DriverAssignmentsSchedule } from './DriverAssignmentsSchedule';
+import { SeatLayoutBuilder } from '../director/SeatLayoutBuilder';
 import { Vehicle, VehicleCategory } from '../../types';
 
 interface OperationsPortalProps {
@@ -37,6 +38,7 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
     drivers, 
     trips, 
     bookings, 
+    seatTemplates,
     addVehicle,
     updateVehicle,
     deleteVehicle,
@@ -63,6 +65,7 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
     odometer: number;
     nextServiceKm: number;
     image: string;
+    layoutTemplateId: string;
   }>({
     unitNumber: '',
     model: '',
@@ -71,7 +74,8 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
     category: 'van',
     odometer: 0,
     nextServiceKm: 10000,
-    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png'
+    image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png',
+    layoutTemplateId: ''
   });
 
   const activeTrip = trips.find(t => t.id === selectedTripForManifest) || trips[0];
@@ -112,6 +116,7 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
     };
 
     const preset = presets[defaultCategory];
+    const defaultTemplate = seatTemplates.find(t => t.vehicleType === defaultCategory) || seatTemplates[0];
     setVehicleForm({
       unitNumber: `${preset.namePrefix}${vehicles.length + 1}`,
       model: preset.model,
@@ -120,7 +125,8 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
       category: defaultCategory,
       odometer: 15000,
       nextServiceKm: 25000,
-      image: preset.img
+      image: preset.img,
+      layoutTemplateId: defaultTemplate?.id || ''
     });
     setShowVehicleModal(true);
   };
@@ -135,7 +141,8 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
       category: v.category || 'van',
       odometer: v.odometer,
       nextServiceKm: v.nextServiceKm,
-      image: v.image || ''
+      image: v.image || '',
+      layoutTemplateId: v.layoutTemplateId || ''
     });
     setShowVehicleModal(true);
   };
@@ -153,7 +160,8 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
         category: vehicleForm.category,
         odometer: Number(vehicleForm.odometer),
         nextServiceKm: Number(vehicleForm.nextServiceKm),
-        image: vehicleForm.image.trim() || undefined
+        image: vehicleForm.image.trim() || undefined,
+        layoutTemplateId: vehicleForm.layoutTemplateId || undefined
       });
     } else {
       addVehicle({
@@ -165,7 +173,8 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
         status: 'active',
         odometer: Number(vehicleForm.odometer),
         nextServiceKm: Number(vehicleForm.nextServiceKm),
-        image: vehicleForm.image.trim() || undefined
+        image: vehicleForm.image.trim() || undefined,
+        layoutTemplateId: vehicleForm.layoutTemplateId || undefined
       });
     }
     setShowVehicleModal(false);
@@ -553,6 +562,13 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
         </div>
       )}
 
+      {/* Tab: Diagramas de Asientos */}
+      {activeTab === 'seat_layouts' && (
+        <div className="max-w-6xl mx-auto w-full">
+          <SeatLayoutBuilder />
+        </div>
+      )}
+
       {/* Tab 4: Configuración de Rutas y Puntos de Partida */}
       {activeTab === 'routes_config' && (
         <div className="max-w-5xl mx-auto w-full">
@@ -733,6 +749,36 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
                     className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900 text-sm focus:border-orange-500 focus:bg-white transition-all outline-none"
                   />
                 </div>
+              </div>
+
+              {/* Layout Template Selector */}
+              <div>
+                <label className="text-xs font-black text-neutral-700 uppercase tracking-wider block mb-1">
+                  Diagrama de Asientos Asignado
+                </label>
+                <select
+                  value={vehicleForm.layoutTemplateId}
+                  onChange={e => {
+                    const selectedId = e.target.value;
+                    const tmpl = seatTemplates.find(t => t.id === selectedId);
+                    setVehicleForm(prev => ({
+                      ...prev,
+                      layoutTemplateId: selectedId,
+                      capacity: tmpl ? tmpl.totalSeats : prev.capacity
+                    }));
+                  }}
+                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900 text-sm focus:border-orange-500 focus:bg-white transition-all outline-none"
+                >
+                  <option value="">Selecciona un diagrama de asientos...</option>
+                  {seatTemplates.map(tmpl => (
+                    <option key={tmpl.id} value={tmpl.id}>
+                      {tmpl.name} ({tmpl.totalSeats} asientos • {tmpl.vehicleType.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-neutral-500 font-medium mt-1">
+                  Define la distribución de asientos de este vehículo para los viajes y reservaciones de clientes.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

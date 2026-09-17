@@ -15,9 +15,13 @@ import {
   AlertCircle,
   BellRing,
   Users,
-  Filter
+  Filter,
+  LayoutGrid,
+  Eye,
+  X
 } from 'lucide-react';
 import { TripSchedule } from '../../types';
+import { SeatDiagramViewer } from '../common/SeatDiagramViewer';
 
 export const TripsCalendarAgenda: React.FC = () => {
   const { 
@@ -25,6 +29,7 @@ export const TripsCalendarAgenda: React.FC = () => {
     vehicles, 
     drivers, 
     charterAssignments, 
+    seatTemplates,
     addTrip,
     sendManualWakeUpAlarm 
   } = useApp();
@@ -37,8 +42,12 @@ export const TripsCalendarAgenda: React.FC = () => {
   );
   const [filterType, setFilterType] = useState<'all' | 'route' | 'tour'>('all');
   const [showAddTripModal, setShowAddTripModal] = useState<boolean>(false);
+  const [viewingDiagramTrip, setViewingDiagramTrip] = useState<TripSchedule | null>(null);
 
   // Form for registering a new scheduled trip
+  const defaultVeh = vehicles[0];
+  const defaultTemplateId = defaultVeh?.layoutTemplateId || seatTemplates[0]?.id || '';
+
   const [newTripForm, setNewTripForm] = useState({
     routeTitle: 'Manzanillo ⇄ Guadalajara (Troncal)',
     origin: 'Manzanillo, Col.',
@@ -47,7 +56,8 @@ export const TripsCalendarAgenda: React.FC = () => {
     departureTime: '07:00 AM',
     endDate: today.toISOString().substring(0, 10),
     estimatedArrival: '11:00 AM',
-    vehicleId: vehicles[0]?.id || '',
+    vehicleId: defaultVeh?.id || '',
+    layoutTemplateId: defaultTemplateId,
     driverId: drivers[0]?.id || '',
     basePrice: 480
   });
@@ -168,6 +178,7 @@ export const TripsCalendarAgenda: React.FC = () => {
       endDate: newTripForm.endDate || newTripForm.date,
       estimatedArrival: newTripForm.estimatedArrival,
       vehicleId: newTripForm.vehicleId,
+      layoutTemplateId: newTripForm.layoutTemplateId,
       driverId: newTripForm.driverId,
       status: 'scheduled',
       basePrice: Number(newTripForm.basePrice),
@@ -464,16 +475,30 @@ export const TripsCalendarAgenda: React.FC = () => {
                       </div>
 
                       {/* Action buttons */}
-                      <div className="flex items-center justify-between pt-1 text-xs">
-                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
-                          event.status === 'scheduled' || event.status === 'upcoming'
-                            ? 'bg-blue-100 text-blue-900'
-                            : event.status === 'boarding'
-                              ? 'bg-amber-100 text-amber-900'
-                              : 'bg-emerald-100 text-emerald-900'
-                        }`}>
-                          {event.status}
-                        </span>
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
+                            event.status === 'scheduled' || event.status === 'upcoming'
+                              ? 'bg-blue-100 text-blue-900'
+                              : event.status === 'boarding'
+                                ? 'bg-amber-100 text-amber-900'
+                                : 'bg-emerald-100 text-emerald-900'
+                          }`}>
+                            {event.status}
+                          </span>
+
+                          {event.type === 'route' && event.tripObj && (
+                            <button
+                              type="button"
+                              onClick={() => setViewingDiagramTrip(event.tripObj)}
+                              className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1 border border-emerald-200"
+                              title="Ver diagrama con asientos verdes (libres) y rojos (ocupados)"
+                            >
+                              <LayoutGrid className="w-3 h-3 text-emerald-600" />
+                              Diagrama ({event.tripObj.seats.filter(s => s.status === 'sold' || s.status === 'locked').length}/{event.tripObj.seats.filter(s => s.type === 'standard' || (!s.type && s.number > 0)).length})
+                            </button>
+                          )}
+                        </div>
 
                         {driver && (
                           <button
@@ -481,7 +506,7 @@ export const TripsCalendarAgenda: React.FC = () => {
                             className="px-2.5 py-1 bg-neutral-100 hover:bg-orange-50 hover:text-orange-600 text-neutral-700 rounded-lg font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1 border border-neutral-200"
                             title="Enviar alarma / despertador al chofer"
                           >
-                            <BellRing className="w-3 h-3 text-orange-500" /> Recordar al Chofer
+                            <BellRing className="w-3 h-3 text-orange-500" /> Recordar Chofer
                           </button>
                         )}
                       </div>
@@ -658,12 +683,23 @@ export const TripsCalendarAgenda: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-black text-neutral-700 mb-1">Unidad Flotilla</label>
                   <select
                     value={newTripForm.vehicleId}
-                    onChange={e => setNewTripForm(prev => ({ ...prev, vehicleId: e.target.value }))}
+                    onChange={e => {
+                      const vId = e.target.value;
+                      const selectedV = vehicles.find(v => v.id === vId);
+                      const matchingTemplate = seatTemplates.find(t => t.id === selectedV?.layoutTemplateId)
+                        || seatTemplates.find(t => t.totalSeats === selectedV?.capacity)
+                        || seatTemplates[0];
+                      setNewTripForm(prev => ({ 
+                        ...prev, 
+                        vehicleId: vId,
+                        layoutTemplateId: matchingTemplate?.id || prev.layoutTemplateId
+                      }));
+                    }}
                     className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
                   >
                     {vehicles.filter(v => v.status !== 'maintenance').map(v => (
@@ -675,19 +711,34 @@ export const TripsCalendarAgenda: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-black text-neutral-700 mb-1">Chofer Asignado</label>
+                  <label className="block font-black text-neutral-700 mb-1">Diagrama de Asientos</label>
                   <select
-                    value={newTripForm.driverId}
-                    onChange={e => setNewTripForm(prev => ({ ...prev, driverId: e.target.value }))}
+                    value={newTripForm.layoutTemplateId}
+                    onChange={e => setNewTripForm(prev => ({ ...prev, layoutTemplateId: e.target.value }))}
                     className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
                   >
-                    {drivers.map(d => (
-                      <option key={d.id} value={d.id}>
-                        {d.name} {d.status === 'available' ? '(Disponible)' : `(${d.status})`}
+                    {seatTemplates.map(tmpl => (
+                      <option key={tmpl.id} value={tmpl.id}>
+                        {tmpl.name} ({tmpl.totalSeats} asientos • {tmpl.vehicleType.toUpperCase()})
                       </option>
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block font-black text-neutral-700 mb-1">Chofer Asignado</label>
+                <select
+                  value={newTripForm.driverId}
+                  onChange={e => setNewTripForm(prev => ({ ...prev, driverId: e.target.value }))}
+                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                >
+                  {drivers.map(d => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} {d.status === 'available' ? '(Disponible)' : `(${d.status})`}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
@@ -706,6 +757,50 @@ export const TripsCalendarAgenda: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: View Trip Seat Diagram (🟢 Libres vs 🔴 Ocupados) */}
+      {viewingDiagramTrip && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-xl rounded-3xl p-6 md:p-8 shadow-2xl border border-neutral-200 max-h-[90vh] overflow-y-auto space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+              <div>
+                <span className="text-xs font-black uppercase tracking-wider text-orange-600">Diagrama Operativo de Asientos</span>
+                <h3 className="text-lg font-black text-neutral-900">
+                  {viewingDiagramTrip.routeTitle}
+                </h3>
+                <p className="text-xs text-neutral-500 font-medium">
+                  {viewingDiagramTrip.date} • Salida: {viewingDiagramTrip.departureTime}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewingDiagramTrip(null)}
+                className="p-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Seat Diagram Viewer */}
+            <SeatDiagramViewer
+              seats={viewingDiagramTrip.seats}
+              isAdminView={true}
+              interactive={false}
+              title={`Estado de Ocupación en Vivo`}
+              subtitle={`🟢 Verde = Asientos Disponibles | 🔴 Rojo = Asientos Ocupados/Vendidos`}
+            />
+
+            <div className="pt-3 border-t border-neutral-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setViewingDiagramTrip(null)}
+                className="px-5 py-2.5 bg-neutral-900 text-white rounded-xl font-black text-xs cursor-pointer hover:bg-neutral-800 transition-colors"
+              >
+                Cerrar Diagrama
+              </button>
+            </div>
           </div>
         </div>
       )}

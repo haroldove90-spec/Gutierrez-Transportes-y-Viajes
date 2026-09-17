@@ -15,8 +15,14 @@ import {
   RoutePricing,
   RentalCar, 
   CharterAssignment,
-  DriverAlarm
+  DriverAlarm,
+  SeatLayoutTemplate
 } from '../types';
+import {
+  DEFAULT_SEAT_TEMPLATES,
+  buildSeatsFromTemplate,
+  getTemplateForVehicle
+} from '../data/seatLayoutTemplates';
 import {
   INITIAL_TRIPS,
   INITIAL_VEHICLES,
@@ -138,6 +144,12 @@ interface AppContextType {
   // Active Passenger Quick View (for instant ticket lookup)
   activeTicket: Booking | null;
   setActiveTicket: (booking: Booking | null) => void;
+
+  // Seat Layout Templates (Diagramas de Asientos de Camionetas y Autos)
+  seatTemplates: SeatLayoutTemplate[];
+  saveSeatTemplate: (template: Omit<SeatLayoutTemplate, 'id' | 'createdAt'> & { id?: string }) => SeatLayoutTemplate;
+  deleteSeatTemplate: (id: string) => boolean;
+  assignLayoutToVehicle: (vehicleId: string, layoutTemplateId: string) => boolean;
   
   // Notifications & Driver Alarms (Despertador / Recordatorio 2h)
   driverAlarms: DriverAlarm[];
@@ -356,6 +368,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.error('Error persisting route pricings', e);
     }
   }, [routePricings]);
+
+  // Seat Layout Templates (Diagramas de Asientos de Camionetas y Autos)
+  const [seatTemplates, setSeatTemplates] = useState<SeatLayoutTemplate[]>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_seat_templates_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const merged = [...parsed];
+          DEFAULT_SEAT_TEMPLATES.forEach(def => {
+            if (!merged.some(t => t.id === def.id)) {
+              merged.push(def);
+            }
+          });
+          return merged;
+        }
+      }
+    } catch (e) {
+      console.warn('Error loading cached seat templates', e);
+    }
+    return DEFAULT_SEAT_TEMPLATES;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_seat_templates_v1', JSON.stringify(seatTemplates));
+    } catch (e) {
+      console.error('Error persisting seat templates', e);
+    }
+  }, [seatTemplates]);
 
   const [selectedTripId, setSelectedTripId] = useState<string | null>('trip-101');
   const [tempLockedSeats, setTempLockedSeats] = useState<{ tripId: string; seatNumbers: number[]; expiresAt: number } | null>(null);
@@ -1185,18 +1227,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addTrip = (tripData: Omit<TripSchedule, 'id' | 'seats' | 'occupiedSeatsCount' | 'totalRevenue'>): TripSchedule => {
     const vehicle = vehicles.find(v => v.id === tripData.vehicleId);
     const capacity = vehicle?.capacity || 19;
-    const initialSeats: Seat[] = Array.from({ length: capacity }, (_, i) => ({
-      id: `seat-${i + 1}`,
-      number: i + 1,
-      row: Math.floor(i / 3) + 1,
-      col: (i % 3) + 1,
-      type: 'standard',
-      status: 'available'
-    }));
+    const template = getTemplateForVehicle(
+      seatTemplates,
+      tripData.layoutTemplateId || vehicle?.layoutTemplateId,
+      capacity
+    );
+    const initialSeats: Seat[] = buildSeatsFromTemplate(template);
 
     const newTrip: TripSchedule = {
       ...tripData,
       id: `trip-${Date.now()}`,
+      layoutTemplateId: template.id,
       occupiedSeatsCount: 0,
       totalRevenue: 0,
       seats: initialSeats,
@@ -1204,8 +1245,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setTrips(prev => [...prev, newTrip]);
-    addAuditEntry('PROGRAMACION_VIAJE', 'TripSchedule', newTrip.id, undefined, `${newTrip.routeTitle} - ${newTrip.departureTime}`);
-    showNotification(`Viaje programado con éxito: ${newTrip.routeTitle} (${newTrip.departureTime})`, 'success');
+    addAuditEntry('PROGRAMACION_VIAJE', 'TripSchedule', newTrip.id, undefined, `${newTrip.routeTitle} - ${newTrip.departureTime} (Diagrama: ${template.name})`);
+    showNotification(`Viaje programado con éxito: ${newTrip.routeTitle} (${newTrip.departureTime}) con diagrama ${template.name}`, 'success');
     return newTrip;
   };
 
@@ -1218,6 +1259,59 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteTrip = (id: string): boolean => {
     setTrips(prev => prev.filter(t => t.id !== id));
     showNotification('Viaje eliminado de la programación.', 'info');
+    return true;
+  };
+
+  // Seat Layout Templates Operations (Diagramas de Asientos)
+  const saveSeatTemplate = (templateData: Omit<SeatLayoutTemplate, 'id' | 'createdAt'> & { id?: string }): SeatLayoutTemplate => {
+    const isEdit = !!templateData.id;
+    const templateId = templateData.id || `template-custom-${Date.now()}`;
+    const newTemplate: SeatLayoutTemplate = {
+      ...templateData,
+      id: templateId,
+      createdAt: new Date().toISOString().substring(0, 10),
+    };
+
+    setSeatTemplates(prev => {
+      if (isEdit) {
+        return prev.map(t => t.id === templateId ? newTemplate : t);
+      }
+      return [newTemplate, ...prev];
+    });
+
+    addAuditEntry(
+      isEdit ? 'EDICION_DIAGRAMA_ASIENTOS' : 'CREACION_DIAGRAMA_ASIENTOS',
+      'SeatLayoutTemplate',
+      templateId,
+      newTemplate.name,
+      `Diagrama guardado con ${newTemplate.totalSeats} asientos.`
+    );
+    showNotification(`Diagrama "${newTemplate.name}" guardado exitosamente.`, 'success');
+    return newTemplate;
+  };
+
+  const deleteSeatTemplate = (id: string): boolean => {
+    const template = seatTemplates.find(t => t.id === id);
+    if (!template) return false;
+    setSeatTemplates(prev => prev.filter(t => t.id !== id));
+    addAuditEntry('ELIMINACION_DIAGRAMA_ASIENTOS', 'SeatLayoutTemplate', id, template.name, 'Diagrama eliminado');
+    showNotification(`Diagrama "${template.name}" eliminado.`, 'info');
+    return true;
+  };
+
+  const assignLayoutToVehicle = (vehicleId: string, layoutTemplateId: string): boolean => {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    const template = seatTemplates.find(t => t.id === layoutTemplateId);
+    if (!vehicle || !template) return false;
+
+    setVehicles(prev => prev.map(v => v.id === vehicleId ? {
+      ...v,
+      layoutTemplateId,
+      capacity: template.totalSeats
+    } : v));
+
+    addAuditEntry('ASIGNACION_DIAGRAMA_VEHICULO', 'Vehicle', vehicleId, vehicle.unitNumber, `Asignado diagrama: ${template.name}`);
+    showNotification(`Diagrama "${template.name}" asignado a ${vehicle.unitNumber}.`, 'success');
     return true;
   };
 
@@ -1738,6 +1832,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toggleRoutePricingStatus,
         deleteRoutePricing,
         resetRoutePricingsToDefault,
+        seatTemplates,
+        saveSeatTemplate,
+        deleteSeatTemplate,
+        assignLayoutToVehicle,
         updateVehicleImage,
         updateRentalCarImage,
         activeTicket,

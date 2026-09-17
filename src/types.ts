@@ -47,6 +47,29 @@ export interface Seat {
   ticketId?: string;
 }
 
+export type SeatCellType = 'seat' | 'driver' | 'door' | 'walkway' | 'empty';
+
+export interface SeatLayoutCell {
+  id: string;
+  row: number;
+  col: number;
+  type: SeatCellType;
+  seatNumber?: number;
+}
+
+export interface SeatLayoutTemplate {
+  id: string;
+  name: string;
+  vehicleType: 'van' | 'auto' | 'camion' | 'autobus';
+  rows: number;
+  cols: number;
+  cells: SeatLayoutCell[];
+  totalSeats: number;
+  description?: string;
+  isDefault?: boolean;
+  createdAt?: string;
+}
+
 export type VehicleCategory = 'van' | 'auto' | 'camion' | 'autobus';
 
 export interface Vehicle {
@@ -62,6 +85,7 @@ export interface Vehicle {
   lastServiceDate: string;
   driverId?: string;
   image?: string;
+  layoutTemplateId?: string; // ID del diagrama de asientos configurado
   tourContractDetails?: {
     clientName: string;
     clientPhone?: string;
@@ -130,6 +154,7 @@ export interface TripSchedule {
   estimatedArrival: string; // Hora de terminación de viaje
   vehicleId: string;
   driverId: string;
+  layoutTemplateId?: string; // ID de la plantilla de diagrama de asientos utilizada
   status: 'scheduled' | 'boarding' | 'in_transit' | 'at_scale' | 'completed' | 'cancelled';
   currentScale?: string;
   seats: Seat[];

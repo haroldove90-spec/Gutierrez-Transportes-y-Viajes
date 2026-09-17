@@ -15,6 +15,7 @@ import { FleetPhotosManager } from './FleetPhotosManager';
 import { TripsCalendarAgenda } from './TripsCalendarAgenda';
 import { DriversManager } from './DriversManager';
 import { ToursManager } from './ToursManager';
+import { SeatLayoutBuilder } from './SeatLayoutBuilder';
 
 interface DirectorPortalProps {
   activeTab: string;
@@ -190,6 +191,13 @@ export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab, setAc
       {activeTab === 'fleet_photos' && (
         <div className="max-w-6xl mx-auto w-full">
           <FleetPhotosManager />
+        </div>
+      )}
+
+      {/* Tab: Diagramas de Asientos de Autos y Camionetas */}
+      {activeTab === 'seat_layouts' && (
+        <div className="max-w-6xl mx-auto w-full">
+          <SeatLayoutBuilder />
         </div>
       )}
     </div>
