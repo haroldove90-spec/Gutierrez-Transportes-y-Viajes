@@ -41,15 +41,26 @@ import {
 import {
   checkSupabaseConnection,
   fetchTripsFromSupabase,
+  saveTripToSupabase,
+  deleteTripFromSupabase,
   fetchBookingsFromSupabase,
+  saveBookingToSupabase,
+  deleteBookingFromSupabase,
+  fetchVehiclesFromSupabase,
+  saveVehicleToSupabase,
+  deleteVehicleFromSupabase,
+  fetchDriversFromSupabase,
+  saveDriverToSupabase,
+  deleteDriverFromSupabase,
   fetchRouteStopsFromSupabase,
   upsertRouteStopToSupabase,
+  deleteRouteStopFromSupabase,
   fetchRoutePricingsFromSupabase,
   upsertRoutePricingToSupabase,
   deleteRoutePricingFromSupabase,
-  saveBookingToSupabase,
   updateBookingCheckInInSupabase,
-  saveRentalQuoteToSupabase
+  saveRentalQuoteToSupabase,
+  deleteRentalQuoteFromSupabase
 } from '../lib/supabase';
 import { SupabaseSqlModal } from '../components/modals/SupabaseSqlModal';
 
@@ -82,6 +93,8 @@ interface AppContextType {
   releaseTemporarySeatLock: () => void;
   createBooking: (bookingData: Omit<Booking, 'id' | 'createdAt' | 'qrCodeData' | 'checkInStatus'>) => Booking;
   cancelBooking: (bookingId: string, reason: string) => boolean;
+  deleteBooking: (bookingId: string) => Promise<boolean>;
+  purgeAllBookings: () => void;
   
   // Driver Actions
   validateTicketQR: (qrData: string) => { status: 'valid' | 'already_used' | 'invalid'; booking?: Booking };
@@ -116,6 +129,7 @@ interface AppContextType {
   createRentalQuote: (quoteData: Omit<RentalQuote, 'id' | 'createdAt' | 'status' | 'balanceRemaining'>) => RentalQuote;
   convertQuoteToReservation: (quoteId: string, vehicleId: string, driverId: string) => boolean;
   updateQuoteStatus: (quoteId: string, status: RentalQuote['status']) => void;
+  deleteRentalQuote: (quoteId: string) => boolean;
   
   // Invoicing & Exceptions
   requestInvoice: (invoiceData: Omit<InvoiceCFDI, 'id' | 'status'>) => InvoiceCFDI;
@@ -202,14 +216,55 @@ export function parseDepartureTimeToDate(dateStr: string, timeStr: string): Date
   }
 }
 
+const getDeletedIds = (): Set<string> => {
+  try {
+    const saved = localStorage.getItem('gutierrez_deleted_ids_v1');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) return new Set(parsed);
+    }
+  } catch {}
+  return new Set();
+};
+
+const recordDeletedId = (id: string) => {
+  try {
+    const set = getDeletedIds();
+    set.add(id);
+    localStorage.setItem('gutierrez_deleted_ids_v1', JSON.stringify(Array.from(set)));
+  } catch {}
+};
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentRole, setCurrentRole] = useState<UserRole>('home');
   const [isMobileDeviceFrame, setIsMobileDeviceFrame] = useState<boolean>(false);
   
-  const [trips, setTrips] = useState<TripSchedule[]>(INITIAL_TRIPS);
+  const [trips, setTrips] = useState<TripSchedule[]>(() => {
+    const deleted = getDeletedIds();
+    try {
+      const saved = localStorage.getItem('gutierrez_trips_v3');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(t => !deleted.has(t.id));
+        }
+      }
+    } catch (e) {
+      console.warn('Error loading cached trips', e);
+    }
+    return INITIAL_TRIPS.filter(t => !deleted.has(t.id));
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_trips_v3', JSON.stringify(trips));
+    } catch (e) {}
+  }, [trips]);
+
   const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
+    const deleted = getDeletedIds();
     try {
       // Clear legacy test cache
       localStorage.removeItem('gutierrez_vehicles_v2');
@@ -217,38 +272,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const loaded = parsed.map((v: any) => {
-            const matched = INITIAL_VEHICLES.find(iv => iv.id === v.id);
-            return {
-              ...v,
-              category: v.category || matched?.category || 'van'
-            };
-          });
-          // Also include new model examples if not yet in user cache
-          INITIAL_VEHICLES.forEach(iv => {
-            if (!loaded.some((lv: any) => lv.id === iv.id)) {
-              loaded.push(iv);
-            }
-          });
-          return loaded;
+          return parsed
+            .filter((v: any) => !deleted.has(v.id))
+            .map((v: any) => {
+              const matched = INITIAL_VEHICLES.find(iv => iv.id === v.id);
+              return {
+                ...v,
+                category: v.category || matched?.category || 'van'
+              };
+            });
         }
       }
     } catch (e) {
       console.warn('Error loading cached vehicles', e);
     }
-    return INITIAL_VEHICLES;
+    return INITIAL_VEHICLES.filter(iv => !deleted.has(iv.id));
   });
+
   const [drivers, setDrivers] = useState<Driver[]>(() => {
+    const deleted = getDeletedIds();
     try {
       const saved = localStorage.getItem('gutierrez_drivers_v3');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.filter((d: any) => !deleted.has(d.id));
+        }
       }
     } catch (e) {
       console.warn('Error loading cached drivers', e);
     }
-    return INITIAL_DRIVERS;
+    return INITIAL_DRIVERS.filter(d => !deleted.has(d.id));
   });
 
   useEffect(() => {
@@ -268,14 +322,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [drivers]);
 
   const [rentalCars, setRentalCars] = useState<RentalCar[]>(() => {
+    const deleted = getDeletedIds();
     try {
       const saved = localStorage.getItem('gutierrez_rental_cars_v2');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const merged = [...parsed];
+          const merged = [...parsed.filter((c: any) => !deleted.has(c.id))];
           OFFICIAL_RENTAL_CARS.forEach(official => {
-            if (!merged.some(c => c.id === official.id)) {
+            if (!deleted.has(official.id) && !merged.some(c => c.id === official.id)) {
               merged.push(official);
             }
           });
@@ -285,11 +340,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {
       console.warn('Error loading cached rental cars', e);
     }
-    return OFFICIAL_RENTAL_CARS;
+    return OFFICIAL_RENTAL_CARS.filter(c => !deleted.has(c.id));
   });
-  const [bookings, setBookings] = useState<Booking[]>(INITIAL_BOOKINGS);
+
+  const [bookings, setBookings] = useState<Booking[]>(() => {
+    const deleted = getDeletedIds();
+    try {
+      const saved = localStorage.getItem('gutierrez_bookings_v3');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(b => !deleted.has(b.id));
+        }
+      }
+    } catch (e) {
+      console.warn('Error loading cached bookings', e);
+    }
+    return INITIAL_BOOKINGS.filter(b => !deleted.has(b.id));
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_bookings_v3', JSON.stringify(bookings));
+    } catch (e) {}
+  }, [bookings]);
+
   const [expenses, setExpenses] = useState<TripExpense[]>(INITIAL_EXPENSES);
-  const [quotes, setQuotes] = useState<RentalQuote[]>(INITIAL_RENTAL_QUOTES);
+
+  const [quotes, setQuotes] = useState<RentalQuote[]>(() => {
+    const deleted = getDeletedIds();
+    try {
+      const saved = localStorage.getItem('gutierrez_rental_quotes_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed.filter(q => !deleted.has(q.id));
+      }
+    } catch (e) {}
+    return INITIAL_RENTAL_QUOTES.filter(q => !deleted.has(q.id));
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_rental_quotes_v1', JSON.stringify(quotes));
+    } catch (e) {}
+  }, [quotes]);
   const [invoices, setInvoices] = useState<InvoiceCFDI[]>(INITIAL_INVOICES);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
   const [exceptions, setExceptions] = useState<ExceptionRequest[]>(INITIAL_EXCEPTIONS);
@@ -690,23 +784,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSupabaseMessage(res.error);
       } else if (res.connected) {
         setSupabaseMessage('Conectado a Supabase PostgreSQL');
-        const [cloudTrips, cloudBookings, cloudStops, cloudPricings] = await Promise.all([
+        const [cloudTrips, cloudBookings, cloudStops, cloudPricings, cloudVehicles, cloudDrivers] = await Promise.all([
           fetchTripsFromSupabase(),
           fetchBookingsFromSupabase(),
           fetchRouteStopsFromSupabase(),
-          fetchRoutePricingsFromSupabase()
+          fetchRoutePricingsFromSupabase(),
+          fetchVehiclesFromSupabase(),
+          fetchDriversFromSupabase()
         ]);
-        if (cloudTrips && cloudTrips.length > 0) {
-          setTrips(cloudTrips);
+
+        const deleted = getDeletedIds();
+
+        // If cloudTrips / cloudBookings is an array (even if empty because user deleted them from Supabase), update state!
+        if (cloudTrips !== null) {
+          setTrips(cloudTrips.filter(t => !deleted.has(t.id)));
         }
-        if (cloudBookings && cloudBookings.length > 0) {
-          setBookings(cloudBookings);
+        if (cloudBookings !== null) {
+          setBookings(cloudBookings.filter(b => !deleted.has(b.id)));
         }
-        if (cloudStops && cloudStops.length > 0) {
-          setRouteStops(cloudStops);
+        if (cloudStops !== null && cloudStops.length > 0) {
+          setRouteStops(cloudStops.filter(s => !deleted.has(s.id)));
         }
-        if (cloudPricings && cloudPricings.length > 0) {
-          setRoutePricings(cloudPricings);
+        if (cloudPricings !== null && cloudPricings.length > 0) {
+          setRoutePricings(cloudPricings.filter(p => !deleted.has(p.id)));
+        }
+        if (cloudVehicles !== null && cloudVehicles.length > 0) {
+          setVehicles(cloudVehicles.filter(v => !deleted.has(v.id)));
+        }
+        if (cloudDrivers !== null && cloudDrivers.length > 0) {
+          setDrivers(cloudDrivers.filter(d => !deleted.has(d.id)));
         }
       }
     } catch {
@@ -910,6 +1016,60 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return true;
   };
 
+  const deleteBooking = async (bookingId: string): Promise<boolean> => {
+    const booking = bookings.find(b => b.id === bookingId);
+    recordDeletedId(bookingId);
+    
+    // Release seats in the trip if associated
+    if (booking && booking.tripId) {
+      setTrips(prev => prev.map(t => {
+        if (t.id !== booking.tripId) return t;
+        return {
+          ...t,
+          occupiedSeatsCount: Math.max(0, t.occupiedSeatsCount - booking.seatNumbers.length),
+          totalRevenue: Math.max(0, (t.totalRevenue || 0) - booking.totalAmount),
+          seats: t.seats.map(s => {
+            if (booking.seatNumbers.includes(s.number)) {
+              return {
+                ...s,
+                status: 'available',
+                passengerName: undefined,
+                ticketId: undefined
+              };
+            }
+            return s;
+          })
+        };
+      }));
+    }
+
+    setBookings(prev => prev.filter(b => b.id !== bookingId));
+    deleteBookingFromSupabase(bookingId).catch(() => {});
+
+    addAuditEntry(
+      'BORRADO_BOLETO',
+      'Booking',
+      bookingId,
+      'Eliminado',
+      `Boleto #${bookingId} eliminado permanentemente de la base de datos`
+    );
+
+    showNotification(`Boleto #${bookingId} eliminado permanentemente del sistema.`, 'info');
+    return true;
+  };
+
+  const purgeAllBookings = () => {
+    bookings.forEach(b => recordDeletedId(b.id));
+    setBookings([]);
+    setTrips(prev => prev.map(t => ({
+      ...t,
+      occupiedSeatsCount: 0,
+      totalRevenue: 0,
+      seats: t.seats.map(s => ({ ...s, status: 'available', passengerName: undefined, ticketId: undefined }))
+    })));
+    showNotification('Todos los boletos han sido eliminados del registro.', 'info');
+  };
+
   const validateTicketQR = (qrData: string): { status: 'valid' | 'already_used' | 'invalid'; booking?: Booking } => {
     const booking = bookings.find(b => b.qrCodeData === qrData || b.id === qrData || qrData.includes(b.id));
     if (!booking) {
@@ -984,6 +1144,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       status: vehicleData.status || 'active'
     };
     setVehicles(prev => [newVehicle, ...prev]);
+    saveVehicleToSupabase(newVehicle).catch(() => {});
     addAuditEntry('ALTA_UNIDAD_FLOTILLA', 'Vehicle', newVehicle.id, 'n/a', `${newVehicle.unitNumber} (${newVehicle.category})`);
     showNotification(`Nueva unidad "${newVehicle.unitNumber}" dada de alta en el sistema.`, 'success');
     return newVehicle;
@@ -991,14 +1152,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateVehicle = (id: string, updates: Partial<Vehicle>): boolean => {
     let updated = false;
+    let updatedVeh: Vehicle | undefined;
     setVehicles(prev => prev.map(v => {
       if (v.id === id) {
         updated = true;
-        return { ...v, ...updates };
+        updatedVeh = { ...v, ...updates };
+        return updatedVeh;
       }
       return v;
     }));
-    if (updated) {
+    if (updated && updatedVeh) {
+      saveVehicleToSupabase(updatedVeh).catch(() => {});
       addAuditEntry('EDICION_UNIDAD_FLOTILLA', 'Vehicle', id, 'modificado', JSON.stringify(updates));
       showNotification('Unidad actualizada correctamente.', 'success');
     }
@@ -1008,9 +1172,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteVehicle = (id: string): boolean => {
     const target = vehicles.find(v => v.id === id);
     if (!target) return false;
+    recordDeletedId(id);
     setVehicles(prev => prev.filter(v => v.id !== id));
+    deleteVehicleFromSupabase(id).catch(() => {});
     addAuditEntry('BAJA_UNIDAD_FLOTILLA', 'Vehicle', id, 'eliminado', `${target.unitNumber} - ${target.model}`);
-    showNotification(`Unidad "${target.unitNumber}" dada de baja del sistema.`, 'info');
+    showNotification(`Unidad "${target.unitNumber}" eliminada definitivamente del sistema.`, 'info');
     return true;
   };
 
@@ -1196,6 +1362,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       status: driverData.status || 'available'
     };
     setDrivers(prev => [newDriver, ...prev]);
+    saveDriverToSupabase(newDriver).catch(() => {});
     if (driverData.currentVehicleId) {
       assignDriverToVehicle(newDriver.id, driverData.currentVehicleId, true);
     }
@@ -1205,7 +1372,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateDriver = (id: string, updates: Partial<Driver>): boolean => {
-    setDrivers(prev => prev.map(d => d.id === id ? { ...d, ...updates } : d));
+    let updatedDrv: Driver | undefined;
+    setDrivers(prev => prev.map(d => {
+      if (d.id === id) {
+        updatedDrv = { ...d, ...updates };
+        return updatedDrv;
+      }
+      return d;
+    }));
+    if (updatedDrv) {
+      saveDriverToSupabase(updatedDrv).catch(() => {});
+    }
     addAuditEntry('ACTUALIZACION_CHOFER', 'Driver', id, undefined, `Actualización de datos chofer ${id}`);
     showNotification('Datos del chofer actualizados.', 'success');
     return true;
@@ -1214,13 +1391,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteDriver = (id: string): boolean => {
     const driver = drivers.find(d => d.id === id);
     if (!driver) return false;
+    recordDeletedId(id);
     // Liberar vehículo si estaba asignado
     if (driver.currentVehicleId) {
       setVehicles(prev => prev.map(v => v.id === driver.currentVehicleId ? { ...v, driverId: undefined } : v));
     }
     setDrivers(prev => prev.filter(d => d.id !== id));
+    deleteDriverFromSupabase(id).catch(() => {});
     addAuditEntry('BAJA_CHOFER', 'Driver', id, driver.name, 'Chofer eliminado del sistema');
-    showNotification(`Chofer ${driver.name} eliminado del sistema.`, 'info');
+    showNotification(`Chofer ${driver.name} eliminado definitivamente del sistema.`, 'info');
     return true;
   };
 
@@ -1245,20 +1424,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setTrips(prev => [...prev, newTrip]);
+    saveTripToSupabase(newTrip).catch(() => {});
     addAuditEntry('PROGRAMACION_VIAJE', 'TripSchedule', newTrip.id, undefined, `${newTrip.routeTitle} - ${newTrip.departureTime} (Diagrama: ${template.name})`);
     showNotification(`Viaje programado con éxito: ${newTrip.routeTitle} (${newTrip.departureTime}) con diagrama ${template.name}`, 'success');
     return newTrip;
   };
 
   const updateTrip = (id: string, updates: Partial<TripSchedule>): boolean => {
-    setTrips(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+    let updatedTrip: TripSchedule | undefined;
+    setTrips(prev => prev.map(t => {
+      if (t.id === id) {
+        updatedTrip = { ...t, ...updates };
+        return updatedTrip;
+      }
+      return t;
+    }));
+    if (updatedTrip) {
+      saveTripToSupabase(updatedTrip).catch(() => {});
+    }
     showNotification('Viaje actualizado correctamente.', 'success');
     return true;
   };
 
   const deleteTrip = (id: string): boolean => {
+    recordDeletedId(id);
     setTrips(prev => prev.filter(t => t.id !== id));
-    showNotification('Viaje eliminado de la programación.', 'info');
+    deleteTripFromSupabase(id).catch(() => {});
+    addAuditEntry('BORRADO_CORRIDA', 'TripSchedule', id, 'eliminado', 'Corrida eliminada');
+    showNotification('Viaje eliminado definitivamente de la programación.', 'info');
     return true;
   };
 
@@ -1293,9 +1486,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteSeatTemplate = (id: string): boolean => {
     const template = seatTemplates.find(t => t.id === id);
     if (!template) return false;
+    recordDeletedId(id);
     setSeatTemplates(prev => prev.filter(t => t.id !== id));
     addAuditEntry('ELIMINACION_DIAGRAMA_ASIENTOS', 'SeatLayoutTemplate', id, template.name, 'Diagrama eliminado');
-    showNotification(`Diagrama "${template.name}" eliminado.`, 'info');
+    showNotification(`Diagrama "${template.name}" eliminado definitivamente.`, 'info');
     return true;
   };
 
@@ -1511,6 +1705,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification(`Estatus actualizado a: ${status}`, 'info');
   };
 
+  const deleteRentalQuote = (quoteId: string): boolean => {
+    recordDeletedId(quoteId);
+    setQuotes(prev => prev.filter(q => q.id !== quoteId));
+    deleteRentalQuoteFromSupabase(quoteId).catch(() => {});
+    addAuditEntry('BORRADO_COTIZACION', 'RentalQuote', quoteId, 'eliminado', 'Cotización eliminada permanentemente');
+    showNotification(`Cotización ${quoteId} eliminada definitivamente del sistema.`, 'info');
+    return true;
+  };
+
   const requestInvoice = (invoiceData: Omit<InvoiceCFDI, 'id' | 'status'>): InvoiceCFDI => {
     const newInvoice: InvoiceCFDI = {
       ...invoiceData,
@@ -1594,9 +1797,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const deleteRouteStop = (id: string): boolean => {
     const target = routeStops.find(s => s.id === id);
+    recordDeletedId(id);
     setRouteStops(prev => prev.filter(stop => stop.id !== id));
+    deleteRouteStopFromSupabase(id).catch(() => {});
     addAuditEntry('ELIMINACION_PUNTO_PARTIDA', 'RouteStop', id, 'eliminado', target ? target.name : id);
-    showNotification('Ubicación eliminada del catálogo.', 'info');
+    showNotification('Ubicación eliminada definitivamente del catálogo.', 'info');
     return true;
   };
 
@@ -1669,10 +1874,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const deleteRoutePricing = (id: string): boolean => {
     const target = routePricings.find(p => p.id === id);
+    recordDeletedId(id);
     setRoutePricings(prev => prev.filter(p => p.id !== id));
     deleteRoutePricingFromSupabase(id).catch(() => {});
     addAuditEntry('ELIMINACION_TARIFA', 'RoutePricing', id, 'eliminado', target ? `${target.origin} a ${target.destination}` : id);
-    showNotification('Tarifa eliminada del catálogo.', 'info');
+    showNotification('Tarifa eliminada definitivamente del catálogo.', 'info');
     return true;
   };
 
@@ -1794,6 +2000,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         releaseTemporarySeatLock,
         createBooking,
         cancelBooking,
+        deleteBooking,
+        purgeAllBookings,
         validateTicketQR,
         checkInPassenger,
         updateTripStatus,
@@ -1818,6 +2026,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         createRentalQuote,
         convertQuoteToReservation,
         updateQuoteStatus,
+        deleteRentalQuote,
         requestInvoice,
         approveException,
         routeStops,

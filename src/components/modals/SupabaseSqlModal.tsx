@@ -277,16 +277,18 @@ CREATE POLICY "Permitir modificacion de viajes" ON public.trips FOR ALL USING (t
 DROP POLICY IF EXISTS "Permitir lectura de reservas" ON public.bookings;
 DROP POLICY IF EXISTS "Permitir creacion de reservas" ON public.bookings;
 DROP POLICY IF EXISTS "Permitir actualizacion de reservas" ON public.bookings;
+DROP POLICY IF EXISTS "Permitir eliminacion de reservas" ON public.bookings;
+DROP POLICY IF EXISTS "Permitir modificacion de reservas" ON public.bookings;
 CREATE POLICY "Permitir lectura de reservas" ON public.bookings FOR SELECT USING (true);
-CREATE POLICY "Permitir creacion de reservas" ON public.bookings FOR INSERT WITH CHECK (true);
-CREATE POLICY "Permitir actualizacion de reservas" ON public.bookings FOR UPDATE USING (true);
+CREATE POLICY "Permitir modificacion de reservas" ON public.bookings FOR ALL USING (true);
 
 DROP POLICY IF EXISTS "Permitir lectura de cotizaciones" ON public.rental_quotes;
 DROP POLICY IF EXISTS "Permitir creacion de cotizaciones" ON public.rental_quotes;
 DROP POLICY IF EXISTS "Permitir actualizacion de cotizaciones" ON public.rental_quotes;
+DROP POLICY IF EXISTS "Permitir eliminacion de cotizaciones" ON public.rental_quotes;
+DROP POLICY IF EXISTS "Permitir modificacion de cotizaciones" ON public.rental_quotes;
 CREATE POLICY "Permitir lectura de cotizaciones" ON public.rental_quotes FOR SELECT USING (true);
-CREATE POLICY "Permitir creacion de cotizaciones" ON public.rental_quotes FOR INSERT WITH CHECK (true);
-CREATE POLICY "Permitir actualizacion de cotizaciones" ON public.rental_quotes FOR UPDATE USING (true);
+CREATE POLICY "Permitir modificacion de cotizaciones" ON public.rental_quotes FOR ALL USING (true);
 
 DROP POLICY IF EXISTS "Permitir gastos de ruta" ON public.trip_expenses;
 CREATE POLICY "Permitir gastos de ruta" ON public.trip_expenses FOR ALL USING (true);
@@ -303,9 +305,9 @@ CREATE POLICY "Permitir auditoria" ON public.audit_logs FOR ALL USING (true);
 DROP POLICY IF EXISTS "Permitir lectura de alarmas chofer" ON public.driver_alarms;
 DROP POLICY IF EXISTS "Permitir insercion de alarmas chofer" ON public.driver_alarms;
 DROP POLICY IF EXISTS "Permitir actualizacion de alarmas chofer" ON public.driver_alarms;
+DROP POLICY IF EXISTS "Permitir modificacion de alarmas chofer" ON public.driver_alarms;
 CREATE POLICY "Permitir lectura de alarmas chofer" ON public.driver_alarms FOR SELECT USING (true);
-CREATE POLICY "Permitir insercion de alarmas chofer" ON public.driver_alarms FOR INSERT WITH CHECK (true);
-CREATE POLICY "Permitir actualizacion de alarmas chofer" ON public.driver_alarms FOR UPDATE USING (true);
+CREATE POLICY "Permitir modificacion de alarmas chofer" ON public.driver_alarms FOR ALL USING (true);
 
 -- ============================================================================
 -- SEED DATA OFICIAL

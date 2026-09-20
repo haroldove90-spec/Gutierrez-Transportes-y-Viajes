@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Booking, TripSchedule, RentalQuote, RouteStop, RoutePricing } from '../types';
+import { Booking, TripSchedule, RentalQuote, RouteStop, RoutePricing, Vehicle, Driver } from '../types';
 import { ROUTE_STOPS } from '../data/mockData';
 
 // Fallback configuration provided by user
@@ -73,7 +73,8 @@ export async function fetchTripsFromSupabase(): Promise<TripSchedule[] | null> {
       .select('*')
       .order('date', { ascending: true });
 
-    if (error || !data || data.length === 0) return null;
+    if (error) return null;
+    if (!data) return [];
 
     return data.map((t: any) => ({
       id: t.id,
@@ -94,10 +95,55 @@ export async function fetchTripsFromSupabase(): Promise<TripSchedule[] | null> {
       status: t.status,
       currentScale: t.current_scale,
       seats: Array.isArray(t.seats) ? t.seats : [],
-      stops: Array.isArray(t.stops) ? t.stops : ROUTE_STOPS
+      stops: Array.isArray(t.stops) ? t.stops : ROUTE_STOPS,
+      layoutTemplateId: t.layout_template_id || undefined,
+      endDate: t.end_date || t.date
     }));
   } catch {
     return null;
+  }
+}
+
+/**
+ * Save / Upsert a Trip to Supabase
+ */
+export async function saveTripToSupabase(trip: TripSchedule): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('trips').upsert({
+      id: trip.id,
+      route_title: trip.routeTitle,
+      origin: trip.origin,
+      destination: trip.destination,
+      date: trip.date,
+      departure_time: trip.departureTime,
+      estimated_arrival: trip.estimatedArrival,
+      driver_id: trip.driverId || null,
+      vehicle_id: trip.vehicleId || null,
+      base_price: trip.basePrice,
+      total_seats: trip.seats?.length || 19,
+      occupied_seats_count: trip.occupiedSeatsCount || 0,
+      total_revenue: trip.totalRevenue || 0,
+      status: trip.status || 'scheduled',
+      current_scale: trip.currentScale || null,
+      seats: trip.seats || [],
+      layout_template_id: trip.layoutTemplateId || null,
+      end_date: trip.endDate || trip.date
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Delete a trip from Supabase permanently
+ */
+export async function deleteTripFromSupabase(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('trips').delete().eq('id', id);
+    return !error;
+  } catch {
+    return false;
   }
 }
 
@@ -156,7 +202,8 @@ export async function fetchBookingsFromSupabase(): Promise<Booking[] | null> {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (error || !data || data.length === 0) return null;
+    if (error) return null;
+    if (!data) return [];
 
     return data.map((b: any) => ({
       id: b.id,
@@ -190,6 +237,149 @@ export async function fetchBookingsFromSupabase(): Promise<Booking[] | null> {
     }));
   } catch {
     return null;
+  }
+}
+
+/**
+ * Delete a booking from Supabase permanently
+ */
+export async function deleteBookingFromSupabase(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('bookings').delete().eq('id', id);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch Vehicles from Supabase
+ */
+export async function fetchVehiclesFromSupabase(): Promise<Vehicle[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('vehicles')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (error) return null;
+    if (!data) return [];
+
+    return data.map((v: any) => ({
+      id: v.id,
+      unitNumber: v.name || v.id,
+      model: v.type === 'sprinter' ? 'Mercedes-Benz Sprinter' : (v.type || 'Van Pasajeros'),
+      plate: v.plate || 'S/P',
+      capacity: Number(v.capacity || 19),
+      status: (v.status as any) || 'active',
+      category: v.type?.toLowerCase().includes('auto') ? 'auto' : 'van',
+      driverId: v.assigned_driver_id || undefined,
+      odometer: Number(v.mileage || 120000),
+      nextServiceKm: Number(v.mileage ? v.mileage + 5000 : 125000),
+      lastServiceDate: '2026-08-15',
+      image: v.image_url || undefined,
+      layoutTemplateId: v.layout_template_id || undefined
+    }));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save / Upsert Vehicle to Supabase
+ */
+export async function saveVehicleToSupabase(vehicle: Vehicle): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('vehicles').upsert({
+      id: vehicle.id,
+      name: vehicle.unitNumber,
+      plate: vehicle.plate,
+      capacity: vehicle.capacity,
+      type: vehicle.category === 'auto' ? 'auto' : 'sprinter',
+      status: vehicle.status,
+      assigned_driver_id: vehicle.driverId || null,
+      mileage: vehicle.odometer,
+      image_url: vehicle.image || null,
+      layout_template_id: vehicle.layoutTemplateId || null
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Delete Vehicle from Supabase permanently
+ */
+export async function deleteVehicleFromSupabase(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('vehicles').delete().eq('id', id);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch Drivers from Supabase
+ */
+export async function fetchDriversFromSupabase(): Promise<Driver[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('drivers')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) return null;
+    if (!data) return [];
+
+    return data.map((d: any) => ({
+      id: d.id,
+      name: d.name,
+      phone: d.phone,
+      licenseNumber: d.license_number || d.license_type || 'FED-B-99882',
+      licenseExpiry: d.license_expiry || '2027-12-31',
+      rating: Number(d.rating || 4.9),
+      status: (d.status as any) || 'available',
+      avatar: d.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+      currentVehicleId: d.current_vehicle_id || undefined
+    }));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save / Upsert Driver to Supabase
+ */
+export async function saveDriverToSupabase(driver: Driver): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('drivers').upsert({
+      id: driver.id,
+      name: driver.name,
+      phone: driver.phone,
+      license_number: driver.licenseNumber || null,
+      license_expiry: driver.licenseExpiry || null,
+      rating: driver.rating,
+      status: driver.status,
+      avatar: driver.avatar || null,
+      current_vehicle_id: driver.currentVehicleId || null
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Delete Driver from Supabase permanently
+ */
+export async function deleteDriverFromSupabase(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('drivers').delete().eq('id', id);
+    return !error;
+  } catch {
+    return false;
   }
 }
 
@@ -250,6 +440,18 @@ export async function saveRentalQuoteToSupabase(quote: RentalQuote): Promise<boo
 }
 
 /**
+ * Delete rental quote from Supabase permanently
+ */
+export async function deleteRentalQuoteFromSupabase(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('rental_quotes').delete().eq('id', id);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Fetch route stops from Supabase if table exists
  */
 export async function fetchRouteStopsFromSupabase(): Promise<RouteStop[] | null> {
@@ -259,7 +461,8 @@ export async function fetchRouteStopsFromSupabase(): Promise<RouteStop[] | null>
       .select('*')
       .order('stop_order', { ascending: true });
 
-    if (error || !data || data.length === 0) return null;
+    if (error) return null;
+    if (!data) return [];
 
     return data.map((s: any) => ({
       id: s.id,
@@ -306,6 +509,18 @@ export async function upsertRouteStopToSupabase(stop: RouteStop): Promise<boolea
 }
 
 /**
+ * Delete route stop from Supabase permanently
+ */
+export async function deleteRouteStopFromSupabase(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('route_stops').delete().eq('id', id);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Fetch route pricings / tarifas from Supabase
  */
 export async function fetchRoutePricingsFromSupabase(): Promise<RoutePricing[] | null> {
@@ -315,7 +530,8 @@ export async function fetchRoutePricingsFromSupabase(): Promise<RoutePricing[] |
       .select('*')
       .order('id', { ascending: true });
 
-    if (error || !data || data.length === 0) return null;
+    if (error) return null;
+    if (!data) return [];
 
     return data.map((p: any) => ({
       id: p.id,

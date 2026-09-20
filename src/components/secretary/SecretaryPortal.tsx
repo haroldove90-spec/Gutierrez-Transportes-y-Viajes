@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Eye,
   Check,
+  Trash2,
   X
 } from 'lucide-react';
 import { RentalQuote, RentalCar } from '../../types';
@@ -44,6 +45,7 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
     seatTemplates,
     createRentalQuote, 
     convertQuoteToReservation, 
+    deleteRentalQuote,
     createBooking, 
     showNotification 
   } = useApp();
@@ -981,13 +983,27 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                     <p className="text-xs md:text-sm text-neutral-500 mt-1">Destino: <strong className="text-neutral-900">{q.destination}</strong></p>
                   </div>
 
-                  <span className={`text-xs font-black px-3 py-1 rounded-full uppercase ${
-                    q.status === 'reserved' ? 'bg-emerald-100 text-emerald-800' :
-                    q.status === 'followup_24h' ? 'bg-amber-100 text-amber-800' :
-                    q.status === 'followup_48h' ? 'bg-purple-100 text-purple-800' : 'bg-neutral-100 text-neutral-800'
-                  }`}>
-                    {q.status.replace('_', ' ')}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-black px-3 py-1 rounded-full uppercase ${
+                      q.status === 'reserved' ? 'bg-emerald-100 text-emerald-800' :
+                      q.status === 'followup_24h' ? 'bg-amber-100 text-amber-800' :
+                      q.status === 'followup_48h' ? 'bg-purple-100 text-purple-800' : 'bg-neutral-100 text-neutral-800'
+                    }`}>
+                      {q.status.replace('_', ' ')}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`¿Estás seguro de eliminar permanentemente la cotización ${q.id} para ${q.clientName}? Se borrará de Supabase.`)) {
+                          deleteRentalQuote(q.id);
+                        }
+                      }}
+                      className="p-1.5 bg-neutral-100 hover:bg-red-50 text-neutral-400 hover:text-red-600 rounded-xl transition-colors cursor-pointer"
+                      title="Eliminar cotización permanentemente"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Información del Viaje: Fecha y Hora de Inicio y Fecha y Hora de Terminación */}

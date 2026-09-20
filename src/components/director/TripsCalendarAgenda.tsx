@@ -18,6 +18,7 @@ import {
   Filter,
   LayoutGrid,
   Eye,
+  Trash2,
   X
 } from 'lucide-react';
 import { TripSchedule } from '../../types';
@@ -31,6 +32,7 @@ export const TripsCalendarAgenda: React.FC = () => {
     charterAssignments, 
     seatTemplates,
     addTrip,
+    deleteTrip,
     sendManualWakeUpAlarm 
   } = useApp();
 
@@ -500,15 +502,32 @@ export const TripsCalendarAgenda: React.FC = () => {
                           )}
                         </div>
 
-                        {driver && (
-                          <button
-                            onClick={() => sendManualWakeUpAlarm(driver.id, event.id, `Recordatorio: Salida programada hacia ${event.destination} a las ${event.time}`)}
-                            className="px-2.5 py-1 bg-neutral-100 hover:bg-orange-50 hover:text-orange-600 text-neutral-700 rounded-lg font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1 border border-neutral-200"
-                            title="Enviar alarma / despertador al chofer"
-                          >
-                            <BellRing className="w-3 h-3 text-orange-500" /> Recordar Chofer
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {driver && (
+                            <button
+                              onClick={() => sendManualWakeUpAlarm(driver.id, event.id, `Recordatorio: Salida programada hacia ${event.destination} a las ${event.time}`)}
+                              className="px-2.5 py-1 bg-neutral-100 hover:bg-orange-50 hover:text-orange-600 text-neutral-700 rounded-lg font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1 border border-neutral-200"
+                              title="Enviar alarma / despertador al chofer"
+                            >
+                              <BellRing className="w-3 h-3 text-orange-500" /> Recordar Chofer
+                            </button>
+                          )}
+
+                          {event.type === 'route' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(`¿Estás seguro de eliminar permanentemente la corrida de viaje "${event.origin} ➔ ${event.destination}" (${event.time})? Se eliminará de la base de datos Supabase.`)) {
+                                  deleteTrip(event.id);
+                                }
+                              }}
+                              className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1 border border-red-200"
+                              title="Eliminar corrida de viaje definitivamente"
+                            >
+                              <Trash2 className="w-3 h-3 text-red-600" /> Borrar
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

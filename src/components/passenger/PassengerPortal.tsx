@@ -20,7 +20,8 @@ import {
   Sparkles,
   ArrowRightLeft,
   Navigation,
-  ExternalLink
+  ExternalLink,
+  Trash2
 } from 'lucide-react';
 import { OFFICIAL_PRICING, OFFICIAL_PHONE, OFFICIAL_WHATSAPP, OFFICIAL_EXPERIENCE_YEARS } from '../../data/mockData';
 import { TripSchedule, Seat, Booking, RoutePricing } from '../../types';
@@ -46,6 +47,8 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
     lockSeatsTemporarily, 
     releaseTemporarySeatLock, 
     createBooking,
+    deleteBooking,
+    purgeAllBookings,
     showNotification 
   } = useApp();
 
@@ -765,55 +768,103 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
       {activeTab === 'tickets' && (
         <div className="max-w-4xl mx-auto w-full space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm md:text-base font-black uppercase tracking-wider text-neutral-800">
-              Mis Boletos Digitales Emitidos
-            </h3>
-            <span className="text-xs md:text-sm text-neutral-600 font-bold">{bookings.length} boletos</span>
+            <div>
+              <h3 className="text-sm md:text-base font-black uppercase tracking-wider text-neutral-800">
+                Mis Boletos Digitales Emitidos
+              </h3>
+              <p className="text-xs text-neutral-500">Boletos registrados en el sistema y sincronizados con la base de datos</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs md:text-sm text-neutral-600 font-bold">{bookings.length} boletos</span>
+              {bookings.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('¿Deseas eliminar TODOS los boletos emitidos? Se liberarán los asientos y se borrarán permanentemente.')) {
+                      purgeAllBookings();
+                    }
+                  }}
+                  className="text-xs font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-xl transition-colors cursor-pointer flex items-center gap-1 border border-red-200"
+                  title="Eliminar todos los boletos registrados"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Limpiar Todo
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-3">
-            {bookings.map(booking => (
-              <div
-                key={booking.id}
-                onClick={() => onOpenTicket(booking)}
-                className="bg-white rounded-3xl p-5 border-2 border-neutral-200 shadow-sm hover:border-orange-500 transition-all cursor-pointer relative overflow-hidden"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <span className="text-xs font-mono font-black text-orange-700 bg-orange-100 px-3 py-1 rounded-lg">
-                      {booking.id}
-                    </span>
-                    <h4 className="text-base md:text-lg font-black text-neutral-900 mt-2">{booking.passengerName}</h4>
-                    <p className="text-sm font-bold text-neutral-600">{booking.origin} ➔ {booking.destination}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-lg md:text-xl font-black text-neutral-900">${booking.totalAmount} MXN</span>
-                    <p className={`text-xs font-black mt-0.5 ${
-                      booking.checkInStatus === 'checked_in' ? 'text-emerald-700' : 'text-orange-600'
-                    }`}>
-                      {booking.checkInStatus === 'checked_in' ? '✓ Abordó' : 'Pendiente de abordar'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-neutral-100 text-xs md:text-sm">
-                  <div>
-                    <span className="text-neutral-400 uppercase font-black text-[10px] md:text-xs">Fecha</span>
-                    <p className="font-black text-neutral-800">{booking.date}</p>
-                  </div>
-                  <div>
-                    <span className="text-neutral-400 uppercase font-black text-[10px] md:text-xs">Asientos</span>
-                    <p className="font-black text-orange-600">#{booking.seatNumbers.join(', ')}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-neutral-400 uppercase font-black text-[10px] md:text-xs">Ver QR</span>
-                    <p className="font-black text-neutral-900 flex items-center justify-end gap-1">
-                      <QrCode className="w-4 h-4 text-orange-600" /> Abrir Pass
-                    </p>
-                  </div>
-                </div>
+            {bookings.length === 0 ? (
+              <div className="bg-white rounded-3xl p-8 border-2 border-dashed border-neutral-200 text-center space-y-2">
+                <p className="text-sm font-black text-neutral-700">No hay boletos emitidos actualmente</p>
+                <p className="text-xs text-neutral-400">Los boletos comprados o reservados aparecerán aquí listos para viajar.</p>
               </div>
-            ))}
+            ) : (
+              bookings.map(booking => (
+                <div
+                  key={booking.id}
+                  onClick={() => onOpenTicket(booking)}
+                  className="bg-white rounded-3xl p-5 border-2 border-neutral-200 shadow-sm hover:border-orange-500 transition-all cursor-pointer relative overflow-hidden group"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-black text-orange-700 bg-orange-100 px-3 py-1 rounded-lg">
+                          {booking.id}
+                        </span>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
+                          booking.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {booking.paymentStatus === 'paid' ? 'Pagado' : 'Pendiente'}
+                        </span>
+                      </div>
+                      <h4 className="text-base md:text-lg font-black text-neutral-900 mt-2">{booking.passengerName}</h4>
+                      <p className="text-sm font-bold text-neutral-600">{booking.origin} ➔ {booking.destination}</p>
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg md:text-xl font-black text-neutral-900">${booking.totalAmount} MXN</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(`¿Estás seguro de eliminar definitivamente el boleto #${booking.id} de ${booking.passengerName}? Se liberarán sus asientos y se borrará de Supabase.`)) {
+                              deleteBooking(booking.id);
+                            }
+                          }}
+                          className="p-1.5 bg-neutral-100 hover:bg-red-50 text-neutral-400 hover:text-red-600 rounded-xl transition-colors cursor-pointer"
+                          title="Eliminar boleto definitivamente de la base de datos"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <p className={`text-xs font-black ${
+                        booking.checkInStatus === 'checked_in' ? 'text-emerald-700' : 'text-orange-600'
+                      }`}>
+                        {booking.checkInStatus === 'checked_in' ? '✓ Abordó' : 'Pendiente de abordar'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-neutral-100 text-xs md:text-sm">
+                    <div>
+                      <span className="text-neutral-400 uppercase font-black text-[10px] md:text-xs">Fecha</span>
+                      <p className="font-black text-neutral-800">{booking.date}</p>
+                    </div>
+                    <div>
+                      <span className="text-neutral-400 uppercase font-black text-[10px] md:text-xs">Asientos</span>
+                      <p className="font-black text-orange-600">#{booking.seatNumbers.join(', ')}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-neutral-400 uppercase font-black text-[10px] md:text-xs">Ver QR</span>
+                      <p className="font-black text-neutral-900 flex items-center justify-end gap-1">
+                        <QrCode className="w-4 h-4 text-orange-600" /> Abrir Pass
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
