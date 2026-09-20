@@ -39,15 +39,19 @@ export const TicketModal: React.FC<TicketModalProps> = ({ booking, onClose }) =>
   );
 
   const handleShareWhatsApp = () => {
+    const isRedondo = booking.tripType === 'redondo' || !!booking.returnDate;
     const text = `*Transportes Gutiérrez - Boleto Digital*\n\n` +
       `🎫 Folio: ${booking.id}\n` +
       `👤 Pasajero: ${booking.passengerName}\n` +
       `📍 Ruta: ${booking.origin} ➔ ${booking.destination}\n` +
-      `📅 Fecha: ${booking.date} | ⏰ ${booking.departureTime}\n` +
-      `💺 Asiento(s): ${booking.seatNumbers.join(', ')}\n` +
+      `🎫 Modalidad: ${isRedondo ? '🔄 Viaje Redondo' : '➡️ Viaje Sencillo'}\n` +
+      `📅 Fecha Salida: ${booking.date} | ⏰ ${booking.departureTime}\n` +
+      (isRedondo && booking.returnDate ? `🔙 Fecha Regreso: ${booking.returnDate} | ⏰ ${booking.returnTime || '17:00 PM'}\n` : '') +
+      `💺 Asiento(s): #${booking.seatNumbers.join(', #')}\n` +
       `🚐 Unidad: ${booking.unitNumber}\n` +
-      `📌 Abordaje: ${booking.boardingPoint}\n\n` +
-      `¡Presenta tu código QR al operador antes de subir!`;
+      `📌 Abordaje: ${booking.boardingPoint}\n` +
+      `💰 Total: $${booking.totalAmount} MXN (${booking.paymentStatus === 'paid' ? 'PAGADO' : 'PENDIENTE'})\n\n` +
+      `¡Presenta tu código QR al operador antes de abordar!`;
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
@@ -142,20 +146,39 @@ export const TicketModal: React.FC<TicketModalProps> = ({ booking, onClose }) =>
             {/* Date, Time, Seats & Vehicle */}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-neutral-50 p-3 rounded-2xl flex items-center gap-2.5 border border-neutral-200">
-                <Calendar className="w-5 h-5 text-neutral-400 shrink-0" />
+                <Calendar className="w-5 h-5 text-orange-600 shrink-0" />
                 <div>
-                  <p className="text-xs text-neutral-500 uppercase font-bold">Fecha</p>
+                  <p className="text-xs text-neutral-500 uppercase font-bold">Fecha Salida</p>
                   <p className="font-black text-neutral-900 text-xs md:text-sm">{booking.date}</p>
                 </div>
               </div>
               <div className="bg-neutral-50 p-3 rounded-2xl flex items-center gap-2.5 border border-neutral-200">
-                <Clock className="w-5 h-5 text-neutral-400 shrink-0" />
+                <Clock className="w-5 h-5 text-orange-600 shrink-0" />
                 <div>
-                  <p className="text-xs text-neutral-500 uppercase font-bold">Salida</p>
+                  <p className="text-xs text-neutral-500 uppercase font-bold">Hora Salida</p>
                   <p className="font-black text-neutral-900 text-xs md:text-sm">{booking.departureTime}</p>
                 </div>
               </div>
             </div>
+
+            {(booking.tripType === 'redondo' || booking.returnDate) && (
+              <div className="grid grid-cols-2 gap-3 bg-orange-50/70 p-2.5 rounded-2xl border border-orange-200">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-orange-700 shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-orange-800 uppercase font-black">Fecha Regreso</p>
+                    <p className="font-black text-neutral-900 text-xs">{booking.returnDate || 'Abierta'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-orange-700 shrink-0" />
+                  <div>
+                    <p className="text-[10px] text-orange-800 uppercase font-black">Hora Regreso</p>
+                    <p className="font-black text-neutral-900 text-xs">{booking.returnTime || '17:00 PM'}</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-orange-50 border-2 border-orange-200 p-3 rounded-2xl text-center">

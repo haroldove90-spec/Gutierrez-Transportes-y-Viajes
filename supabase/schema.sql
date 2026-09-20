@@ -85,6 +85,8 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     source TEXT NOT NULL DEFAULT 'web',
     trip_type TEXT NOT NULL DEFAULT 'sencillo',
     return_date DATE,
+    return_time TEXT,
+    return_seat_numbers INTEGER[],
     package_type TEXT NOT NULL DEFAULT 'estandar',
     qr_code_data TEXT NOT NULL,
     check_in_status TEXT NOT NULL DEFAULT 'pending',
@@ -94,6 +96,11 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS return_date DATE;
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS return_time TEXT;
+ALTER TABLE public.bookings ADD COLUMN IF NOT EXISTS return_seat_numbers INTEGER[];
+ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS end_date DATE;
+ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS layout_template_id TEXT;
 
 -- 6. TABLA: COTIZACIONES DE RENTA Y VIAJES ESPECIALES
 CREATE TABLE IF NOT EXISTS public.rental_quotes (

@@ -197,6 +197,8 @@ export interface Booking {
   source: 'web' | 'counter' | 'whatsapp' | 'phone';
   tripType?: 'sencillo' | 'redondo';
   returnDate?: string;
+  returnTime?: string;
+  returnSeatNumbers?: number[];
   packageType?: 'estandar' | 'consulado' | 'zoologico' | 'intermedio';
   qrCodeData: string;
   createdAt: string;

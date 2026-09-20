@@ -14,12 +14,17 @@ import {
   MapPin,
   Phone,
   Car,
-  Clock
+  Clock,
+  ChevronDown,
+  Eye,
+  Check,
+  X
 } from 'lucide-react';
 import { RentalQuote, RentalCar } from '../../types';
 import { ROUTE_STOPS, OFFICIAL_PRICING, OFFICIAL_PHONE, OFFICIAL_WHATSAPP, OFFICIAL_EXPERIENCE_YEARS } from '../../data/mockData';
 import { ClientReportModal } from '../modals/ClientReportModal';
 import { RentalCatalog } from '../common/RentalCatalog';
+import { SeatDiagramViewer } from '../common/SeatDiagramViewer';
 
 interface SecretaryPortalProps {
   activeTab: string;
@@ -36,23 +41,63 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
     quotes, 
     routePricings,
     routeStops,
+    seatTemplates,
     createRentalQuote, 
     convertQuoteToReservation, 
     createBooking, 
     showNotification 
   } = useApp();
 
-  // Quick Counter Sale Form State
+  const todayStr = new Date().toISOString().split('T')[0];
+  const tomorrowDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  };
+  const returnDefaultDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 2);
+    return d.toISOString().split('T')[0];
+  };
+
+  // Quick Counter Sale Form State with Date and Time
   const [counterPassengerName, setCounterPassengerName] = useState('');
   const [counterPhone, setCounterPhone] = useState('');
   const [counterTripId, setCounterTripId] = useState(trips[0]?.id || '');
+  const [counterTravelDate, setCounterTravelDate] = useState<string>(trips[0]?.date || todayStr);
+  const [counterDepartureTime, setCounterDepartureTime] = useState<string>(trips[0]?.departureTime || '09:00 AM');
+  const [counterReturnDate, setCounterReturnDate] = useState<string>(returnDefaultDate());
+  const [counterReturnTime, setCounterReturnTime] = useState<string>('17:00 PM');
   const [counterSeatNum, setCounterSeatNum] = useState<number>(5);
+  const [showSeatDiagramModal, setShowSeatDiagramModal] = useState<boolean>(false);
   const [counterPaymentMethod, setCounterPaymentMethod] = useState<'cash_counter' | 'card' | 'spei'>('cash_counter');
   const [counterTripType, setCounterTripType] = useState<'sencillo' | 'redondo'>('sencillo');
   const [counterBoardingPoint, setCounterBoardingPoint] = useState<string>(
     'Soriana Híper Manzanillo (Soriana Híper Manzanillo)'
   );
   const [showClientReport, setShowClientReport] = useState<boolean>(false);
+
+  // Active trip & seat diagram data for counter
+  const activeTrip = trips.find(t => t.id === counterTripId) || trips[0];
+  const tripTemplate = activeTrip?.layoutTemplateId 
+    ? seatTemplates?.find(tmpl => tmpl.id === activeTrip.layoutTemplateId)
+    : undefined;
+  const activeSeats = activeTrip?.seats || [];
+  const availableSeats = activeSeats.filter(s => s.status === 'available');
+  const seatOptions = React.useMemo(() => {
+    if (activeSeats.length > 0) {
+      return activeSeats
+        .filter(s => s.number > 0)
+        .map(s => ({
+          number: s.number,
+          isSold: s.status === 'sold' || s.status === 'locked'
+        }));
+    }
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].map(n => ({
+      number: n,
+      isSold: false
+    }));
+  }, [activeSeats]);
 
   // Dynamic Rental Quote Form State
   const [clientName, setClientName] = useState('Dra. Claudia Vaca (Congreso Médico)');
@@ -139,21 +184,25 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
       destination: trip.destination,
       boardingPoint: counterBoardingPoint,
       dropoffPoint: trip.destination,
-      date: trip.date,
-      departureTime: trip.departureTime,
+      date: counterTravelDate || trip.date,
+      departureTime: counterDepartureTime || trip.departureTime,
       seatNumbers: [counterSeatNum],
-      unitNumber: trip.vehicleId === 'veh-01' ? 'Unidad 04 (Sprinter)' : 'Unidad 07 (Sprinter)',
+      unitNumber: trip.vehicleId === 'veh-01' ? 'Unidad 04 (Sprinter)' : (trip.unitNumber || 'Unidad 07 (Sprinter)'),
       totalAmount: price,
       paymentMethod: counterPaymentMethod,
       paymentStatus: 'paid',
       source: 'counter',
       tripType: counterTripType,
+      returnDate: counterTripType === 'redondo' ? counterReturnDate : undefined,
+      returnTime: counterTripType === 'redondo' ? counterReturnTime : undefined,
+      returnSeatNumbers: counterTripType === 'redondo' ? [counterSeatNum] : undefined,
       packageType: matchedPricing?.packageType,
       addons: {}
     });
 
     setCounterPassengerName('');
     setCounterPhone('');
+    showNotification(`Boleto generado exitosamente: ${newBooking.id}`, 'success');
     onOpenTicket(newBooking);
   };
 
@@ -255,11 +304,19 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
             <form onSubmit={handleCreateCounterSale} className="space-y-4 text-sm">
               {/* Trip selection */}
               <div>
-                <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider">Seleccionar Corrida</label>
+                <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider">Seleccionar Corrida / Ruta</label>
                 <select
                   value={counterTripId}
-                  onChange={e => setCounterTripId(e.target.value)}
-                  className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900 text-sm md:text-base"
+                  onChange={e => {
+                    const newId = e.target.value;
+                    setCounterTripId(newId);
+                    const selected = trips.find(t => t.id === newId);
+                    if (selected) {
+                      setCounterDepartureTime(selected.departureTime);
+                      if (selected.date) setCounterTravelDate(selected.date);
+                    }
+                  }}
+                  className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900 text-sm md:text-base focus:border-orange-500 outline-none"
                 >
                   {trips.map(t => (
                     <option key={t.id} value={t.id}>
@@ -269,6 +326,160 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                 </select>
               </div>
 
+              {/* Fecha y Horario de Salida */}
+              <div className="bg-neutral-50 p-4 rounded-2xl border-2 border-neutral-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs md:text-sm font-black text-neutral-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-orange-600" /> Fecha y Horario de Salida
+                  </label>
+                  <span className="text-[11px] font-bold text-orange-600 bg-orange-100 px-2.5 py-0.5 rounded-full">
+                    Ida Oficial
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-neutral-600 block mb-1">
+                      Fecha del Viaje
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={counterTravelDate}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setCounterTravelDate(val);
+                        if (counterReturnDate < val) {
+                          setCounterReturnDate(val);
+                        }
+                      }}
+                      className="w-full p-3 bg-white border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-sm focus:border-orange-500 outline-none"
+                    />
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setCounterTravelDate(todayStr)}
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                          counterTravelDate === todayStr ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300'
+                        }`}
+                      >
+                        Hoy
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCounterTravelDate(tomorrowDate())}
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                          counterTravelDate === tomorrowDate() ? 'bg-orange-600 text-white border-orange-600' : 'bg-white text-neutral-700 border-neutral-200 hover:border-neutral-300'
+                        }`}
+                      >
+                        Mañana
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-neutral-600 flex items-center gap-1 mb-1">
+                      <Clock className="w-3.5 h-3.5 text-orange-600" /> Horario de Salida
+                    </label>
+                    <select
+                      value={counterDepartureTime}
+                      onChange={e => setCounterDepartureTime(e.target.value)}
+                      className="w-full p-3 bg-white border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-sm focus:border-orange-500 outline-none"
+                    >
+                      {['06:00 AM', '07:00 AM', '08:00 AM', '09:00 AM', '10:30 AM', '11:00 AM', '01:00 PM', '03:00 PM', '05:00 PM', '07:00 PM', '09:00 PM'].map(time => (
+                        <option key={time} value={time}>{time}</option>
+                      ))}
+                    </select>
+                    <p className="text-[11px] text-neutral-500 font-medium mt-1.5">
+                      Horario programado de partida
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fecha y Horario de Regreso (solo en Viaje Redondo) */}
+              {counterTripType === 'redondo' && (
+                <div className="bg-orange-50/80 p-4 rounded-2xl border-2 border-orange-200 space-y-3 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs md:text-sm font-black text-orange-950 uppercase tracking-wider flex items-center gap-1.5">
+                      <ArrowRightLeft className="w-4 h-4 text-orange-600" /> Fecha y Horario de Regreso (Vuelta)
+                    </label>
+                    <span className="text-[11px] font-black text-white bg-orange-600 px-2.5 py-0.5 rounded-full">
+                      Viaje Redondo Activo
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-orange-900 block mb-1">
+                        Fecha de Retorno
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        min={counterTravelDate}
+                        value={counterReturnDate}
+                        onChange={e => setCounterReturnDate(e.target.value)}
+                        className="w-full p-3 bg-white border-2 border-orange-200 rounded-xl font-bold text-neutral-900 text-sm focus:border-orange-500 outline-none"
+                      />
+                      <div className="flex items-center gap-1.5 mt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const d = new Date(counterTravelDate || todayStr);
+                            d.setDate(d.getDate() + 1);
+                            setCounterReturnDate(d.toISOString().split('T')[0]);
+                          }}
+                          className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white text-orange-800 border border-orange-200 hover:bg-orange-100 transition-all cursor-pointer"
+                        >
+                          +1 Día
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const d = new Date(counterTravelDate || todayStr);
+                            d.setDate(d.getDate() + 2);
+                            setCounterReturnDate(d.toISOString().split('T')[0]);
+                          }}
+                          className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white text-orange-800 border border-orange-200 hover:bg-orange-100 transition-all cursor-pointer"
+                        >
+                          +2 Días
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const d = new Date(counterTravelDate || todayStr);
+                            d.setDate(d.getDate() + 7);
+                            setCounterReturnDate(d.toISOString().split('T')[0]);
+                          }}
+                          className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-white text-orange-800 border border-orange-200 hover:bg-orange-100 transition-all cursor-pointer"
+                        >
+                          +1 Sem.
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-orange-900 flex items-center gap-1 mb-1">
+                        <Clock className="w-3.5 h-3.5 text-orange-600" /> Horario de Retorno
+                      </label>
+                      <select
+                        value={counterReturnTime}
+                        onChange={e => setCounterReturnTime(e.target.value)}
+                        className="w-full p-3 bg-white border-2 border-orange-200 rounded-xl font-bold text-neutral-900 text-sm focus:border-orange-500 outline-none"
+                      >
+                        {['12:00 PM', '01:00 PM', '03:00 PM', '05:00 PM', '06:30 PM', '07:00 PM', '08:00 PM', '09:00 PM', '09:30 PM'].map(time => (
+                          <option key={time} value={time}>{time}</option>
+                        ))}
+                      </select>
+                      <p className="text-[11px] text-orange-700/80 font-medium mt-1.5">
+                        Corrida de retorno seleccionada
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Boarding Stop Picker */}
               <div>
                 <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
@@ -277,7 +488,7 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                 <select
                   value={counterBoardingPoint}
                   onChange={e => setCounterBoardingPoint(e.target.value)}
-                  className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900 text-xs md:text-sm"
+                  className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900 text-xs md:text-sm focus:border-orange-500 outline-none"
                 >
                   {routeStops.filter(s => s.isActive).map(stop => (
                     <option key={stop.id} value={`${stop.city}: ${stop.name} (${stop.landmark})`}>
@@ -287,18 +498,72 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                 </select>
               </div>
 
-              {/* Seat number quick select */}
+              {/* Seat number quick select & Diagram interactive viewer */}
               <div>
-                <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider">Número de Asiento</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs md:text-sm font-black text-neutral-700 uppercase tracking-wider">
+                    Número de Asiento ({availableSeats.length} disponibles)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowSeatDiagramModal(!showSeatDiagramModal)}
+                    className="text-xs font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 bg-orange-50 px-2.5 py-1 rounded-xl border border-orange-200 cursor-pointer"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    {showSeatDiagramModal ? 'Ocultar Diagrama' : 'Ver / Elegir en Diagrama'}
+                  </button>
+                </div>
+
                 <select
                   value={counterSeatNum}
                   onChange={e => setCounterSeatNum(Number(e.target.value))}
-                  className="w-full mt-1.5 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900 text-sm md:text-base"
+                  className="w-full mt-1 p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900 text-sm md:text-base focus:border-orange-500 outline-none"
                 >
-                  {[1, 2, 5, 6, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19].map(num => (
-                    <option key={num} value={num}>Asiento #{num}</option>
+                  {seatOptions.map(opt => (
+                    <option key={opt.number} value={opt.number} disabled={opt.isSold}>
+                      {opt.isSold ? `🔴 Asiento #${opt.number} (Ocupado)` : `🟢 Asiento #${opt.number} (Libre)`}
+                    </option>
                   ))}
                 </select>
+
+                {/* Inline Seat Diagram Preview */}
+                {showSeatDiagramModal && (
+                  <div className="mt-3 p-4 bg-neutral-900 rounded-3xl border-2 border-neutral-800 text-white animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-center justify-between pb-3 border-b border-neutral-800 mb-3">
+                      <div>
+                        <p className="text-xs font-black uppercase text-orange-400">Distribución de Unidad</p>
+                        <p className="text-xs text-neutral-300 font-medium">
+                          Toca cualquier asiento <span className="text-emerald-400 font-bold">VERDE</span> para seleccionarlo
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowSeatDiagramModal(false)}
+                        className="text-neutral-400 hover:text-white p-1 cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="max-w-xs mx-auto">
+                      <SeatDiagramViewer
+                        seats={activeTrip?.seats}
+                        template={tripTemplate}
+                        selectedSeatNumbers={[counterSeatNum]}
+                        interactive={true}
+                        isAdminView={false}
+                        onSeatClick={(num, seat) => {
+                          if (seat?.status === 'sold') {
+                            showNotification(`El Asiento #${num} ya está ocupado.`, 'warning');
+                            return;
+                          }
+                          setCounterSeatNum(num);
+                          showNotification(`Asiento #${num} asignado.`, 'success');
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Passenger Info */}
@@ -380,12 +645,35 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                   : basePrice;
 
                 return (
-                  <button
-                    type="submit"
-                    className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-sm md:text-base shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-                  >
-                    <ShieldCheck className="w-5 h-5" /> Emitir Pasaje Inmediato — ${livePrice} MXN
-                  </button>
+                  <div className="space-y-3">
+                    <div className="bg-neutral-100 p-3.5 rounded-2xl border border-neutral-200 text-xs space-y-1.5">
+                      <div className="flex items-center justify-between text-neutral-800 font-bold">
+                        <span>🗓️ Salida Programada:</span>
+                        <span className="font-black text-neutral-900">{counterTravelDate} a las {counterDepartureTime}</span>
+                      </div>
+                      {counterTripType === 'redondo' && (
+                        <div className="flex items-center justify-between text-orange-900 font-bold">
+                          <span>🔄 Retorno Programado:</span>
+                          <span className="font-black text-orange-700">{counterReturnDate} a las {counterReturnTime}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between text-neutral-700 font-medium">
+                        <span>💺 Asiento Asignado:</span>
+                        <span className="font-black text-neutral-900">Asiento #{counterSeatNum}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-neutral-900 font-black text-sm pt-1 border-t border-neutral-200">
+                        <span>Total a Cobrar:</span>
+                        <span className="text-orange-600 font-black text-base">${livePrice} MXN</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-sm md:text-base shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                    >
+                      <ShieldCheck className="w-5 h-5" /> Emitir Pasaje Inmediato — ${livePrice} MXN
+                    </button>
+                  </div>
                 );
               })()}
             </form>
