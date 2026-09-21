@@ -230,6 +230,21 @@ export interface Booking {
   };
 }
 
+export interface SaleAlert {
+  id: string;
+  type: 'reservation' | 'payment' | 'sold_out' | 'cancellation';
+  title: string;
+  message: string;
+  bookingId: string;
+  tripId: string;
+  passengerName: string;
+  passengerPhone?: string;
+  amount: number;
+  seatNumbers: number[];
+  timestamp: string;
+  read: boolean;
+}
+
 export interface TripExpense {
   id: string;
   tripId: string;

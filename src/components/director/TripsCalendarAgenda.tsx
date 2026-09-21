@@ -461,8 +461,23 @@ export const TripsCalendarAgenda: React.FC = () => {
                           }`}>
                             {event.type === 'tour' ? '🌴 Tour Turístico Particular' : '🚌 Ruta Troncal Regular'}
                           </span>
-                          <h4 className="text-sm md:text-base font-black text-neutral-900 mt-1">
-                            {event.origin} ➔ {event.destination}
+                          <h4 
+                            onClick={() => {
+                              if (event.type === 'route' && event.tripObj) {
+                                setViewingDiagramTrip(event.tripObj);
+                              }
+                            }}
+                            className={`text-sm md:text-base font-black text-neutral-900 mt-1 flex items-center gap-2 ${
+                              event.type === 'route' && event.tripObj ? 'cursor-pointer hover:text-orange-600 transition-colors' : ''
+                            }`}
+                            title={event.type === 'route' ? "Haz clic para monitorear el viaje, ver asientos y pasajeros" : undefined}
+                          >
+                            <span>{event.origin} ➔ {event.destination}</span>
+                            {event.type === 'route' && (
+                              <span className="text-[10px] font-bold text-orange-600 bg-orange-100/80 px-1.5 py-0.2 rounded-md">
+                                Monitorear
+                              </span>
+                            )}
                           </h4>
                         </div>
 

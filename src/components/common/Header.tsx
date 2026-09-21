@@ -15,7 +15,8 @@ import {
   LogOut,
   Menu,
   X,
-  Database
+  Database,
+  Bell
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -31,7 +32,18 @@ export const Header: React.FC<HeaderProps> = ({
   isSidebarOpen = true, 
   onToggleSidebar 
 }) => {
-  const { currentRole, setCurrentRole, activeTicket, setShowSupabaseModal, supabaseConnected } = useApp();
+  const { 
+    currentRole, 
+    setCurrentRole, 
+    activeTicket, 
+    setShowSupabaseModal, 
+    supabaseConnected,
+    saleAlerts,
+    markSaleAlertAsRead
+  } = useApp();
+
+  const [showAlertsDropdown, setShowAlertsDropdown] = React.useState(false);
+  const unreadAlertsCount = saleAlerts.filter(a => !a.read).length;
 
   const roleOptions: { id: UserRole; label: string; icon: React.ReactNode }[] = [
     { id: 'pasajero', label: 'Pasajero / Cliente', icon: <User className="w-4 h-4 md:w-5 md:h-5 text-orange-400" /> },
@@ -96,6 +108,70 @@ export const Header: React.FC<HeaderProps> = ({
               <Ticket className="w-4 h-4 text-orange-400" />
               <span className="hidden md:inline">Mi Boleto</span>
             </button>
+          )}
+
+          {/* Sales Alerts Bell for Admin / Staff */}
+          {(currentRole === 'director' || currentRole === 'operaciones' || currentRole === 'secretaria') && (
+            <div className="relative">
+              <button
+                onClick={() => setShowAlertsDropdown(!showAlertsDropdown)}
+                className={`p-2 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-black transition-all border shrink-0 cursor-pointer shadow-xs flex items-center gap-1.5 ${
+                  unreadAlertsCount > 0 
+                    ? 'bg-black text-white border-orange-400' 
+                    : 'bg-black/60 hover:bg-black text-white border-white/20'
+                }`}
+                title="Alertas de ventas y reservaciones"
+              >
+                <Bell className="w-3.5 h-3.5 text-orange-400" />
+                <span className="hidden xl:inline text-[11px]">Ventas</span>
+                {unreadAlertsCount > 0 ? (
+                  <span className="px-1.5 py-0.2 rounded-full bg-orange-600 text-white text-[9px] font-black animate-pulse">
+                    {unreadAlertsCount}
+                  </span>
+                ) : (
+                  <span className="w-2 h-2 rounded-full bg-neutral-400" />
+                )}
+              </button>
+
+              {/* Alerts Dropdown Popover */}
+              {showAlertsDropdown && (
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border-2 border-neutral-200 text-neutral-900 z-50 p-3 space-y-2 animate-fadeIn">
+                  <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
+                    <span className="text-xs font-black uppercase text-neutral-900 flex items-center gap-1.5">
+                      <Bell className="w-3.5 h-3.5 text-orange-600" /> Alertas de Ventas en Vivo
+                    </span>
+                    <button
+                      onClick={() => setShowAlertsDropdown(false)}
+                      className="text-neutral-400 hover:text-neutral-700 text-xs font-bold cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="max-h-64 overflow-y-auto space-y-1.5">
+                    {saleAlerts.length === 0 ? (
+                      <p className="text-xs text-neutral-400 py-4 text-center">No hay alertas recientes.</p>
+                    ) : (
+                      saleAlerts.slice(0, 8).map(alert => (
+                        <div
+                          key={alert.id}
+                          onClick={() => markSaleAlertAsRead(alert.id)}
+                          className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-colors ${
+                            alert.read ? 'bg-neutral-50 border-neutral-200' : 'bg-orange-50 border-orange-200 font-bold'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-black text-neutral-900">{alert.title}</span>
+                            <span className="text-[10px] text-neutral-400">{alert.timestamp}</span>
+                          </div>
+                          <p className="text-[11px] text-neutral-600 mt-0.5">{alert.message}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Supabase Status / SQL Script Button */}

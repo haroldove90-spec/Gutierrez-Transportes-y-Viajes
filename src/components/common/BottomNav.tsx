@@ -76,6 +76,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
       case 'director':
         return [
           { id: 'executive', label: 'Métricas', icon: <TrendingUp className="w-5 h-5 text-white" /> },
+          { id: 'sales', label: 'Ventas', icon: <Ticket className="w-5 h-5 text-white" /> },
           { id: 'agenda', label: 'Agenda', icon: <CalendarDays className="w-5 h-5 text-white" /> },
           { id: 'seat_layouts', label: 'Diagramas', icon: <LayoutGrid className="w-5 h-5 text-white" /> },
           { id: 'drivers', label: 'Choferes', icon: <Users className="w-5 h-5 text-white" /> },

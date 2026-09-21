@@ -106,6 +106,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
           badge: 'Control Total',
           items: [
             { id: 'executive', label: 'Métricas', icon: <TrendingUp className="w-5 h-5" /> },
+            { id: 'sales', label: 'Ventas & Boletos', icon: <Ticket className="w-5 h-5" /> },
             { id: 'agenda', label: 'Agenda', icon: <CalendarDays className="w-5 h-5" /> },
             { id: 'drivers', label: 'Choferes', icon: <Users className="w-5 h-5" /> },
             { id: 'tours', label: 'Tours', icon: <Palmtree className="w-5 h-5" /> },

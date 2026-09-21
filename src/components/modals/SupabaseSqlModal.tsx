@@ -127,6 +127,22 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 5.1 TABLA: ALERTAS DE VENTAS Y RESERVACIONES EN TIEMPO REAL
+CREATE TABLE IF NOT EXISTS public.sale_alerts (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    booking_id TEXT,
+    trip_id TEXT,
+    passenger_name TEXT,
+    passenger_phone TEXT,
+    amount NUMERIC(10,2) DEFAULT 0,
+    seat_numbers INTEGER[] DEFAULT '{}',
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 6. TABLA: COTIZACIONES DE RENTA Y VIAJES ESPECIALES
 CREATE TABLE IF NOT EXISTS public.rental_quotes (
     id TEXT PRIMARY KEY,
@@ -344,6 +360,10 @@ DROP POLICY IF EXISTS "Permitir actualizacion de alarmas chofer" ON public.drive
 DROP POLICY IF EXISTS "Permitir modificacion de alarmas chofer" ON public.driver_alarms;
 CREATE POLICY "Permitir lectura de alarmas chofer" ON public.driver_alarms FOR SELECT USING (true);
 CREATE POLICY "Permitir modificacion de alarmas chofer" ON public.driver_alarms FOR ALL USING (true);
+
+ALTER TABLE public.sale_alerts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Permitir alertas de venta" ON public.sale_alerts;
+CREATE POLICY "Permitir alertas de venta" ON public.sale_alerts FOR ALL USING (true);
 
 -- 13. ALMACENAMIENTO DE FOTOGRAFÍAS (SUPABASE STORAGE: BUCKET 'autos')
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

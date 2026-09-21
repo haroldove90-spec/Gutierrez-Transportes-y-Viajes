@@ -17,6 +17,8 @@ import { TripsCalendarAgenda } from './TripsCalendarAgenda';
 import { DriversManager } from './DriversManager';
 import { ToursManager } from './ToursManager';
 import { SeatLayoutBuilder } from './SeatLayoutBuilder';
+import { SalesManager } from './SalesManager';
+import { LiveTripSupervisionModal } from '../modals/LiveTripSupervisionModal';
 
 interface DirectorPortalProps {
   activeTab: string;
@@ -29,8 +31,11 @@ export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab, setAc
     quotes, 
     expenses, 
     vehicles, 
-    trips
+    trips,
+    setActiveTicket
   } = useApp();
+
+  const [selectedSupervisionTripId, setSelectedSupervisionTripId] = React.useState<string | null>(null);
 
   const totalSalesMonth = bookings.reduce((sum, b) => sum + b.totalAmount, 0) + quotes.reduce((sum, q) => sum + q.totalPrice, 0);
   const totalIncomeToday = bookings.reduce((sum, b) => sum + b.totalAmount, 0);
@@ -135,21 +140,50 @@ export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab, setAc
 
           {/* Today's Active Corridas */}
           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-3">
-            <h4 className="text-base md:text-lg font-black uppercase tracking-wider text-neutral-900">Ocupación de Corridas de Hoy</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-base md:text-lg font-black uppercase tracking-wider text-neutral-900">Ocupación de Corridas de Hoy</h4>
+              <span className="text-xs text-neutral-400 font-bold">Haz clic en cualquier viaje para monitorear en vivo</span>
+            </div>
             <div className="space-y-3">
-              {trips.map(t => (
-                <div key={t.id} className="p-4 rounded-2xl bg-neutral-50 border-2 border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs md:text-sm">
-                  <div>
-                    <span className="font-black text-sm md:text-base text-neutral-900">{t.departureTime} • {t.routeTitle}</span>
-                    <p className="text-xs md:text-sm text-neutral-500 font-bold">Ingreso Total: ${t.totalRevenue} MXN</p>
+              {trips.map(t => {
+                const totalSeats = t.seats.filter(s => s.type === 'standard' || (!s.type && s.number > 0)).length || t.totalSeats || 19;
+                return (
+                  <div 
+                    key={t.id} 
+                    onClick={() => setSelectedSupervisionTripId(t.id)}
+                    className="p-4 rounded-2xl bg-neutral-50 border-2 border-neutral-200 hover:border-orange-500 hover:bg-orange-50/40 cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs md:text-sm group shadow-2xs"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-black text-sm md:text-base text-neutral-900 group-hover:text-orange-600 transition-colors">
+                          {t.departureTime} • {t.routeTitle}
+                        </span>
+                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">
+                          🔍 Monitorear
+                        </span>
+                      </div>
+                      <p className="text-xs md:text-sm text-neutral-500 font-bold">
+                        Ingreso: ${t.totalRevenue.toLocaleString()} MXN • Unidad: {t.unitNumber || 'Sprinter'} • Chofer: {t.driverName || 'Por asignar'}
+                      </p>
+                    </div>
+                    <span className="text-xs md:text-sm font-black bg-white border-2 border-neutral-200 px-3 py-1.5 rounded-xl text-neutral-900 self-start sm:self-auto group-hover:border-orange-400">
+                      {t.occupiedSeatsCount} / {totalSeats} Plazas Ocupadas
+                    </span>
                   </div>
-                  <span className="text-xs md:text-sm font-black bg-white border-2 border-neutral-200 px-3 py-1.5 rounded-xl text-neutral-900 self-start sm:self-auto">
-                    {t.occupiedSeatsCount} / 19 Plazas Ocupadas
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Tab: Ventas & Monitoreo de Boletos */}
+      {activeTab === 'sales' && (
+        <div className="max-w-6xl mx-auto w-full">
+          <SalesManager 
+            onSelectTrip={t => setSelectedSupervisionTripId(t.id)} 
+            onOpenTicket={b => setActiveTicket(b)} 
+          />
         </div>
       )}
 
@@ -200,6 +234,15 @@ export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab, setAc
         <div className="max-w-6xl mx-auto w-full">
           <SeatLayoutBuilder />
         </div>
+      )}
+
+      {/* Live Trip Supervision Modal */}
+      {selectedSupervisionTripId && (
+        <LiveTripSupervisionModal
+          tripId={selectedSupervisionTripId}
+          onClose={() => setSelectedSupervisionTripId(null)}
+          onOpenTicket={b => setActiveTicket(b)}
+        />
       )}
     </div>
   );

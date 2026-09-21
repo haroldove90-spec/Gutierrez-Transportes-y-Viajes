@@ -16,7 +16,8 @@ import {
   RentalCar, 
   CharterAssignment,
   DriverAlarm,
-  SeatLayoutTemplate
+  SeatLayoutTemplate,
+  SaleAlert
 } from '../types';
 import {
   DEFAULT_SEAT_TEMPLATES,
@@ -59,6 +60,7 @@ import {
   upsertRoutePricingToSupabase,
   deleteRoutePricingFromSupabase,
   updateBookingCheckInInSupabase,
+  updateBookingPaymentStatusInSupabase,
   saveRentalQuoteToSupabase,
   deleteRentalQuoteFromSupabase,
   fetchRentalCarsFromSupabase,
@@ -196,6 +198,12 @@ interface AppContextType {
 
   notification: { message: string; type: 'success' | 'error' | 'info' | 'warning' } | null;
   showNotification: (message: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
+
+  // Sales Monitoring & Real-time Booking Alerts
+  saleAlerts: SaleAlert[];
+  markSaleAlertAsRead: (alertId: string) => void;
+  clearSaleAlerts: () => void;
+  updateBookingPaymentStatus: (bookingId: string, paymentStatus: 'paid' | 'pending' | 'refunded', paymentMethod?: Booking['paymentMethod']) => void;
 
   // Supabase Cloud Sync
   supabaseConnected: boolean;
@@ -400,6 +408,87 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('gutierrez_bookings_v3', JSON.stringify(bookings));
     } catch (e) {}
   }, [bookings]);
+
+  // Real-time Sales Alerts for Admin
+  const [saleAlerts, setSaleAlerts] = useState<SaleAlert[]>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_sale_alerts_v1');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [
+      {
+        id: 'alert-initial-1',
+        type: 'payment',
+        title: '¡Boleto Pagado y Confirmado!',
+        message: 'Juan Pérez reservó 2 asientos (#3, #4) para Manzanillo ➔ Guadalajara ($960 MXN)',
+        bookingId: 'TG-4820',
+        tripId: 'trip-1',
+        passengerName: 'Juan Pérez',
+        passengerPhone: '314 123 4567',
+        amount: 960,
+        seatNumbers: [3, 4],
+        timestamp: '10:15 AM',
+        read: false
+      },
+      {
+        id: 'alert-initial-2',
+        type: 'reservation',
+        title: '¡Nueva Reservación Pendiente!',
+        message: 'Carlos Díaz apartó asiento #2 para Guadalajara ➔ Manzanillo ($480 MXN)',
+        bookingId: 'TG-4821',
+        tripId: 'trip-2',
+        passengerName: 'Carlos Díaz',
+        passengerPhone: '33 1890 2345',
+        amount: 480,
+        seatNumbers: [2],
+        timestamp: '11:40 AM',
+        read: false
+      }
+    ];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_sale_alerts_v1', JSON.stringify(saleAlerts));
+    } catch (e) {}
+  }, [saleAlerts]);
+
+  // Audio tone synthesizer for sales alerts
+  const playSaleChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+      
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = 'sine';
+      osc2.type = 'triangle';
+      osc1.frequency.setValueAtTime(587.33, now); // D5
+      osc1.frequency.setValueAtTime(880, now + 0.12); // A5
+
+      osc2.frequency.setValueAtTime(293.66, now); // D4
+      osc2.frequency.setValueAtTime(440, now + 0.12); // A4
+
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.5);
+      osc2.stop(now + 0.5);
+    } catch (e) {}
+  };
 
   const [expenses, setExpenses] = useState<TripExpense[]>(INITIAL_EXPENSES);
 
@@ -1097,7 +1186,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       `Vendido a ${bookingData.passengerName} ($${bookingData.totalAmount} MXN)`
     );
 
+    // Trigger Real-time Sale Alert for the Admin and play audible chime
+    const isPaid = bookingData.paymentStatus === 'paid';
+    const saleAlertItem: SaleAlert = {
+      id: `alert-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+      type: isPaid ? 'payment' : 'reservation',
+      title: isPaid ? '¡Boleto Pagado y Confirmado!' : '¡Nueva Reservación de Boleto!',
+      message: `${bookingData.passengerName} reservó ${bookingData.seatNumbers.length} asiento(s) (#${bookingData.seatNumbers.join(', #')}) en la ruta ${bookingData.origin} ➔ ${bookingData.destination} por $${bookingData.totalAmount} MXN (${isPaid ? 'Pagado' : 'Pendiente de cobro'}).`,
+      bookingId,
+      tripId: bookingData.tripId,
+      passengerName: bookingData.passengerName,
+      passengerPhone: bookingData.passengerPhone,
+      amount: bookingData.totalAmount,
+      seatNumbers: bookingData.seatNumbers,
+      timestamp: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+      read: false
+    };
+    setSaleAlerts(prev => [saleAlertItem, ...prev]);
+    playSaleChime();
+
     if (soldOutAdminNotice) {
+      const soldOutAlert: SaleAlert = {
+        id: `alert-soldout-${Date.now()}`,
+        type: 'sold_out',
+        title: '🚨 ¡Corrida Vendida al 100%!',
+        message: soldOutAdminNotice,
+        bookingId,
+        tripId: bookingData.tripId,
+        passengerName: bookingData.passengerName,
+        passengerPhone: bookingData.passengerPhone,
+        amount: bookingData.totalAmount,
+        seatNumbers: bookingData.seatNumbers,
+        timestamp: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+        read: false
+      };
+      setSaleAlerts(prev => [soldOutAlert, ...prev]);
+
       showNotification(soldOutAdminNotice, 'warning');
       addAuditEntry(
         'VIAJE_VENDIDO_TOTALMENTE',
@@ -1222,6 +1346,70 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       seats: t.seats.map(s => ({ ...s, status: 'available', passengerName: undefined, ticketId: undefined }))
     })));
     showNotification('Todos los boletos han sido eliminados del registro.', 'info');
+  };
+
+  const updateBookingPaymentStatus = (
+    bookingId: string, 
+    paymentStatus: 'paid' | 'pending' | 'refunded',
+    paymentMethod?: Booking['paymentMethod']
+  ) => {
+    let updatedBooking: Booking | null = null;
+
+    setBookings(prev => prev.map(b => {
+      if (b.id === bookingId) {
+        const up: Booking = { 
+          ...b, 
+          paymentStatus,
+          paymentMethod: paymentMethod || b.paymentMethod
+        };
+        updatedBooking = up;
+        return up;
+      }
+      return b;
+    }));
+
+    if (updatedBooking) {
+      const b = updatedBooking as Booking;
+      updateBookingPaymentStatusInSupabase(bookingId, paymentStatus, paymentMethod);
+      
+      const alert: SaleAlert = {
+        id: `alert-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+        type: paymentStatus === 'paid' ? 'payment' : 'cancellation',
+        title: paymentStatus === 'paid' ? '¡Pago Registrado Exitosamente!' : '¡Estatus de Boleto Actualizado!',
+        message: `El boleto #${bookingId} de ${b.passengerName} ahora está ${paymentStatus === 'paid' ? 'PAGADO Y CONFIRMADO' : paymentStatus.toUpperCase()} ($${b.totalAmount} MXN).`,
+        bookingId,
+        tripId: b.tripId,
+        passengerName: b.passengerName,
+        passengerPhone: b.passengerPhone,
+        amount: b.totalAmount,
+        seatNumbers: b.seatNumbers,
+        timestamp: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+        read: false
+      };
+      setSaleAlerts(prev => [alert, ...prev]);
+      playSaleChime();
+
+      addAuditEntry(
+        'ACTUALIZACION_PAGO_BOLETO',
+        'Booking',
+        bookingId,
+        'Pendiente',
+        `Estatus de cobro cambiado a: ${paymentStatus}`
+      );
+      showNotification(`Boleto #${bookingId} marcado como ${paymentStatus === 'paid' ? 'PAGADO' : paymentStatus}.`, 'success');
+    }
+  };
+
+  const markSaleAlertAsRead = (alertId: string) => {
+    setSaleAlerts(prev => prev.map(a => a.id === alertId ? { ...a, read: true } : a));
+  };
+
+  const clearSaleAlerts = () => {
+    setSaleAlerts([]);
+    try {
+      localStorage.removeItem('gutierrez_sale_alerts_v1');
+    } catch (e) {}
+    showNotification('Historial de alertas de venta limpiado.', 'info');
   };
 
   const validateTicketQR = (qrData: string): { status: 'valid' | 'already_used' | 'invalid'; booking?: Booking } => {
@@ -2526,6 +2714,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         stopAlarmSound,
         notification,
         showNotification,
+        saleAlerts,
+        markSaleAlertAsRead,
+        clearSaleAlerts,
+        updateBookingPaymentStatus,
         supabaseConnected,
         supabaseMessage,
         showSupabaseModal,

@@ -253,6 +253,24 @@ export async function deleteBookingFromSupabase(id: string): Promise<boolean> {
 }
 
 /**
+ * Update payment status for a booking in Supabase
+ */
+export async function updateBookingPaymentStatusInSupabase(
+  id: string, 
+  paymentStatus: 'paid' | 'pending' | 'refunded',
+  paymentMethod?: string
+): Promise<boolean> {
+  try {
+    const payload: any = { payment_status: paymentStatus };
+    if (paymentMethod) payload.payment_method = paymentMethod;
+    const { error } = await supabase.from('bookings').update(payload).eq('id', id);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Fetch Vehicles from Supabase
  */
 export async function fetchVehiclesFromSupabase(): Promise<Vehicle[] | null> {
