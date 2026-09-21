@@ -212,7 +212,7 @@ export function parseDepartureTimeToDate(dateStr: string, timeStr: string): Date
     const month = parseInt(parts[1], 10) - 1;
     const day = parseInt(parts[2], 10);
 
-    const cleanTime = timeStr.trim().toUpperCase();
+    const cleanTime = (timeStr || '').trim().toUpperCase();
     const isPM = cleanTime.includes('PM');
     const isAM = cleanTime.includes('AM');
     const numPart = cleanTime.replace('AM', '').replace('PM', '').trim();
@@ -938,7 +938,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newLog: AuditLog = {
       id: `aud-${Date.now()}`,
       timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
-      userName: currentRole === 'pasajero' ? 'Cliente Web / PWA' : `Usuario (${currentRole.toUpperCase()})`,
+      userName: currentRole === 'pasajero' ? 'Cliente Web / PWA' : `Usuario (${(currentRole || 'ADMIN').toUpperCase()})`,
       userRole: currentRole,
       action,
       entity,
@@ -1265,7 +1265,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
 
     addAuditEntry('CAMBIO_ESTATUS_VIAJE', 'TripSchedule', tripId, 'En proceso', `Nuevo estatus: ${status} (${currentScale || 'Ruta'})`);
-    showNotification(`Viaje actualizado a: ${status.replace('_', ' ').toUpperCase()}`, 'info');
+    showNotification(`Viaje actualizado a: ${(status || '').replace('_', ' ').toUpperCase()}`, 'info');
   };
 
   const addExpense = (expenseData: Omit<TripExpense, 'id' | 'status'>): TripExpense => {

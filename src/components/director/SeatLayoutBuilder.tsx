@@ -291,7 +291,7 @@ export const SeatLayoutBuilder: React.FC = () => {
                     <div className="flex items-start justify-between gap-2 mb-3">
                       <div>
                         <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-neutral-100 text-neutral-700 mb-1 border border-neutral-200">
-                          {template.vehicleType.toUpperCase()} • {template.rows} Filas × {template.cols} Columnas
+                          {(template.vehicleType || 'van').toUpperCase()} • {template.rows} Filas × {template.cols} Columnas
                         </span>
                         <h3 className="text-base font-black text-neutral-900 leading-tight">
                           {template.name}

@@ -121,7 +121,7 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
     setVehicleForm({
       unitNumber: `${preset.namePrefix}${vehicles.length + 1}`,
       model: preset.model,
-      plate: `GT-${Math.floor(100 + Math.random() * 900)}-${defaultCategory.toUpperCase().substring(0, 2)}`,
+      plate: `GT-${Math.floor(100 + Math.random() * 900)}-${(defaultCategory || 'van').toUpperCase().substring(0, 2)}`,
       capacity: preset.capacity,
       category: defaultCategory,
       odometer: 15000,
@@ -239,7 +239,7 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
                 >
                   {vehicles.map(v => (
                     <option key={v.id} value={v.id}>
-                      {v.unitNumber} - {v.model} ({v.status.toUpperCase()})
+                      {v.unitNumber} - {v.model} ({(v.status || 'active').toUpperCase()})
                     </option>
                   ))}
                 </select>
@@ -773,7 +773,7 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
                   <option value="">Selecciona un diagrama de asientos...</option>
                   {seatTemplates.map(tmpl => (
                     <option key={tmpl.id} value={tmpl.id}>
-                      {tmpl.name} ({tmpl.totalSeats} asientos • {tmpl.vehicleType.toUpperCase()})
+                      {tmpl.name} ({tmpl.totalSeats} asientos • {(tmpl.vehicleType || 'van').toUpperCase()})
                     </option>
                   ))}
                 </select>

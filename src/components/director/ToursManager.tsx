@@ -636,7 +636,7 @@ export const ToursManager: React.FC = () => {
                       <optgroup label="🚗 Autos y Camionetas del Catálogo de Renta">
                         {rentalCars.map(c => (
                           <option key={c.id} value={c.id}>
-                            {c.brand} {c.name} ({c.type.toUpperCase()} • {c.passengers} pax) {!c.available ? '[Ocupado]' : '✓ Disponible'}
+                            {c.brand} {c.name} ({(c.category || (c as any).type || 'Auto').toUpperCase()} • {c.capacity || (c as any).passengers || 4} pax) {!c.available ? '[Ocupado]' : '✓ Disponible'}
                           </option>
                         ))}
                       </optgroup>
@@ -727,7 +727,7 @@ export const ToursManager: React.FC = () => {
                   >
                     {seatTemplates.map(tmpl => (
                       <option key={tmpl.id} value={tmpl.id}>
-                        {tmpl.name} — ({tmpl.totalSeats} asientos • {tmpl.vehicleType.toUpperCase()})
+                        {tmpl.name} — ({tmpl.totalSeats} asientos • {(tmpl.vehicleType || 'van').toUpperCase()})
                       </option>
                     ))}
                   </select>

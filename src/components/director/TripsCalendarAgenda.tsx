@@ -781,7 +781,7 @@ export const TripsCalendarAgenda: React.FC = () => {
                     >
                       {seatTemplates.map(tmpl => (
                         <option key={tmpl.id} value={tmpl.id}>
-                          {tmpl.name} ({tmpl.totalSeats} asientos • {tmpl.vehicleType.toUpperCase()})
+                          {tmpl.name} ({tmpl.totalSeats} asientos • {(tmpl.vehicleType || 'van').toUpperCase()})
                         </option>
                       ))}
                     </select>
