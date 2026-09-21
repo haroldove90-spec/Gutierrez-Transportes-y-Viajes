@@ -190,8 +190,8 @@ interface AppContextType {
   playAlarmSoundTest: () => void;
   stopAlarmSound: () => void;
 
-  notification: { message: string; type: 'success' | 'error' | 'info' } | null;
-  showNotification: (message: string, type?: 'success' | 'error' | 'info') => void;
+  notification: { message: string; type: 'success' | 'error' | 'info' | 'warning' } | null;
+  showNotification: (message: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
 
   // Supabase Cloud Sync
   supabaseConnected: boolean;
@@ -541,7 +541,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [selectedTripId]);
   const [tempLockedSeats, setTempLockedSeats] = useState<{ tripId: string; seatNumbers: number[]; expiresAt: number } | null>(null);
   const [activeTicket, setActiveTicket] = useState<Booking | null>(INITIAL_BOOKINGS[0]);
-  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
 
   // Driver Alarms & Despertador State
   const [driverAlarms, setDriverAlarms] = useState<DriverAlarm[]>(() => {
@@ -927,7 +927,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  const showNotification = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
     setNotification({ message, type });
     setTimeout(() => {
       setNotification(prev => prev?.message === message ? null : prev);

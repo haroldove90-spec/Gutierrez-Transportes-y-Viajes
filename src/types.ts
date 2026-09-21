@@ -162,6 +162,7 @@ export interface TripSchedule {
   status: 'scheduled' | 'boarding' | 'in_transit' | 'at_scale' | 'completed' | 'cancelled';
   currentScale?: string;
   seats: Seat[];
+  totalSeats?: number;
   stops: RouteStop[];
   basePrice: number;
   occupiedSeatsCount: number;

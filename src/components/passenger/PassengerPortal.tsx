@@ -145,7 +145,8 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
   const totalAmount = seatSubtotal + parcelFee + petFee;
 
   const handleSelectTrip = (trip: TripSchedule) => {
-    const isSoldOut = trip.isFull === true || trip.isActiveForBooking === false || (trip.totalSeats - trip.occupiedSeatsCount) <= 0;
+    const totalCapacity = trip.totalSeats || trip.seats.filter(s => s.type === 'standard').length || trip.seats.length;
+    const isSoldOut = trip.isFull === true || trip.isActiveForBooking === false || (totalCapacity - trip.occupiedSeatsCount) <= 0;
     if (isSoldOut) {
       showNotification('Este viaje se encuentra completamente vendido y desactivado para reservaciones.', 'warning');
       return;
