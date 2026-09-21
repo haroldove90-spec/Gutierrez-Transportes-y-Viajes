@@ -60,7 +60,11 @@ import {
   deleteRoutePricingFromSupabase,
   updateBookingCheckInInSupabase,
   saveRentalQuoteToSupabase,
-  deleteRentalQuoteFromSupabase
+  deleteRentalQuoteFromSupabase,
+  fetchRentalCarsFromSupabase,
+  saveRentalCarToSupabase,
+  deleteRentalCarFromSupabase,
+  updateRentalCarAvailabilityInSupabase
 } from '../lib/supabase';
 import { SupabaseSqlModal } from '../components/modals/SupabaseSqlModal';
 
@@ -151,9 +155,13 @@ interface AppContextType {
   deleteRoutePricing: (id: string) => boolean;
   resetRoutePricingsToDefault: () => void;
 
-  // Fleet Image Management (Admin configurable)
+  // Fleet Image & Rental Management
   updateVehicleImage: (vehicleId: string, newImageUrl: string) => void;
   updateRentalCarImage: (carId: string, newImageUrl: string) => void;
+  toggleRentalCarAvailability: (carId: string, available?: boolean) => boolean;
+  deleteRentalCar: (carId: string) => boolean;
+  addRentalCar: (car: Omit<RentalCar, 'id'>) => RentalCar;
+  updateRentalCar: (id: string, updates: Partial<RentalCar>) => boolean;
 
   // Active Passenger Quick View (for instant ticket lookup)
   activeTicket: Booking | null;
@@ -359,6 +367,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     return OFFICIAL_RENTAL_CARS.filter(c => !deleted.has(c.id));
   });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_rental_cars_v2', JSON.stringify(rentalCars));
+    } catch (e) {
+      console.warn('Error persisting rental cars', e);
+    }
+  }, [rentalCars]);
 
   const [bookings, setBookings] = useState<Booking[]>(() => {
     const deleted = getDeletedIds();
@@ -815,13 +831,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSupabaseMessage(res.error);
       } else if (res.connected) {
         setSupabaseMessage('Conectado a Supabase PostgreSQL');
-        const [cloudTrips, cloudBookings, cloudStops, cloudPricings, cloudVehicles, cloudDrivers] = await Promise.all([
+        const [cloudTrips, cloudBookings, cloudStops, cloudPricings, cloudVehicles, cloudDrivers, cloudRentalCars] = await Promise.all([
           fetchTripsFromSupabase(),
           fetchBookingsFromSupabase(),
           fetchRouteStopsFromSupabase(),
           fetchRoutePricingsFromSupabase(),
           fetchVehiclesFromSupabase(),
-          fetchDriversFromSupabase()
+          fetchDriversFromSupabase(),
+          fetchRentalCarsFromSupabase()
         ]);
 
         const deleted = getDeletedIds();
@@ -844,6 +861,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
         if (cloudDrivers !== null && cloudDrivers.length > 0) {
           setDrivers(cloudDrivers.filter(d => !deleted.has(d.id)));
+        }
+        if (cloudRentalCars !== null && cloudRentalCars.length > 0) {
+          setRentalCars(cloudRentalCars.filter(c => !deleted.has(c.id)));
         }
       }
     } catch {
@@ -1937,7 +1957,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateRentalCarImage = (carId: string, newImageUrl: string) => {
     setRentalCars(prev => {
-      const updated = prev.map(c => c.id === carId ? { ...c, image: newImageUrl } : c);
+      const updated = prev.map(c => {
+        if (c.id === carId) {
+          const newCar = { ...c, image: newImageUrl };
+          saveRentalCarToSupabase(newCar).catch(() => {});
+          return newCar;
+        }
+        return c;
+      });
       try {
         localStorage.setItem('gutierrez_rental_cars_v2', JSON.stringify(updated));
       } catch (e) {
@@ -1947,6 +1974,76 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     addAuditEntry('ACTUALIZACION_FOTO_RENTA', 'RentalCar', carId, undefined, `Nueva URL: ${newImageUrl}`);
     showNotification('Foto del vehículo de renta actualizada en catálogo.', 'success');
+  };
+
+  const toggleRentalCarAvailability = (id: string, availableState?: boolean): boolean => {
+    const target = rentalCars.find(c => c.id === id);
+    if (!target) return false;
+    const newAvailable = availableState !== undefined ? availableState : !target.available;
+    setRentalCars(prev => {
+      const updated = prev.map(c => c.id === id ? { ...c, available: newAvailable } : c);
+      try {
+        localStorage.setItem('gutierrez_rental_cars_v2', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    updateRentalCarAvailabilityInSupabase(id, newAvailable).catch(() => {});
+    addAuditEntry('DISPONIBILIDAD_AUTO_RENTA', 'RentalCar', id, newAvailable ? 'activado' : 'desactivado', `${target.brand} ${target.name}`);
+    showNotification(`Vehículo "${target.name}" ${newAvailable ? 'activado para renta' : 'desactivado / en mantenimiento'}.`, 'success');
+    return true;
+  };
+
+  const deleteRentalCar = (id: string): boolean => {
+    const target = rentalCars.find(c => c.id === id);
+    if (!target) return false;
+    recordDeletedId(id);
+    setRentalCars(prev => {
+      const updated = prev.filter(c => c.id !== id);
+      try {
+        localStorage.setItem('gutierrez_rental_cars_v2', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    deleteRentalCarFromSupabase(id).catch(() => {});
+    addAuditEntry('BAJA_AUTO_RENTA', 'RentalCar', id, 'eliminado', `${target.brand} ${target.name}`);
+    showNotification(`Vehículo "${target.brand} ${target.name}" eliminado definitivamente.`, 'info');
+    return true;
+  };
+
+  const addRentalCar = (newCarData: Omit<RentalCar, 'id'>): RentalCar => {
+    const newId = `rc-${Date.now()}`;
+    const newCar: RentalCar = {
+      id: newId,
+      ...newCarData
+    };
+    setRentalCars(prev => {
+      const updated = [newCar, ...prev];
+      try {
+        localStorage.setItem('gutierrez_rental_cars_v2', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    saveRentalCarToSupabase(newCar).catch(() => {});
+    addAuditEntry('ALTA_AUTO_RENTA', 'RentalCar', newId, 'creado', `${newCar.brand} ${newCar.name}`);
+    showNotification(`Vehículo "${newCar.brand} ${newCar.name}" agregado al catálogo de renta.`, 'success');
+    return newCar;
+  };
+
+  const updateRentalCar = (id: string, updates: Partial<RentalCar>): boolean => {
+    const target = rentalCars.find(c => c.id === id);
+    if (!target) return false;
+    const updatedCar: RentalCar = { ...target, ...updates };
+    setRentalCars(prev => {
+      const updated = prev.map(c => c.id === id ? updatedCar : c);
+      try {
+        localStorage.setItem('gutierrez_rental_cars_v2', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+    saveRentalCarToSupabase(updatedCar).catch(() => {});
+    addAuditEntry('EDICION_AUTO_RENTA', 'RentalCar', id, 'editado', `${updatedCar.brand} ${updatedCar.name}`);
+    showNotification(`Vehículo "${updatedCar.name}" actualizado correctamente.`, 'success');
+    return true;
   };
 
   const clearAllTestData = () => {
@@ -2078,6 +2175,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         assignLayoutToVehicle,
         updateVehicleImage,
         updateRentalCarImage,
+        toggleRentalCarAvailability,
+        deleteRentalCar,
+        addRentalCar,
+        updateRentalCar,
         activeTicket,
         setActiveTicket,
         driverAlarms,

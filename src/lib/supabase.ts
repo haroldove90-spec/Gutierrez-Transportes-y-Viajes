@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Booking, TripSchedule, RentalQuote, RouteStop, RoutePricing, Vehicle, Driver } from '../types';
+import { Booking, TripSchedule, RentalQuote, RouteStop, RoutePricing, Vehicle, Driver, RentalCar } from '../types';
 import { ROUTE_STOPS } from '../data/mockData';
 
 // Fallback configuration provided by user
@@ -582,3 +582,89 @@ export async function deleteRoutePricingFromSupabase(id: string): Promise<boolea
     return false;
   }
 }
+
+/**
+ * Fetch Rental Cars from Supabase
+ */
+export async function fetchRentalCarsFromSupabase(): Promise<RentalCar[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('rental_cars')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error) return null;
+    if (!data) return [];
+
+    return data.map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      brand: c.brand,
+      category: c.category,
+      capacity: Number(c.capacity || 5),
+      dailyRateWithoutDriver: Number(c.daily_rate_without_driver || 800),
+      dailyRateWithDriver: Number(c.daily_rate_with_driver || 1600),
+      transmission: c.transmission || 'Automática',
+      hasAC: c.has_ac ?? true,
+      fuelType: c.fuel_type || 'Gasolina',
+      luggageCapacity: c.luggage_capacity || '',
+      image: c.image || '',
+      available: c.available ?? true,
+      features: Array.isArray(c.features) ? c.features : []
+    }));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save / Update Rental Car in Supabase
+ */
+export async function saveRentalCarToSupabase(car: RentalCar): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('rental_cars').upsert({
+      id: car.id,
+      name: car.name,
+      brand: car.brand,
+      category: car.category,
+      capacity: car.capacity,
+      daily_rate_without_driver: car.dailyRateWithoutDriver,
+      daily_rate_with_driver: car.dailyRateWithDriver,
+      transmission: car.transmission,
+      has_ac: car.hasAC,
+      fuel_type: car.fuelType,
+      luggage_capacity: car.luggageCapacity,
+      image: car.image,
+      available: car.available,
+      features: car.features
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Delete Rental Car from Supabase permanently
+ */
+export async function deleteRentalCarFromSupabase(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('rental_cars').delete().eq('id', id);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Update Rental Car Availability in Supabase
+ */
+export async function updateRentalCarAvailabilityInSupabase(id: string, available: boolean): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('rental_cars').update({ available }).eq('id', id);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+

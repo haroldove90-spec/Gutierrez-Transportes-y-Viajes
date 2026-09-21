@@ -242,6 +242,25 @@ CREATE TABLE IF NOT EXISTS public.charter_assignments (
 ALTER TABLE public.charter_assignments ADD COLUMN IF NOT EXISTS start_time TEXT DEFAULT '08:00 AM';
 ALTER TABLE public.charter_assignments ADD COLUMN IF NOT EXISTS return_time TEXT DEFAULT '06:00 PM';
 
+-- 12. TABLA: CATÁLOGO DE AUTOS Y VANS DE RENTA
+CREATE TABLE IF NOT EXISTS public.rental_cars (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    brand TEXT NOT NULL,
+    category TEXT NOT NULL,
+    capacity INTEGER NOT NULL DEFAULT 5,
+    daily_rate_without_driver NUMERIC(10,2) NOT NULL DEFAULT 800,
+    daily_rate_with_driver NUMERIC(10,2) NOT NULL DEFAULT 1600,
+    transmission TEXT DEFAULT 'Automática',
+    has_ac BOOLEAN DEFAULT true,
+    fuel_type TEXT DEFAULT 'Gasolina',
+    luggage_capacity TEXT,
+    image TEXT,
+    available BOOLEAN DEFAULT true,
+    features TEXT[] DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================================================
 -- POLÍTICAS DE SEGURIDAD (ROW LEVEL SECURITY - RLS)
 -- ============================================================================
@@ -257,6 +276,12 @@ ALTER TABLE public.route_stops ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.driver_alarms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.charter_assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rental_cars ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Permitir lectura de rental_cars" ON public.rental_cars;
+DROP POLICY IF EXISTS "Permitir modificacion de rental_cars" ON public.rental_cars;
+CREATE POLICY "Permitir lectura de rental_cars" ON public.rental_cars FOR SELECT USING (true);
+CREATE POLICY "Permitir modificacion de rental_cars" ON public.rental_cars FOR ALL USING (true);
 
 -- Políticas de lectura pública (ANON) protegidas contra re-ejecuciones
 DROP POLICY IF EXISTS "Permitir lectura de vehiculos" ON public.vehicles;
@@ -400,6 +425,30 @@ VALUES
   ('trip-102', 'Colima ➔ CAS / Consulado Americano GDL', 'Colima', 'CAS / Consulado Americano', CURRENT_DATE, '08:30 AM', '11:45 AM', 'drv-02', 'Rosendo Navarro', 'veh-hi14-01', 'Unidad 02 (Hiace)', 340, 14, 2, 680, 'scheduled', 'Directo sin escalas'),
   ('trip-103', 'Colima ➔ Guadalajara (GDL)', 'Colima', 'Guadalajara (GDL)', CURRENT_DATE, '09:00 AM', '11:30 AM', 'drv-03', 'Eduardo Morales', 'veh-hi14-02', 'Unidad 03 (Hiace)', 279, 14, 2, 558, 'scheduled', 'Parada en Cd. Guzmán')
 ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.rental_cars (
+  id, name, brand, category, capacity, daily_rate_without_driver, daily_rate_with_driver,
+  transmission, has_ac, fuel_type, luggage_capacity, image, available, features
+)
+VALUES
+  ('rc-vento-01', 'Vento Confortline', 'Volkswagen', 'Sedán', 5, 850, 1650, 'Automática', true, 'Gasolina', '2 maletas grandes', 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/vento.png', true, ARRAY['Aire acondicionado', 'Rendimiento 17 km/L', 'Bluetooth / USB']),
+  ('rc-avanza-01', 'Avanza XLE', 'Toyota', 'Familiar', 7, 1100, 1950, 'Automática', true, 'Gasolina', '3 maletas medianas', 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/avanzatoyota.png', true, ARRAY['3 filas de asientos', 'Excelente rendimiento', 'Pantalla táctil']),
+  ('rc-l200-01', 'L200 Doble Cabina 4x4', 'Mitsubishi', 'Pick-up / Trabajo & Aventura', 5, 1400, 2300, 'Manual 6 vel', true, 'Diésel', 'Batea de carga 1 Tonelada', 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/l200mitsubishi.png', true, ARRAY['Tracción 4x4 con reductora', 'Ganchos de amarre', 'Uso rudo y mina']),
+  ('rc-tiguan-01', 'Tiguan Elegance', 'Volkswagen', 'SUV', 7, 1600, 2500, 'Tiptronic 8 vel', true, 'Gasolina Turbo', '3 maletas grandes', 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/tiguan.png', true, ARRAY['Techo panorámico', 'Apple CarPlay / Android Auto', 'Asistencias ADAS']),
+  ('rc-teramont-01', 'Teramont Highline', 'Volkswagen', 'SUV', 7, 2100, 3100, 'Automática 8 vel', true, 'Gasolina V6', '4 maletas grandes', 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/teramon.png', true, ARRAY['Máximo confort y espacio VIP', 'Tracción 4Motion', 'Audio Fender Premium']),
+  ('rc-hiace-12', 'Hiace Commuter VIP', 'Toyota', 'Camioneta / Van', 12, 1900, 2900, 'Manual 6 vel', true, 'Gasolina', '4 maletas grandes', 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede12pasajeros.png', true, ARRAY['Asientos reclinables', 'Doble aire acondicionado', 'Ideal grupos medianos']),
+  ('rc-hiace-15', 'Hiace Gran Confort', 'Toyota', 'Camioneta / Van', 14, 2200, 3200, 'Manual 6 vel', true, 'Gasolina', '5 maletas grandes', 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png', true, ARRAY['Configuración 14 pasajeros', 'Doble difusor de clima', 'Puerto USB en cada fila']),
+  ('rc-transit-18', 'Transit Custom Tourneo', 'Ford', 'Camioneta / Van', 18, 2500, 3600, 'Manual 6 vel', true, 'Diésel EcoBlue', '6 maletas grandes', 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/fordtransitde18pasajeros.png', true, ARRAY['Capacidad 18 pasajeros', 'Espacio para equipaje', 'Control de estabilidad']),
+  ('rc-sprinter-21', 'Sprinter 516 VIP', 'Mercedes-Benz', 'Sprinter Ejecutiva', 20, 2900, 4200, 'Automática 9G-Tronic', true, 'Diésel', 'Maletero trasero profundo', 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/sprinterde21pasajeros.png', true, ARRAY['Asientos ejecutivos de piel', 'Pantalla central y sonido HD', 'Suspensión neumática'])
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  brand = EXCLUDED.brand,
+  category = EXCLUDED.category,
+  capacity = EXCLUDED.capacity,
+  daily_rate_without_driver = EXCLUDED.daily_rate_without_driver,
+  daily_rate_with_driver = EXCLUDED.daily_rate_with_driver,
+  image = EXCLUDED.image,
+  available = EXCLUDED.available;
 `;
 
 export const SupabaseSqlModal: React.FC<SupabaseSqlModalProps> = ({ onClose }) => {

@@ -109,7 +109,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
             { id: 'seat_layouts', label: 'Diagramas de Asientos', icon: <LayoutGrid className="w-5 h-5" /> },
             { id: 'fares_manager', label: 'Gestión de Tarifas', icon: <DollarSign className="w-5 h-5" /> },
             { id: 'routes_config', label: 'Puntos de Partida (Maps)', icon: <Map className="w-5 h-5" /> },
-            { id: 'fleet_photos', label: 'Gestión Flotilla & Fotos', icon: <Bus className="w-5 h-5" /> },
+            { id: 'fleet_photos', label: 'Catálogo de Renta', icon: <Car className="w-5 h-5" /> },
           ]
         };
       default:

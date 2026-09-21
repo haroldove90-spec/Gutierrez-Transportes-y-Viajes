@@ -7,7 +7,8 @@ import {
   TrendingUp,
   CalendarDays,
   Users,
-  Palmtree
+  Palmtree,
+  Car
 } from 'lucide-react';
 import { RouteLocationsManager } from '../common/RouteLocationsManager';
 import { RouteFaresManager } from '../common/RouteFaresManager';
@@ -39,49 +40,49 @@ export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab, setAc
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar bg-neutral-100 p-4 md:p-6 lg:p-8 space-y-6">
-      {/* Executive Header Banner */}
-      <div className="max-w-6xl mx-auto w-full bg-black text-white p-6 md:p-8 rounded-3xl border-2 border-neutral-800 shadow-md space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Shield className="w-6 h-6 text-orange-500" />
-            <div>
-              <h3 className="text-base md:text-lg font-black uppercase tracking-wider text-white">Dirección General</h3>
-              <p className="text-xs md:text-sm text-neutral-400">Supervisión Ejecutiva, Agenda, Flotilla y Operadores</p>
-            </div>
-          </div>
-          <span className="text-xs md:text-sm bg-orange-600/30 text-orange-400 font-black px-3 py-1 rounded-full border border-orange-500/30">
-            Acceso Total
-          </span>
-        </div>
-
-        {/* 4 Core Executive KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
-          <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
-            <p className="text-xs text-neutral-400 uppercase font-black">Ingresos del Día</p>
-            <p className="text-lg md:text-2xl font-black text-emerald-400 mt-1">${totalIncomeToday.toLocaleString()} MXN</p>
-            <p className="text-xs text-neutral-500 mt-0.5">{bookings.length} boletos emitidos</p>
-          </div>
-          <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
-            <p className="text-xs text-neutral-400 uppercase font-black">Ventas del Mes</p>
-            <p className="text-lg md:text-2xl font-black text-white mt-1">${totalSalesMonth.toLocaleString()} MXN</p>
-            <p className="text-xs text-neutral-500 mt-0.5">Pasajes + Rentas</p>
-          </div>
-          <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
-            <p className="text-xs text-neutral-400 uppercase font-black">Margen Neto</p>
-            <p className="text-lg md:text-2xl font-black text-orange-400 mt-1">{netMarginPercent}%</p>
-            <p className="text-xs text-emerald-400 mt-0.5">+5.2% vs mes anterior</p>
-          </div>
-          <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
-            <p className="text-xs text-neutral-400 uppercase font-black">Saldo por Cobrar</p>
-            <p className="text-lg md:text-2xl font-black text-amber-400 mt-1">${totalReceivables.toLocaleString()} MXN</p>
-            <p className="text-xs text-neutral-500 mt-0.5">{quotes.filter(q => q.balanceRemaining > 0).length} clientes</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Tab 1: Métricas (anteriormente KPIs en Tiempo Real) */}
+      {/* Tab 1: Métricas (Las métricas ejecutivas ahora son exclusivas de este módulo) */}
       {(activeTab === 'executive' || activeTab === 'metricas') && (
         <div className="max-w-6xl mx-auto w-full space-y-6">
+          {/* Executive Header Banner con los 4 KPIs principales */}
+          <div className="bg-black text-white p-6 md:p-8 rounded-3xl border-2 border-neutral-800 shadow-md space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Shield className="w-6 h-6 text-orange-500" />
+                <div>
+                  <h3 className="text-base md:text-lg font-black uppercase tracking-wider text-white">Dirección General</h3>
+                  <p className="text-xs md:text-sm text-neutral-400">Supervisión Ejecutiva e Indicadores Financieros</p>
+                </div>
+              </div>
+              <span className="text-xs md:text-sm bg-orange-600/30 text-orange-400 font-black px-3 py-1 rounded-full border border-orange-500/30">
+                Acceso Total
+              </span>
+            </div>
+
+            {/* 4 Core Executive KPIs */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+              <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
+                <p className="text-xs text-neutral-400 uppercase font-black">Ingresos del Día</p>
+                <p className="text-lg md:text-2xl font-black text-emerald-400 mt-1">${totalIncomeToday.toLocaleString()} MXN</p>
+                <p className="text-xs text-neutral-500 mt-0.5">{bookings.length} boletos emitidos</p>
+              </div>
+              <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
+                <p className="text-xs text-neutral-400 uppercase font-black">Ventas del Mes</p>
+                <p className="text-lg md:text-2xl font-black text-white mt-1">${totalSalesMonth.toLocaleString()} MXN</p>
+                <p className="text-xs text-neutral-500 mt-0.5">Pasajes + Rentas</p>
+              </div>
+              <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
+                <p className="text-xs text-neutral-400 uppercase font-black">Margen Neto</p>
+                <p className="text-lg md:text-2xl font-black text-orange-400 mt-1">{netMarginPercent}%</p>
+                <p className="text-xs text-emerald-400 mt-0.5">+5.2% vs mes anterior</p>
+              </div>
+              <div className="bg-neutral-900 p-4 rounded-2xl border border-neutral-800">
+                <p className="text-xs text-neutral-400 uppercase font-black">Saldo por Cobrar</p>
+                <p className="text-lg md:text-2xl font-black text-amber-400 mt-1">${totalReceivables.toLocaleString()} MXN</p>
+                <p className="text-xs text-neutral-500 mt-0.5">{quotes.filter(q => q.balanceRemaining > 0).length} clientes</p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200">
             <div className="flex items-center gap-2 text-orange-600 mb-1">
               <TrendingUp className="w-6 h-6" />
@@ -107,7 +108,7 @@ export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab, setAc
                   onClick={() => setActiveTab('fleet_photos')}
                   className="px-3 py-1.5 bg-neutral-900 hover:bg-orange-600 text-white rounded-xl text-xs font-black transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm"
                 >
-                  <Camera className="w-3.5 h-3.5 text-orange-400" /> Gestionar Fotos
+                  <Car className="w-3.5 h-3.5 text-orange-400" /> Catálogo de Renta
                 </button>
               </div>
             </div>
