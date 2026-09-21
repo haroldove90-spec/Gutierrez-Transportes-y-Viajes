@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   Calendar as CalendarIcon, 
@@ -33,7 +33,8 @@ export const TripsCalendarAgenda: React.FC = () => {
     seatTemplates,
     addTrip,
     deleteTrip,
-    sendManualWakeUpAlarm 
+    sendManualWakeUpAlarm,
+    syncWithSupabase
   } = useApp();
 
   const today = new Date();
@@ -47,9 +48,6 @@ export const TripsCalendarAgenda: React.FC = () => {
   const [viewingDiagramTrip, setViewingDiagramTrip] = useState<TripSchedule | null>(null);
 
   // Form for registering a new scheduled trip
-  const defaultVeh = vehicles[0];
-  const defaultTemplateId = defaultVeh?.layoutTemplateId || seatTemplates[0]?.id || '';
-
   const [newTripForm, setNewTripForm] = useState({
     routeTitle: 'Manzanillo ⇄ Guadalajara (Troncal)',
     origin: 'Manzanillo, Col.',
@@ -58,11 +56,47 @@ export const TripsCalendarAgenda: React.FC = () => {
     departureTime: '07:00 AM',
     endDate: today.toISOString().substring(0, 10),
     estimatedArrival: '11:00 AM',
-    vehicleId: defaultVeh?.id || '',
-    layoutTemplateId: defaultTemplateId,
-    driverId: drivers[0]?.id || '',
+    vehicleId: '',
+    layoutTemplateId: '',
+    driverId: '',
     basePrice: 480
   });
+
+  // Re-sync with Supabase when opening the trip modal
+  useEffect(() => {
+    if (showAddTripModal) {
+      syncWithSupabase();
+    }
+  }, [showAddTripModal]);
+
+  // Keep driverId in sync with latest drivers
+  useEffect(() => {
+    if (drivers.length > 0) {
+      if (!newTripForm.driverId || !drivers.some(d => d.id === newTripForm.driverId)) {
+        setNewTripForm(prev => ({ ...prev, driverId: drivers[0].id }));
+      }
+    } else {
+      setNewTripForm(prev => ({ ...prev, driverId: '' }));
+    }
+  }, [drivers]);
+
+  // Keep vehicleId & layoutTemplateId in sync with latest vehicles
+  useEffect(() => {
+    const activeVehicles = vehicles.filter(v => v.status !== 'maintenance');
+    if (activeVehicles.length > 0) {
+      if (!newTripForm.vehicleId || !activeVehicles.some(v => v.id === newTripForm.vehicleId)) {
+        const v = activeVehicles[0];
+        const templateId = v.layoutTemplateId || seatTemplates[0]?.id || '';
+        setNewTripForm(prev => ({ 
+          ...prev, 
+          vehicleId: v.id,
+          layoutTemplateId: templateId
+        }));
+      }
+    } else {
+      setNewTripForm(prev => ({ ...prev, vehicleId: '' }));
+    }
+  }, [vehicles, seatTemplates]);
 
   // Calendar math
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -720,12 +754,17 @@ export const TripsCalendarAgenda: React.FC = () => {
                       }));
                     }}
                     className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    required
                   >
-                    {vehicles.filter(v => v.status !== 'maintenance').map(v => (
-                      <option key={v.id} value={v.id}>
-                        {v.unitNumber} ({v.model} - {v.capacity} pl.)
-                      </option>
-                    ))}
+                    {vehicles.length === 0 ? (
+                      <option value="">-- No hay camionetas registradas --</option>
+                    ) : (
+                      vehicles.filter(v => v.status !== 'maintenance').map(v => (
+                        <option key={v.id} value={v.id}>
+                          {v.unitNumber} ({v.model} - {v.capacity} pl.)
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 
@@ -735,6 +774,7 @@ export const TripsCalendarAgenda: React.FC = () => {
                     value={newTripForm.layoutTemplateId}
                     onChange={e => setNewTripForm(prev => ({ ...prev, layoutTemplateId: e.target.value }))}
                     className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    required
                   >
                     {seatTemplates.map(tmpl => (
                       <option key={tmpl.id} value={tmpl.id}>
@@ -751,13 +791,23 @@ export const TripsCalendarAgenda: React.FC = () => {
                   value={newTripForm.driverId}
                   onChange={e => setNewTripForm(prev => ({ ...prev, driverId: e.target.value }))}
                   className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                  required
                 >
-                  {drivers.map(d => (
-                    <option key={d.id} value={d.id}>
-                      {d.name} {d.status === 'available' ? '(Disponible)' : `(${d.status})`}
-                    </option>
-                  ))}
+                  {drivers.length === 0 ? (
+                    <option value="">-- No hay choferes registrados --</option>
+                  ) : (
+                    drivers.map(d => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} {d.status === 'available' ? '(✓ Disponible)' : `(${d.status})`}
+                      </option>
+                    ))
+                  )}
                 </select>
+                {drivers.length === 0 && (
+                  <p className="mt-1 text-[11px] font-bold text-rose-600">
+                    ⚠️ No hay choferes registrados en el sistema. Registra uno en el módulo "Choferes".
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">

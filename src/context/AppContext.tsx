@@ -64,7 +64,11 @@ import {
   fetchRentalCarsFromSupabase,
   saveRentalCarToSupabase,
   deleteRentalCarFromSupabase,
-  updateRentalCarAvailabilityInSupabase
+  updateRentalCarAvailabilityInSupabase,
+  fetchCharterAssignmentsFromSupabase,
+  saveCharterAssignmentToSupabase,
+  deleteCharterAssignmentFromSupabase,
+  supabase
 } from '../lib/supabase';
 import { SupabaseSqlModal } from '../components/modals/SupabaseSqlModal';
 
@@ -111,6 +115,7 @@ interface AppContextType {
   addDriver: (driverData: Omit<Driver, 'id'>) => Driver;
   updateDriver: (id: string, updates: Partial<Driver>) => boolean;
   deleteDriver: (id: string) => boolean;
+  clearAllSampleDrivers: () => void;
 
   // Trips Management (Admin configurable)
   addTrip: (tripData: Omit<TripSchedule, 'id' | 'seats' | 'occupiedSeatsCount' | 'totalRevenue'>) => TripSchedule;
@@ -291,12 +296,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
     const deleted = getDeletedIds();
     try {
-      // Clear legacy test cache
       localStorage.removeItem('gutierrez_vehicles_v2');
       const saved = localStorage.getItem('gutierrez_vehicles_v3');
-      if (saved) {
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed
             .filter((v: any) => !deleted.has(v.id))
             .map((v: any) => {
@@ -318,9 +322,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const deleted = getDeletedIds();
     try {
       const saved = localStorage.getItem('gutierrez_drivers_v3');
-      if (saved) {
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed.filter((d: any) => !deleted.has(d.id));
         }
       }
@@ -350,16 +354,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const deleted = getDeletedIds();
     try {
       const saved = localStorage.getItem('gutierrez_rental_cars_v2');
-      if (saved) {
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const merged = [...parsed.filter((c: any) => !deleted.has(c.id))];
-          OFFICIAL_RENTAL_CARS.forEach(official => {
-            if (!deleted.has(official.id) && !merged.some(c => c.id === official.id)) {
-              merged.push(official);
-            }
-          });
-          return merged;
+        if (Array.isArray(parsed)) {
+          return parsed.filter((c: any) => !deleted.has(c.id));
         }
       }
     } catch (e) {
@@ -422,12 +420,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [exceptions, setExceptions] = useState<ExceptionRequest[]>(INITIAL_EXCEPTIONS);
   const [charterAssignments, setCharterAssignments] = useState<CharterAssignment[]>(() => {
     try {
-      // Clear legacy test cache
       localStorage.removeItem('gutierrez_charter_assignments_v1');
       const saved = localStorage.getItem('gutierrez_charter_assignments_v2');
-      if (saved) {
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch (e) {
       console.warn('Error loading cached charter assignments', e);
@@ -831,39 +828,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSupabaseMessage(res.error);
       } else if (res.connected) {
         setSupabaseMessage('Conectado a Supabase PostgreSQL');
-        const [cloudTrips, cloudBookings, cloudStops, cloudPricings, cloudVehicles, cloudDrivers, cloudRentalCars] = await Promise.all([
+        const [cloudTrips, cloudBookings, cloudStops, cloudPricings, cloudVehicles, cloudDrivers, cloudRentalCars, cloudCharters] = await Promise.all([
           fetchTripsFromSupabase(),
           fetchBookingsFromSupabase(),
           fetchRouteStopsFromSupabase(),
           fetchRoutePricingsFromSupabase(),
           fetchVehiclesFromSupabase(),
           fetchDriversFromSupabase(),
-          fetchRentalCarsFromSupabase()
+          fetchRentalCarsFromSupabase(),
+          fetchCharterAssignmentsFromSupabase()
         ]);
 
         const deleted = getDeletedIds();
 
-        // If cloudTrips / cloudBookings is an array (even if empty because user deleted them from Supabase), update state!
+        // Exact state reflection from Supabase (including empty lists if user deleted rows)
         if (cloudTrips !== null) {
           setTrips(cloudTrips.filter(t => !deleted.has(t.id)));
         }
         if (cloudBookings !== null) {
           setBookings(cloudBookings.filter(b => !deleted.has(b.id)));
         }
-        if (cloudStops !== null && cloudStops.length > 0) {
+        if (cloudStops !== null) {
           setRouteStops(cloudStops.filter(s => !deleted.has(s.id)));
         }
-        if (cloudPricings !== null && cloudPricings.length > 0) {
+        if (cloudPricings !== null) {
           setRoutePricings(cloudPricings.filter(p => !deleted.has(p.id)));
         }
-        if (cloudVehicles !== null && cloudVehicles.length > 0) {
+        if (cloudVehicles !== null) {
           setVehicles(cloudVehicles.filter(v => !deleted.has(v.id)));
         }
-        if (cloudDrivers !== null && cloudDrivers.length > 0) {
+        if (cloudDrivers !== null) {
           setDrivers(cloudDrivers.filter(d => !deleted.has(d.id)));
         }
-        if (cloudRentalCars !== null && cloudRentalCars.length > 0) {
+        if (cloudRentalCars !== null) {
           setRentalCars(cloudRentalCars.filter(c => !deleted.has(c.id)));
+        }
+        if (cloudCharters !== null) {
+          setCharterAssignments(cloudCharters);
         }
       }
     } catch {
@@ -874,6 +875,55 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     syncWithSupabase();
+
+    // 1. Auto-sync on window focus or visibility change
+    const onFocus = () => {
+      syncWithSupabase();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+
+    // 2. Periodic background poll (every 5 seconds) to catch any changes from Supabase SQL editor or other users
+    const pollInterval = setInterval(() => {
+      syncWithSupabase();
+    }, 5000);
+
+    // 3. Supabase Realtime Channel
+    const channel = supabase
+      .channel('realtime_fleet_and_drivers')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'drivers' }, () => {
+        fetchDriversFromSupabase().then(res => {
+          if (res !== null) setDrivers(res);
+        });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, () => {
+        fetchVehiclesFromSupabase().then(res => {
+          if (res !== null) setVehicles(res);
+        });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'rental_cars' }, () => {
+        fetchRentalCarsFromSupabase().then(res => {
+          if (res !== null) setRentalCars(res);
+        });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'charter_assignments' }, () => {
+        fetchCharterAssignmentsFromSupabase().then(res => {
+          if (res !== null) setCharterAssignments(res);
+        });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'trips' }, () => {
+        fetchTripsFromSupabase().then(res => {
+          if (res !== null) setTrips(res);
+        });
+      })
+      .subscribe();
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+      clearInterval(pollInterval);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -1454,6 +1504,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return true;
   };
 
+  const clearAllSampleDrivers = () => {
+    const sampleIds = ['drv-01', 'drv-02', 'drv-03', 'drv-04', 'drv-05', 'drv-06', 'drv-07'];
+    sampleIds.forEach(id => {
+      recordDeletedId(id);
+      deleteDriverFromSupabase(id).catch(() => {});
+    });
+    setDrivers(prev => prev.filter(d => !sampleIds.includes(d.id)));
+    showNotification('Se eliminaron los choferes de muestra del sistema.', 'info');
+  };
+
   const addTrip = (tripData: Omit<TripSchedule, 'id' | 'seats' | 'occupiedSeatsCount' | 'totalRevenue'>): TripSchedule => {
     const vehicle = vehicles.find(v => v.id === tripData.vehicleId);
     const capacity = vehicle?.capacity || 19;
@@ -1607,10 +1667,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } : d));
 
-    // 3. Registrar en la agenda de asignaciones
-    setCharterAssignments(prev => [newAssignment, ...prev]);
+    // 3. Bloquear en catálogo de autos si fue un auto de renta
+    const rentalCar = rentalCars.find(c => c.id === data.vehicleId);
+    if (rentalCar) {
+      setRentalCars(prev => prev.map(c => c.id === data.vehicleId ? { ...c, available: false } : c));
+      updateRentalCarAvailabilityInSupabase(data.vehicleId, false).catch(() => {});
+    }
 
-    // 4. Notificación y Alarma de Despacho Inmediata al Chofer
+    // 4. Registrar en la agenda de asignaciones y Supabase
+    setCharterAssignments(prev => [newAssignment, ...prev]);
+    saveCharterAssignmentToSupabase(newAssignment).catch(() => {});
+
+    // 5. Notificación y Alarma de Despacho Inmediata al Chofer
     const charterAlarm: DriverAlarm = {
       id: `alarm-charter-${data.driverId}-${Date.now()}`,
       driverId: data.driverId,
@@ -1656,7 +1724,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const releaseVehicleFromTourContract = (vehicleId: string): boolean => {
     const vehicle = vehicles.find(v => v.id === vehicleId);
-    if (!vehicle) return false;
+    if (!vehicle) {
+      // Check if it's a rental car
+      const rentalCar = rentalCars.find(c => c.id === vehicleId);
+      if (rentalCar) {
+        setRentalCars(prev => prev.map(c => c.id === vehicleId ? { ...c, available: true } : c));
+        updateRentalCarAvailabilityInSupabase(vehicleId, true).catch(() => {});
+        return true;
+      }
+      return false;
+    }
 
     const assignedDriverId = vehicle.driverId;
 
@@ -1689,10 +1766,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!charter) return false;
 
     // Mark charter as completed
-    setCharterAssignments(prev => prev.map(c => c.id === charterId ? { ...c, status: 'completed' } : c));
+    const updated = { ...charter, status: 'completed' as const };
+    setCharterAssignments(prev => prev.map(c => c.id === charterId ? updated : c));
+    saveCharterAssignmentToSupabase(updated).catch(() => {});
 
-    // Release vehicle
+    // Release vehicle or rental car
     releaseVehicleFromTourContract(charter.vehicleId);
+
+    // Also release driver
+    if (charter.driverId) {
+      setDrivers(prev => prev.map(d => d.id === charter.driverId ? {
+        ...d,
+        status: 'available',
+        currentVehicleId: undefined,
+        currentServiceType: 'none',
+        charterDetails: undefined
+      } : d));
+    }
 
     showNotification(`Servicio turístico ${charter.folio} finalizado y recursos liberados.`, 'info');
     return true;
@@ -2138,6 +2228,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addDriver,
         updateDriver,
         deleteDriver,
+        clearAllSampleDrivers,
         addTrip,
         updateTrip,
         deleteTrip,

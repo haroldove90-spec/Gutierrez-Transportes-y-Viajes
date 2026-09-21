@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   Clock,
   ArrowRightLeft,
-  X
+  X,
+  RefreshCw
 } from 'lucide-react';
 import { Driver } from '../../types';
 
@@ -27,13 +28,17 @@ export const DriversManager: React.FC = () => {
     addDriver, 
     updateDriver, 
     deleteDriver, 
+    clearAllSampleDrivers,
     assignDriverToVehicle, 
     releaseDriverFromService,
-    sendManualWakeUpAlarm 
+    sendManualWakeUpAlarm,
+    syncWithSupabase
   } = useApp();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'in_service' | 'charter_service' | 'resting'>('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [driverToDelete, setDriverToDelete] = useState<{ id: string; name: string } | null>(null);
 
   // Modal: Alta de Chofer
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -120,10 +125,16 @@ export const DriversManager: React.FC = () => {
   };
 
   const handleDeleteDriver = (id: string, name: string) => {
-    if (window.confirm(`¿Estás seguro de dar de baja al chofer "${name}"? Se desvinculará de cualquier vehículo.`)) {
-      deleteDriver(id);
-    }
+    setDriverToDelete({ id, name });
   };
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await syncWithSupabase();
+    setTimeout(() => setIsRefreshing(false), 600);
+  };
+
+  const hasSampleDrivers = drivers.some(d => d.id.startsWith('drv-'));
 
   return (
     <div className="space-y-6">
@@ -143,12 +154,32 @@ export const DriversManager: React.FC = () => {
             </p>
           </div>
 
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="px-5 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-xs md:text-sm transition-all shadow-md flex items-center gap-2 cursor-pointer self-start md:self-auto active:scale-98"
-          >
-            <UserPlus className="w-4 h-4" /> Dar de Alta Chofer
-          </button>
+          <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+            <button
+              onClick={handleManualRefresh}
+              className="px-4 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-2xl font-bold text-xs md:text-sm transition-all flex items-center gap-1.5 cursor-pointer border border-neutral-200"
+              title="Sincronizar con Supabase"
+            >
+              <RefreshCw className={`w-4 h-4 text-orange-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Sincronizar</span>
+            </button>
+            {hasSampleDrivers && (
+              <button
+                onClick={() => clearAllSampleDrivers()}
+                className="px-4 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl font-black text-xs md:text-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                title="Eliminar choferes de muestra precargados"
+              >
+                <Trash2 className="w-4 h-4 text-rose-600" />
+                <span>Limpiar Choferes de Muestra</span>
+              </button>
+            )}
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-5 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-xs md:text-sm transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-98"
+            >
+              <UserPlus className="w-4 h-4" /> Dar de Alta Chofer
+            </button>
+          </div>
         </div>
 
         {/* Stats Row */}
@@ -607,6 +638,41 @@ export const DriversManager: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Modal: Confirmación Baja de Chofer */}
+      {driverToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-2 border-neutral-200 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-black text-neutral-900">¿Dar de baja chofer?</h3>
+              <p className="text-xs text-neutral-500 mt-1">
+                ¿Estás seguro de eliminar a <span className="font-bold text-neutral-800">{driverToDelete.name}</span>? Se desvinculará de cualquier vehículo y se borrará definitivamente del sistema y de Supabase.
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDriverToDelete(null)}
+                className="flex-1 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl font-bold text-xs cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteDriver(driverToDelete.id);
+                  setDriverToDelete(null);
+                }}
+                className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black text-xs cursor-pointer shadow-md"
+              >
+                Confirmar Baja
+              </button>
+            </div>
           </div>
         </div>
       )}

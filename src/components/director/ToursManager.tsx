@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   Palmtree, 
@@ -16,7 +16,8 @@ import {
   BellRing,
   Search,
   Filter,
-  Check
+  Check,
+  RefreshCw
 } from 'lucide-react';
 import { CharterAssignment } from '../../types';
 
@@ -24,15 +25,18 @@ export const ToursManager: React.FC = () => {
   const { 
     charterAssignments, 
     vehicles, 
+    rentalCars,
     drivers, 
     assignDriverToCharter, 
     completeCharterAssignment,
-    sendManualWakeUpAlarm 
+    sendManualWakeUpAlarm,
+    syncWithSupabase
   } = useApp();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'upcoming' | 'completed'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Form for new tour registration
   const todayStr = new Date().toISOString().substring(0, 10);
@@ -47,13 +51,68 @@ export const ToursManager: React.FC = () => {
     startTime: '08:00 AM',
     endDate: tomorrowStr,
     returnTime: '20:00 PM',
-    unitNumber: vehicles[0]?.unitNumber || '',
-    vehicleId: vehicles[0]?.id || '',
-    driverName: drivers[0]?.name || '',
-    driverId: drivers[0]?.id || '',
+    unitNumber: '',
+    vehicleId: '',
+    driverName: '',
+    driverId: '',
     totalAmount: 18500,
     notes: ''
   });
+
+  // Re-sync with Supabase on opening modal or manual trigger
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await syncWithSupabase();
+    setTimeout(() => setIsRefreshing(false), 600);
+  };
+
+  useEffect(() => {
+    if (showCreateModal) {
+      syncWithSupabase();
+    }
+  }, [showCreateModal]);
+
+  // Keep driverId automatically synchronized with current drivers list
+  useEffect(() => {
+    if (drivers.length > 0) {
+      if (!form.driverId || !drivers.some(d => d.id === form.driverId)) {
+        setForm(prev => ({
+          ...prev,
+          driverId: drivers[0].id,
+          driverName: drivers[0].name
+        }));
+      }
+    } else {
+      setForm(prev => ({
+        ...prev,
+        driverId: '',
+        driverName: ''
+      }));
+    }
+  }, [drivers]);
+
+  // Keep vehicleId automatically synchronized with current vehicles & rental cars list
+  useEffect(() => {
+    const allUnits = [
+      ...vehicles.map(v => ({ id: v.id, label: v.unitNumber })),
+      ...rentalCars.map(c => ({ id: c.id, label: `${c.brand} ${c.name}` }))
+    ];
+    if (allUnits.length > 0) {
+      if (!form.vehicleId || !allUnits.some(u => u.id === form.vehicleId)) {
+        setForm(prev => ({
+          ...prev,
+          vehicleId: allUnits[0].id,
+          unitNumber: allUnits[0].label
+        }));
+      }
+    } else {
+      setForm(prev => ({
+        ...prev,
+        vehicleId: '',
+        unitNumber: ''
+      }));
+    }
+  }, [vehicles, rentalCars]);
 
   // Filtered tours
   const filteredTours = useMemo(() => {
@@ -85,12 +144,15 @@ export const ToursManager: React.FC = () => {
     if (!form.clientName || !form.destination || !form.vehicleId || !form.driverId) return;
 
     const selectedVehicle = vehicles.find(v => v.id === form.vehicleId);
+    const selectedRentalCar = rentalCars.find(c => c.id === form.vehicleId);
     const selectedDriver = drivers.find(d => d.id === form.driverId);
+
+    const unitLabel = selectedVehicle?.unitNumber || (selectedRentalCar ? `${selectedRentalCar.brand} ${selectedRentalCar.name}` : form.unitNumber);
 
     assignDriverToCharter({
       driverId: form.driverId,
-      driverName: selectedDriver?.name || form.driverName,
-      unitNumber: selectedVehicle?.unitNumber || form.unitNumber,
+      driverName: selectedDriver?.name || form.driverName || 'Chofer Asignado',
+      unitNumber: unitLabel,
       vehicleId: form.vehicleId,
       clientName: form.clientName,
       clientPhone: form.clientPhone,
@@ -147,12 +209,22 @@ export const ToursManager: React.FC = () => {
             </p>
           </div>
 
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-xs md:text-sm transition-all shadow-md flex items-center gap-2 cursor-pointer self-start md:self-auto active:scale-98"
-          >
-            <Plus className="w-4 h-4" /> Registrar Nuevo Tour
-          </button>
+          <div className="flex items-center gap-2 self-start md:self-auto">
+            <button
+              onClick={handleManualRefresh}
+              className="px-4 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-2xl font-bold text-xs md:text-sm transition-all flex items-center gap-1.5 cursor-pointer border border-neutral-200"
+              title="Actualizar datos con Supabase"
+            >
+              <RefreshCw className={`w-4 h-4 text-purple-600 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Sincronizar</span>
+            </button>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-5 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black text-xs md:text-sm transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-98"
+            >
+              <Plus className="w-4 h-4" /> Registrar Nuevo Tour
+            </button>
+          </div>
         </div>
 
         {/* Stats Row */}
@@ -493,35 +565,94 @@ export const ToursManager: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-black text-neutral-700 mb-1">Unidad a Bloquear para el Tour</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-black text-neutral-700 text-xs md:text-sm">Unidad / Van o Auto Asignado</label>
+                    <span className="text-[10px] text-neutral-500 font-bold">
+                      {vehicles.length + rentalCars.length} disponibles
+                    </span>
+                  </div>
                   <select
                     value={form.vehicleId}
-                    onChange={e => setForm(prev => ({ ...prev, vehicleId: e.target.value }))}
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    onChange={e => {
+                      const vId = e.target.value;
+                      const vObj = vehicles.find(v => v.id === vId);
+                      const cObj = rentalCars.find(c => c.id === vId);
+                      setForm(prev => ({ 
+                        ...prev, 
+                        vehicleId: vId,
+                        unitNumber: vObj?.unitNumber || (cObj ? `${cObj.brand} ${cObj.name}` : '')
+                      }));
+                    }}
+                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs md:text-sm focus:border-purple-500 focus:outline-none"
+                    required
                   >
-                    {vehicles.filter(v => v.status !== 'maintenance').map(v => (
-                      <option key={v.id} value={v.id}>
-                        {v.unitNumber} ({v.model} - {v.capacity} pl.) {v.status === 'tour_contract' ? '[En Tour]' : ''}
-                      </option>
-                    ))}
+                    {vehicles.length === 0 && rentalCars.length === 0 && (
+                      <option value="">-- No hay unidades registradas --</option>
+                    )}
+                    {vehicles.length > 0 && (
+                      <optgroup label="🚐 Flotilla de Vans y Sprinters (Rutas & Turismo)">
+                        {vehicles.filter(v => v.status !== 'maintenance').map(v => (
+                          <option key={v.id} value={v.id}>
+                            {v.unitNumber} ({v.model} - {v.capacity} pl.) {v.status === 'tour_contract' ? '[En Tour]' : ''}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {rentalCars.length > 0 && (
+                      <optgroup label="🚗 Autos y Camionetas del Catálogo de Renta">
+                        {rentalCars.map(c => (
+                          <option key={c.id} value={c.id}>
+                            {c.brand} {c.name} ({c.type.toUpperCase()} • {c.passengers} pax) {!c.available ? '[Ocupado]' : '✓ Disponible'}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
+                  {vehicles.length === 0 && rentalCars.length === 0 && (
+                    <p className="mt-1 text-[11px] font-bold text-rose-600">
+                      ⚠️ No hay unidades registradas en el sistema.
+                    </p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block font-black text-neutral-700 mb-1">Chofer / Operador Responsable</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-black text-neutral-700 text-xs md:text-sm">Chofer / Operador Responsable</label>
+                    <span className="text-[10px] text-neutral-500 font-bold">
+                      {drivers.length} registrados
+                    </span>
+                  </div>
                   <select
                     value={form.driverId}
-                    onChange={e => setForm(prev => ({ ...prev, driverId: e.target.value }))}
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    onChange={e => {
+                      const dId = e.target.value;
+                      const dObj = drivers.find(d => d.id === dId);
+                      setForm(prev => ({ 
+                        ...prev, 
+                        driverId: dId,
+                        driverName: dObj?.name || ''
+                      }));
+                    }}
+                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs md:text-sm focus:border-purple-500 focus:outline-none"
+                    required
                   >
-                    {drivers.map(d => (
-                      <option key={d.id} value={d.id}>
-                        {d.name} {d.status === 'available' ? '(Disponible)' : `(${d.status})`}
-                      </option>
-                    ))}
+                    {drivers.length === 0 ? (
+                      <option value="">-- No hay choferes registrados en el sistema --</option>
+                    ) : (
+                      drivers.map(d => (
+                        <option key={d.id} value={d.id}>
+                          {d.name} {d.status === 'available' ? '(✓ Disponible)' : `(${d.status})`}
+                        </option>
+                      ))
+                    )}
                   </select>
+                  {drivers.length === 0 && (
+                    <p className="mt-1 text-[11px] font-bold text-rose-600">
+                      ⚠️ No hay choferes en el sistema. Registra uno en el módulo "Choferes".
+                    </p>
+                  )}
                 </div>
               </div>
 

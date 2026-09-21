@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Booking, TripSchedule, RentalQuote, RouteStop, RoutePricing, Vehicle, Driver, RentalCar } from '../types';
+import { Booking, TripSchedule, RentalQuote, RouteStop, RoutePricing, Vehicle, Driver, RentalCar, CharterAssignment } from '../types';
 import { ROUTE_STOPS } from '../data/mockData';
 
 // Fallback configuration provided by user
@@ -330,7 +330,10 @@ export async function fetchDriversFromSupabase(): Promise<Driver[] | null> {
       .select('*')
       .order('name', { ascending: true });
 
-    if (error) return null;
+    if (error) {
+      console.warn('Error fetching drivers from Supabase:', error.message);
+      return null;
+    }
     if (!data) return [];
 
     return data.map((d: any) => ({
@@ -338,13 +341,14 @@ export async function fetchDriversFromSupabase(): Promise<Driver[] | null> {
       name: d.name,
       phone: d.phone,
       licenseNumber: d.license_number || d.license_type || 'FED-B-99882',
-      licenseExpiry: d.license_expiry || '2027-12-31',
+      licenseExpiry: d.license_expiry || '2028-12-31',
       rating: Number(d.rating || 4.9),
       status: (d.status as any) || 'available',
       avatar: d.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
       currentVehicleId: d.current_vehicle_id || undefined
     }));
-  } catch {
+  } catch (err) {
+    console.warn('Exception fetching drivers:', err);
     return null;
   }
 }
@@ -354,18 +358,34 @@ export async function fetchDriversFromSupabase(): Promise<Driver[] | null> {
  */
 export async function saveDriverToSupabase(driver: Driver): Promise<boolean> {
   try {
-    const { error } = await supabase.from('drivers').upsert({
+    const payload: any = {
       id: driver.id,
       name: driver.name,
       phone: driver.phone,
+      license_type: driver.licenseNumber || 'Federal Tipo B',
       license_number: driver.licenseNumber || null,
       license_expiry: driver.licenseExpiry || null,
       rating: driver.rating,
       status: driver.status,
       avatar: driver.avatar || null,
       current_vehicle_id: driver.currentVehicleId || null
-    });
-    return !error;
+    };
+
+    const { error } = await supabase.from('drivers').upsert(payload);
+    if (error) {
+      // Fallback in case table has only standard columns
+      const fallbackPayload = {
+        id: driver.id,
+        name: driver.name,
+        phone: driver.phone,
+        license_type: driver.licenseNumber || 'Federal Tipo B',
+        rating: driver.rating,
+        status: driver.status
+      };
+      const { error: err2 } = await supabase.from('drivers').upsert(fallbackPayload);
+      return !err2;
+    }
+    return true;
   } catch {
     return false;
   }
@@ -377,6 +397,86 @@ export async function saveDriverToSupabase(driver: Driver): Promise<boolean> {
 export async function deleteDriverFromSupabase(id: string): Promise<boolean> {
   try {
     const { error } = await supabase.from('drivers').delete().eq('id', id);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Fetch Charter Assignments / Tours from Supabase
+ */
+export async function fetchCharterAssignmentsFromSupabase(): Promise<CharterAssignment[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('charter_assignments')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) return null;
+    if (!data) return [];
+
+    return data.map((c: any) => ({
+      id: c.id,
+      folio: c.folio || `TOUR-${c.id.substring(c.id.length - 4)}`,
+      clientName: c.client_name,
+      clientPhone: c.client_phone || '',
+      destination: c.destination,
+      origin: c.origin,
+      vehicleId: c.vehicle_id,
+      unitNumber: c.unit_number,
+      driverId: c.driver_id,
+      driverName: c.driver_name,
+      driverPhone: c.driver_phone || '',
+      startDate: c.start_date,
+      endDate: c.end_date,
+      startTime: c.start_time || '08:00 AM',
+      returnTime: c.return_time || '20:00 PM',
+      totalAmount: Number(c.total_amount || 0),
+      status: (c.status as any) || 'upcoming',
+      notes: c.notes || '',
+      createdAt: c.created_at || new Date().toISOString()
+    }));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save Charter Assignment / Tour to Supabase
+ */
+export async function saveCharterAssignmentToSupabase(charter: CharterAssignment): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('charter_assignments').upsert({
+      id: charter.id,
+      type: 'charter',
+      client_name: charter.clientName,
+      service_title: `Tour a ${charter.destination}`,
+      origin: charter.origin,
+      destination: charter.destination,
+      vehicle_id: charter.vehicleId,
+      unit_number: charter.unitNumber,
+      driver_id: charter.driverId,
+      driver_name: charter.driverName,
+      start_date: charter.startDate,
+      end_date: charter.endDate,
+      start_time: charter.startTime || '08:00 AM',
+      return_time: charter.returnTime || '20:00 PM',
+      notes: charter.notes || null,
+      passengers_count: 14
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Delete Charter Assignment from Supabase
+ */
+export async function deleteCharterAssignmentFromSupabase(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('charter_assignments').delete().eq('id', id);
     return !error;
   } catch {
     return false;
