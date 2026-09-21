@@ -141,6 +141,10 @@ export interface CharterAssignment {
   status: 'active' | 'upcoming' | 'completed' | 'cancelled';
   notes?: string;
   createdAt: string;
+  layoutTemplateId?: string; // Plantilla de asientos configurada
+  pricePerSeat?: number; // Precio por asiento para venta individual a clientes
+  isPublicBookingAvailable?: boolean; // Disponible en módulo de reservación para clientes
+  tripId?: string; // ID del viaje programado sincronizado
 }
 
 export interface TripSchedule {
@@ -162,6 +166,9 @@ export interface TripSchedule {
   basePrice: number;
   occupiedSeatsCount: number;
   totalRevenue: number;
+  isTour?: boolean; // Indica si es un viaje turístico o especial
+  tourFolio?: string;
+  notes?: string;
 }
 
 export interface BookingPassenger {

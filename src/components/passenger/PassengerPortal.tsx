@@ -21,7 +21,12 @@ import {
   ArrowRightLeft,
   Navigation,
   ExternalLink,
-  Trash2
+  Trash2,
+  Palmtree,
+  LayoutGrid,
+  Tag,
+  Compass,
+  Car
 } from 'lucide-react';
 import { OFFICIAL_PRICING, OFFICIAL_PHONE, OFFICIAL_WHATSAPP, OFFICIAL_EXPERIENCE_YEARS } from '../../data/mockData';
 import { TripSchedule, Seat, Booking, RoutePricing } from '../../types';
@@ -41,6 +46,8 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
     bookings, 
     routeStops,
     routePricings,
+    seatTemplates,
+    charterAssignments,
     selectedTripId, 
     setSelectedTripId, 
     tempLockedSeats, 
@@ -60,6 +67,10 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
   const [tripType, setTripType] = useState<'sencillo' | 'redondo'>('sencillo');
   const [returnDate, setReturnDate] = useState<string>('2026-09-05');
   const [showClientReport, setShowClientReport] = useState<boolean>(false);
+
+  // Tours tab states
+  const [tourSearchTerm, setTourSearchTerm] = useState<string>('');
+  const [tourCategoryFilter, setTourCategoryFilter] = useState<'all' | 'tours' | 'routes'>('all');
 
   // Seat selection states
   const [selectedSeatNums, setSelectedSeatNums] = useState<number[]>([3]);
@@ -123,9 +134,14 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
     ? (tripType === 'redondo' ? (matchedBoardingStop.farePrice * 2 - 20) : matchedBoardingStop.farePrice)
     : baseUnitPrice;
 
+  const isSelectedTripTour = Boolean(selectedTrip?.isTour);
+  const effectiveUnitPrice = isSelectedTripTour
+    ? (selectedTrip.basePrice || 650)
+    : unitPrice;
+
   const parcelFee = hasParcel ? (origin.includes('Manzanillo') ? 250 : 150) : 0;
   const petFee = hasPet ? (origin.includes('Manzanillo') ? 250 : 150) : 0;
-  const seatSubtotal = unitPrice * selectedSeatNums.length;
+  const seatSubtotal = effectiveUnitPrice * selectedSeatNums.length;
   const totalAmount = seatSubtotal + parcelFee + petFee;
 
   const handleSelectTrip = (trip: TripSchedule) => {
@@ -170,21 +186,21 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
       passengerName,
       passengerPhone,
       passengerEmail,
-      origin,
-      destination,
+      origin: selectedTrip.origin || origin,
+      destination: selectedTrip.destination || destination,
       boardingPoint: selectedBoardingStop,
       dropoffPoint: selectedDropoffStop,
-      date: travelDate,
+      date: selectedTrip.date || travelDate,
       departureTime: selectedTrip.departureTime,
       seatNumbers: selectedSeatNums,
-      unitNumber: selectedTrip.vehicleId === 'veh-01' ? 'Unidad 04 (Sprinter)' : 'Unidad 07 (Sprinter)',
+      unitNumber: selectedTrip.unitNumber || (selectedTrip.vehicleId === 'veh-sp20-01' ? 'Unidad 04 (Sprinter)' : 'Unidad Flotilla'),
       totalAmount,
       paymentMethod,
       paymentStatus: 'paid',
       source: 'web',
-      tripType,
+      tripType: isSelectedTripTour ? 'sencillo' : tripType,
       returnDate: tripType === 'redondo' ? returnDate : undefined,
-      packageType: matchedPricing.packageType,
+      packageType: isSelectedTripTour ? 'Tour Turístico' : matchedPricing.packageType,
       addons: {
         parcel: hasParcel,
         parcelFee,
@@ -429,9 +445,20 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-xs font-black uppercase px-2.5 py-1 rounded-lg bg-orange-100 text-orange-700 font-mono">
-                        {trip.unitNumber}
-                      </span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-black uppercase px-2.5 py-1 rounded-lg bg-orange-100 text-orange-700 font-mono">
+                          {trip.unitNumber}
+                        </span>
+                        {trip.isTour ? (
+                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 flex items-center gap-1">
+                            <Palmtree className="w-3 h-3 text-purple-600" /> Tour Turístico
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-600">
+                            Ruta Regular
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-2">
                         <Clock className="w-5 h-5 text-orange-600" />
                         <h4 className="text-xl md:text-2xl font-black text-neutral-900">{trip.departureTime}</h4>
@@ -440,11 +467,22 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                       <p className="text-xs text-neutral-600 font-medium mt-1">
                         Conductor: <strong>{trip.driverName}</strong>
                       </p>
+                      {trip.routeTitle && (
+                        <p className="text-xs text-neutral-800 font-black mt-0.5">{trip.routeTitle}</p>
+                      )}
+                      {(() => {
+                        const tmpl = seatTemplates.find(t => t.id === trip.layoutTemplateId);
+                        return tmpl ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md mt-1 border border-purple-200">
+                            <LayoutGrid className="w-3 h-3 text-purple-500" /> {tmpl.name}
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
 
                     <div className="text-right">
                       <span className="text-xl md:text-2xl font-black text-neutral-900">
-                        ${unitPrice}
+                        ${trip.isTour ? (trip.basePrice || unitPrice) : unitPrice}
                       </span>
                       <p className="text-xs text-neutral-500 font-bold">por persona</p>
                     </div>
@@ -500,35 +538,55 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                   </span>
                   <span className="text-neutral-500">•</span>
                   <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                    Llegada: {selectedTrip.endDate || selectedTrip.date || travelDate} a las {selectedTrip.estimatedArrival}
+                    Tarifa: ${effectiveUnitPrice} MXN / boleto
                   </span>
+                  {selectedTrip.isTour && (
+                    <>
+                      <span className="text-neutral-500">•</span>
+                      <span className="text-purple-300 font-black flex items-center gap-1">
+                        <Palmtree className="w-3.5 h-3.5 text-purple-400" /> Tour Especial
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
               <button
-                onClick={() => setActiveTab('search')}
+                onClick={() => setActiveTab(selectedTrip.isTour ? 'tours' : 'search')}
                 className="text-xs md:text-sm bg-neutral-800 hover:bg-neutral-700 text-white px-4 py-2 rounded-xl font-bold transition-colors shrink-0"
               >
-                Cambiar Viaje
+                {selectedTrip.isTour ? 'Ver Otros Tours' : 'Cambiar Viaje'}
               </button>
             </div>
           </div>
 
           {/* Seat Map Canvas Container */}
-          <SeatDiagramViewer
-            seats={selectedTrip.seats}
-            selectedSeatNumbers={selectedSeatNums}
-            onSeatClick={(seatNum, seat) => {
-              if (seat) {
-                toggleSeatSelection(seat);
-              } else {
-                const found = selectedTrip.seats.find(s => s.number === seatNum);
-                if (found) toggleSeatSelection(found);
-              }
-            }}
-            interactive={true}
-            title={selectedTrip.vehicleId === 'veh-03' ? 'Diagrama Toyota Hiace (14 Plazas)' : 'Diagrama Mercedes-Benz Sprinter (19 Plazas)'}
-            subtitle="Toca los asientos para seleccionarlos. 🟢 Verde = Libre/Disponible, 🔴 Rojo = Vendido/Ocupado, 🟠 Naranja = Seleccionado"
-          />
+          {(() => {
+            const tripTemplate = seatTemplates.find(t => t.id === selectedTrip.layoutTemplateId)
+              || seatTemplates.find(t => t.totalSeats === selectedTrip.seats.filter(s => s.type === 'standard').length)
+              || seatTemplates[0];
+
+            const diagramTitle = tripTemplate
+              ? `${tripTemplate.name} (${selectedTrip.seats.filter(s => s.type === 'standard').length} Asientos)`
+              : `Diagrama de Asientos (${selectedTrip.seats.filter(s => s.type === 'standard').length} Asientos)`;
+
+            return (
+              <SeatDiagramViewer
+                seats={selectedTrip.seats}
+                selectedSeatNumbers={selectedSeatNums}
+                onSeatClick={(seatNum, seat) => {
+                  if (seat) {
+                    toggleSeatSelection(seat);
+                  } else {
+                    const found = selectedTrip.seats.find(s => s.number === seatNum);
+                    if (found) toggleSeatSelection(found);
+                  }
+                }}
+                interactive={true}
+                title={diagramTitle}
+                subtitle="Toca los asientos para seleccionarlos. 🟢 Verde = Libre/Disponible, 🔴 Rojo = Vendido/Ocupado, 🟠 Naranja = Seleccionado"
+              />
+            );
+          })()}
 
           {/* Boarding Point & Contact Details Form */}
           <form onSubmit={handleCompleteCheckout} className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-4">
@@ -986,6 +1044,253 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
       {/* Tab 5: Catálogo Oficial de Autos y Camionetas de Renta (Con y Sin Chofer) */}
       {activeTab === 'rentals' && (
         <RentalCatalog />
+      )}
+
+      {/* Tab 6: Tours Turísticos y Viajes Especiales Disponibles */}
+      {activeTab === 'tours' && (
+        <div className="max-w-6xl mx-auto w-full space-y-6">
+          {/* Header Banner */}
+          <div className="bg-gradient-to-r from-purple-950 via-indigo-950 to-neutral-900 text-white rounded-3xl p-6 md:p-8 shadow-sm space-y-3 relative overflow-hidden border border-purple-900/50">
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <span className="text-xs md:text-sm font-black uppercase tracking-wider text-purple-300 flex items-center gap-2">
+                  <Palmtree className="w-5 h-5 text-purple-400" /> Tours y Viajes Disponibles para Clientes
+                </span>
+                <h2 className="text-2xl md:text-3xl font-black text-white mt-1">
+                  Excursiones, Playas y Pueblos Mágicos
+                </h2>
+                <p className="text-sm text-neutral-300 font-medium max-w-2xl mt-1">
+                  Elige el viaje turístico o excursión que más te convenga. Cada tour cuenta con su diagrama de asientos oficial para que selecciones tus lugares antes de confirmar.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="text-right bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/10">
+                  <span className="text-[10px] text-purple-200 uppercase font-black block">Tours Disponibles</span>
+                  <span className="text-xl md:text-2xl font-black text-white">
+                    {trips.filter(t => t.isTour).length} Tours Activos
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Filters & Search */}
+          <div className="bg-white rounded-3xl p-4 md:p-6 shadow-xs border border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+              <input 
+                type="text"
+                placeholder="Buscar destino, pueblo o tour..."
+                value={tourSearchTerm}
+                onChange={e => setTourSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 bg-neutral-50 border-2 border-neutral-200 rounded-xl text-xs md:text-sm font-bold text-neutral-900 focus:border-purple-600 focus:outline-none"
+              />
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+              <button
+                onClick={() => setTourCategoryFilter('all')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                  tourCategoryFilter === 'all'
+                    ? 'bg-purple-700 text-white shadow-xs'
+                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                }`}
+              >
+                Todos los Viajes ({trips.length})
+              </button>
+              <button
+                onClick={() => setTourCategoryFilter('tours')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                  tourCategoryFilter === 'tours'
+                    ? 'bg-purple-700 text-white shadow-xs'
+                    : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                }`}
+              >
+                <Palmtree className="w-3.5 h-3.5" />
+                Solo Tours Turísticos ({trips.filter(t => t.isTour).length})
+              </button>
+              <button
+                onClick={() => setTourCategoryFilter('routes')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                  tourCategoryFilter === 'routes'
+                    ? 'bg-orange-600 text-white shadow-xs'
+                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                }`}
+              >
+                <Bus className="w-3.5 h-3.5" />
+                Rutas Regulares ({trips.filter(t => !t.isTour).length})
+              </button>
+            </div>
+          </div>
+
+          {/* Cards Grid */}
+          {(() => {
+            const displayTrips = trips.filter(trip => {
+              const isTour = Boolean(trip.isTour);
+              const matchesSearch = !tourSearchTerm ||
+                trip.destination.toLowerCase().includes(tourSearchTerm.toLowerCase()) ||
+                trip.origin.toLowerCase().includes(tourSearchTerm.toLowerCase()) ||
+                (trip.routeTitle && trip.routeTitle.toLowerCase().includes(tourSearchTerm.toLowerCase())) ||
+                (trip.notes && trip.notes.toLowerCase().includes(tourSearchTerm.toLowerCase()));
+
+              if (tourCategoryFilter === 'tours') return isTour && matchesSearch;
+              if (tourCategoryFilter === 'routes') return !isTour && matchesSearch;
+              return matchesSearch;
+            });
+
+            if (displayTrips.length === 0) {
+              return (
+                <div className="bg-white rounded-3xl p-12 text-center border-2 border-dashed border-neutral-300 space-y-3">
+                  <Palmtree className="w-12 h-12 text-neutral-300 mx-auto" />
+                  <h4 className="text-base font-black text-neutral-800">No se encontraron tours con ese criterio</h4>
+                  <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+                    Intenta con otra palabra de búsqueda o restablece los filtros para ver todos los viajes turísticos disponibles.
+                  </p>
+                  <button
+                    onClick={() => { setTourSearchTerm(''); setTourCategoryFilter('all'); }}
+                    className="px-4 py-2 bg-neutral-900 text-white rounded-xl text-xs font-black cursor-pointer"
+                  >
+                    Ver Todos los Viajes
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {displayTrips.map(trip => {
+                  const isTour = Boolean(trip.isTour);
+                  const freeSeats = trip.seats.filter(s => s.status === 'available' && s.type !== 'driver' && s.type !== 'door' && s.type !== 'walkway').length;
+                  const totalStandardSeats = trip.seats.filter(s => s.type === 'standard').length;
+                  const assignedTemplate = seatTemplates.find(t => t.id === trip.layoutTemplateId)
+                    || seatTemplates.find(t => t.totalSeats === totalStandardSeats)
+                    || seatTemplates[0];
+
+                  const ticketPrice = trip.basePrice || (isTour ? 650 : unitPrice);
+
+                  return (
+                    <div
+                      key={trip.id}
+                      className={`bg-white rounded-3xl p-6 border-2 transition-all shadow-xs flex flex-col justify-between space-y-4 hover:shadow-md ${
+                        isTour ? 'border-purple-200 hover:border-purple-400' : 'border-neutral-200 hover:border-neutral-400'
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        {/* Header Badges */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {isTour ? (
+                              <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-lg bg-purple-100 text-purple-800 flex items-center gap-1.5">
+                                <Palmtree className="w-3.5 h-3.5 text-purple-600" /> Tour Turístico
+                              </span>
+                            ) : (
+                              <span className="text-[11px] font-black uppercase px-2.5 py-1 rounded-lg bg-orange-100 text-orange-700 flex items-center gap-1.5 font-mono">
+                                <Bus className="w-3.5 h-3.5 text-orange-600" /> Ruta Troncal
+                              </span>
+                            )}
+
+                            {trip.tourFolio && (
+                              <span className="text-[11px] font-mono font-black text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md">
+                                {trip.tourFolio}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-right">
+                            <span className="text-xl md:text-2xl font-black text-neutral-900 block">
+                              ${ticketPrice.toLocaleString()} MXN
+                            </span>
+                            <span className="text-[10px] text-neutral-500 font-bold block">
+                              por persona / boleto
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Title & Route */}
+                        <div>
+                          <h3 className="text-lg md:text-xl font-black text-neutral-900 leading-snug">
+                            {trip.routeTitle || `${trip.origin} ➔ ${trip.destination}`}
+                          </h3>
+                          <p className="text-xs text-neutral-600 font-bold mt-1 flex items-center gap-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                            <span>{trip.origin}</span>
+                            <span className="text-neutral-400">➔</span>
+                            <span className="text-neutral-900 font-black">{trip.destination}</span>
+                          </p>
+                        </div>
+
+                        {/* Schedule & Operational Info */}
+                        <div className="grid grid-cols-2 gap-2 p-3 bg-neutral-50 rounded-2xl border border-neutral-100 text-xs">
+                          <div>
+                            <span className="text-[10px] text-neutral-400 uppercase font-black block">Salida</span>
+                            <p className="font-black text-neutral-900">{trip.date || travelDate}</p>
+                            <p className="text-orange-600 font-bold flex items-center gap-1 text-[11px]">
+                              <Clock className="w-3 h-3 text-orange-500" /> {trip.departureTime}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-neutral-400 uppercase font-black block">Retorno / Llegada</span>
+                            <p className="font-black text-neutral-900">{trip.endDate || trip.date || travelDate}</p>
+                            <p className="text-emerald-700 font-bold flex items-center gap-1 text-[11px]">
+                              <Clock className="w-3 h-3 text-emerald-600" /> {trip.estimatedArrival}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Plantilla de Diagrama de Asientos Seleccionada */}
+                        <div className="p-3 bg-purple-50/60 rounded-2xl border border-purple-100 flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <LayoutGrid className="w-4 h-4 text-purple-600 shrink-0" />
+                            <div>
+                              <span className="text-[10px] text-purple-700 font-black uppercase tracking-wider block">
+                                Diagrama Oficial de Asientos
+                              </span>
+                              <span className="font-black text-neutral-900">
+                                {assignedTemplate?.name || 'Plantilla de Asientos Estándar'}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-[11px] font-black text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full shrink-0">
+                            {freeSeats} de {totalStandardSeats} libres
+                          </span>
+                        </div>
+
+                        {/* Driver & Unit info */}
+                        <div className="flex items-center justify-between text-xs text-neutral-600">
+                          <span>Unidad: <strong>{trip.unitNumber}</strong></span>
+                          <span>Conductor: <strong>{trip.driverName}</strong></span>
+                        </div>
+
+                        {/* Itinerary Notes */}
+                        {trip.notes && (
+                          <p className="text-xs text-neutral-600 italic bg-neutral-50 p-2.5 rounded-xl border border-neutral-100">
+                            <span className="font-black not-italic text-neutral-700">Detalles: </span>
+                            {trip.notes}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="pt-2 border-t border-neutral-100">
+                        <button
+                          onClick={() => handleSelectTrip(trip)}
+                          className="w-full py-3 px-4 bg-neutral-900 hover:bg-purple-700 active:scale-[0.99] text-white rounded-xl text-xs md:text-sm font-black transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+                        >
+                          <LayoutGrid className="w-4 h-4 text-purple-300" />
+                          <span>Elegir Asientos en Diagrama y Reservar</span>
+                          <Check className="w-4 h-4 text-emerald-400" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
       )}
     </div>
   );

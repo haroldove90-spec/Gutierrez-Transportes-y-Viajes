@@ -807,6 +807,50 @@ export const INITIAL_TRIPS: TripSchedule[] = [
     basePrice: 370,
     occupiedSeatsCount: 0,
     totalRevenue: 0,
+  },
+  {
+    id: 'trip-tour-201',
+    routeTitle: '🌴 Tour Mágico: Mazamitla Pueblo & Cabañas',
+    origin: 'Colima / Manzanillo',
+    destination: 'Mazamitla, Jalisco',
+    date: todayStr,
+    departureTime: '06:00 AM',
+    endDate: todayStr,
+    estimatedArrival: '21:00 PM',
+    vehicleId: 'veh-sp20-01',
+    driverId: 'drv-01',
+    layoutTemplateId: 'template-sprinter-20',
+    status: 'scheduled',
+    seats: generateSprinterSeats(20),
+    stops: ROUTE_STOPS,
+    basePrice: 650,
+    occupiedSeatsCount: 0,
+    totalRevenue: 0,
+    isTour: true,
+    tourFolio: 'TUR-2026-101',
+    notes: 'Incluye recorrido por centro de Mazamitla, tiempo libre en cabañas y mirador.'
+  },
+  {
+    id: 'trip-tour-202',
+    routeTitle: '🌴 Tour de Playa: Barra de Navidad & Melaque',
+    origin: 'Manzanillo',
+    destination: 'Barra de Navidad y San Patricio Melaque',
+    date: todayStr,
+    departureTime: '07:30 AM',
+    endDate: todayStr,
+    estimatedArrival: '19:30 PM',
+    vehicleId: 'veh-hi14-01',
+    driverId: 'drv-02',
+    layoutTemplateId: 'template-hiace-14',
+    status: 'scheduled',
+    seats: generateHiace14Seats(),
+    stops: ROUTE_STOPS.filter(s => s.city === 'Manzanillo'),
+    basePrice: 480,
+    occupiedSeatsCount: 0,
+    totalRevenue: 0,
+    isTour: true,
+    tourFolio: 'TUR-2026-102',
+    notes: 'Paseo en lancha y almuerzo típico frente al mar en Costa Alegre.'
   }
 ];
 
@@ -816,5 +860,56 @@ export const INITIAL_RENTAL_QUOTES: RentalQuote[] = [];
 export const INITIAL_INVOICES: InvoiceCFDI[] = [];
 export const INITIAL_AUDIT_LOGS: AuditLog[] = [];
 export const INITIAL_EXCEPTIONS: ExceptionRequest[] = [];
-export const INITIAL_CHARTER_ASSIGNMENTS: CharterAssignment[] = [];
+export const INITIAL_CHARTER_ASSIGNMENTS: CharterAssignment[] = [
+  {
+    id: 'charter-init-1',
+    folio: 'TUR-2026-101',
+    clientName: 'Grupo Turístico Costa Alegre / Excursión',
+    clientPhone: '+52 314 112 3344',
+    origin: 'Colima / Manzanillo',
+    destination: 'Mazamitla, Jalisco',
+    vehicleId: 'veh-sp20-01',
+    unitNumber: 'Unidad 04 (Sprinter 20)',
+    driverId: 'drv-01',
+    driverName: 'Efraín Martínez Cruz',
+    driverPhone: '+52 314 109 4725',
+    startDate: todayStr,
+    endDate: todayStr,
+    startTime: '06:00 AM',
+    returnTime: '21:00 PM',
+    totalAmount: 18500,
+    status: 'active',
+    notes: 'Tour especial Mazamitla. Plazas habilitadas para reservación individual.',
+    createdAt: todayStr,
+    layoutTemplateId: 'template-sprinter-20',
+    pricePerSeat: 650,
+    isPublicBookingAvailable: true,
+    tripId: 'trip-tour-201'
+  },
+  {
+    id: 'charter-init-2',
+    folio: 'TUR-2026-102',
+    clientName: 'Familia Gómez / Paseo Dominical',
+    clientPhone: '+52 312 345 6789',
+    origin: 'Manzanillo',
+    destination: 'Barra de Navidad y San Patricio Melaque',
+    vehicleId: 'veh-hi14-01',
+    unitNumber: 'Unidad 07 (Hiace 14)',
+    driverId: 'drv-02',
+    driverName: 'Rosendo Navarro',
+    driverPhone: '+52 33 1735 4281',
+    startDate: todayStr,
+    endDate: todayStr,
+    startTime: '07:30 AM',
+    returnTime: '19:30 PM',
+    totalAmount: 14000,
+    status: 'active',
+    notes: 'Paseo en lancha y almuerzo en Barra de Navidad.',
+    createdAt: todayStr,
+    layoutTemplateId: 'template-hiace-14',
+    pricePerSeat: 480,
+    isPublicBookingAvailable: true,
+    tripId: 'trip-tour-202'
+  }
+];
 

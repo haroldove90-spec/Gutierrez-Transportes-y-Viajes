@@ -36,6 +36,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
       case 'pasajero':
         return [
           { id: 'search', label: 'Itinerarios', icon: <Search className="w-5 h-5 text-white" /> },
+          { id: 'tours', label: 'Tours', icon: <Palmtree className="w-5 h-5 text-white" /> },
           { id: 'seats', label: 'Asientos', icon: <Grid className="w-5 h-5 text-white" /> },
           { id: 'tickets', label: 'Mis Boletos', icon: <Ticket className="w-5 h-5 text-white" /> },
           { id: 'routes', label: 'Tarifario', icon: <Map className="w-5 h-5 text-white" /> },

@@ -17,7 +17,8 @@ import {
   Search,
   Filter,
   Check,
-  RefreshCw
+  RefreshCw,
+  LayoutGrid
 } from 'lucide-react';
 import { CharterAssignment } from '../../types';
 
@@ -27,6 +28,7 @@ export const ToursManager: React.FC = () => {
     vehicles, 
     rentalCars,
     drivers, 
+    seatTemplates,
     assignDriverToCharter, 
     completeCharterAssignment,
     sendManualWakeUpAlarm,
@@ -56,6 +58,9 @@ export const ToursManager: React.FC = () => {
     driverName: '',
     driverId: '',
     totalAmount: 18500,
+    layoutTemplateId: 'template-sprinter-20',
+    pricePerSeat: 650,
+    isPublicBookingAvailable: true,
     notes: ''
   });
 
@@ -162,7 +167,10 @@ export const ToursManager: React.FC = () => {
       endDate: form.endDate,
       startTime: form.startTime,
       returnTime: form.returnTime,
-      totalAmount: Number(form.totalAmount),
+      totalAmount: Number(form.totalAmount) || 0,
+      layoutTemplateId: form.layoutTemplateId,
+      pricePerSeat: Number(form.pricePerSeat) || 650,
+      isPublicBookingAvailable: form.isPublicBookingAvailable,
       notes: form.notes
     });
 
@@ -181,6 +189,9 @@ export const ToursManager: React.FC = () => {
       driverName: drivers[0]?.name || '',
       driverId: drivers[0]?.id || '',
       totalAmount: 18500,
+      layoutTemplateId: seatTemplates[0]?.id || 'template-sprinter-20',
+      pricePerSeat: 650,
+      isPublicBookingAvailable: true,
       notes: ''
     });
   };
@@ -402,6 +413,21 @@ export const ToursManager: React.FC = () => {
                       {tour.notes}
                     </div>
                   )}
+
+                  {(() => {
+                    const tmpl = seatTemplates.find(t => t.id === tour.layoutTemplateId);
+                    return tmpl ? (
+                      <div className="mt-2 flex items-center justify-between text-[11px] bg-purple-100/70 text-purple-900 px-3 py-1.5 rounded-xl font-bold border border-purple-200">
+                        <span className="flex items-center gap-1.5">
+                          <LayoutGrid className="w-3.5 h-3.5 text-purple-700" />
+                          Diagrama: {tmpl.name} ({tmpl.totalSeats} asientos)
+                        </span>
+                        <span className="text-emerald-700 font-black">
+                          {tour.pricePerSeat ? `$${tour.pricePerSeat} MXN/asiento` : 'Visible a Clientes'}
+                        </span>
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
 
                 {/* Bottom Actions */}
@@ -580,10 +606,15 @@ export const ToursManager: React.FC = () => {
                       const vId = e.target.value;
                       const vObj = vehicles.find(v => v.id === vId);
                       const cObj = rentalCars.find(c => c.id === vId);
+                      const matchingTemplate = seatTemplates.find(t => t.id === vObj?.layoutTemplateId)
+                        || seatTemplates.find(t => t.totalSeats === vObj?.capacity)
+                        || seatTemplates[0];
+
                       setForm(prev => ({ 
                         ...prev, 
                         vehicleId: vId,
-                        unitNumber: vObj?.unitNumber || (cObj ? `${cObj.brand} ${cObj.name}` : '')
+                        unitNumber: vObj?.unitNumber || (cObj ? `${cObj.brand} ${cObj.name}` : ''),
+                        layoutTemplateId: matchingTemplate?.id || prev.layoutTemplateId
                       }));
                     }}
                     className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs md:text-sm focus:border-purple-500 focus:outline-none"
@@ -657,15 +688,117 @@ export const ToursManager: React.FC = () => {
                 </div>
               </div>
 
+              {/* Selector de Plantilla de Diagrama de Asientos */}
+              <div className="p-3.5 bg-purple-50/70 rounded-2xl border-2 border-purple-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <LayoutGrid className="w-4 h-4 text-purple-600" />
+                    <span className="text-xs font-black uppercase text-purple-900 tracking-wider">
+                      Plantilla de Diagrama de Asientos
+                    </span>
+                  </div>
+                  {(() => {
+                    const currentTmpl = seatTemplates.find(t => t.id === form.layoutTemplateId);
+                    return (
+                      <span className="text-[11px] font-black bg-purple-200/80 text-purple-800 px-2.5 py-0.5 rounded-full">
+                        {currentTmpl ? `${currentTmpl.totalSeats} Asientos Totales` : ''}
+                      </span>
+                    );
+                  })()}
+                </div>
+
+                <div>
+                  <label className="block font-black text-neutral-700 text-xs mb-1">
+                    Seleccionar Distribución de Asientos para el Tour
+                  </label>
+                  <select
+                    value={form.layoutTemplateId}
+                    onChange={e => {
+                      const newTmplId = e.target.value;
+                      const tmpl = seatTemplates.find(t => t.id === newTmplId);
+                      setForm(prev => ({ 
+                        ...prev, 
+                        layoutTemplateId: newTmplId,
+                        pricePerSeat: tmpl && tmpl.totalSeats > 0 ? Math.round(Number(prev.totalAmount) / tmpl.totalSeats) : prev.pricePerSeat
+                      }));
+                    }}
+                    className="w-full p-3 bg-white border-2 border-purple-200 rounded-xl font-bold text-neutral-900 text-xs md:text-sm focus:border-purple-600 focus:outline-none cursor-pointer"
+                    required
+                  >
+                    {seatTemplates.map(tmpl => (
+                      <option key={tmpl.id} value={tmpl.id}>
+                        {tmpl.name} — ({tmpl.totalSeats} asientos • {tmpl.vehicleType.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-[11px] text-purple-700 font-medium">
+                    Esta plantilla se desplegará interactivamente en el módulo de clientes para que reserven sus asientos con exactitud.
+                  </p>
+                </div>
+
+                {/* Habilitar reservación a clientes con precio por asiento */}
+                <div className="bg-white p-3 rounded-xl border border-purple-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <span className="text-xs font-black text-neutral-800 flex items-center gap-1.5">
+                      <Check className="w-4 h-4 text-emerald-600" /> Disponible en Portal de Clientes
+                    </span>
+                    <p className="text-[11px] text-neutral-500 font-medium">
+                      Los pasajeros podrán ver este Tour en su módulo y seleccionar sus asientos para reservar.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs font-black text-neutral-600">Precio / Asiento:</span>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-black text-xs text-neutral-500">$</span>
+                      <input 
+                        type="text"
+                        inputMode="decimal"
+                        value={form.pricePerSeat === 0 ? '' : form.pricePerSeat}
+                        onChange={e => {
+                          const clean = e.target.value.replace(/[^0-9.]/g, '');
+                          setForm(prev => ({ ...prev, pricePerSeat: clean === '' ? 0 : Number(clean) }));
+                        }}
+                        placeholder="650"
+                        className="w-28 pl-6 pr-10 py-1.5 bg-neutral-50 border-2 border-neutral-200 rounded-lg font-black text-xs text-neutral-900 focus:border-purple-600 focus:outline-none"
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 font-bold text-[10px] text-neutral-400">MXN</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div>
-                <label className="block font-black text-neutral-700 mb-1">Monto Total del Contrato ($ MXN)</label>
-                <input 
-                  type="number"
-                  value={form.totalAmount}
-                  onChange={e => setForm(prev => ({ ...prev, totalAmount: Number(e.target.value) }))}
-                  required
-                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-black text-neutral-700 text-xs md:text-sm">
+                    Monto Total del Contrato
+                  </label>
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                    Moneda Nacional (Pesos Mexicanos)
+                  </span>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-neutral-500 text-sm md:text-base">
+                    $
+                  </span>
+                  <input 
+                    type="text"
+                    inputMode="decimal"
+                    value={form.totalAmount === 0 ? '' : form.totalAmount}
+                    onChange={e => {
+                      const cleanVal = e.target.value.replace(/[^0-9.]/g, '');
+                      setForm(prev => ({ ...prev, totalAmount: cleanVal === '' ? 0 : Number(cleanVal) }));
+                    }}
+                    placeholder="18500"
+                    required
+                    className="w-full pl-8 pr-16 p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-black text-neutral-900 text-sm md:text-base focus:border-purple-600 focus:bg-white focus:outline-none"
+                  />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 font-black text-xs text-neutral-500">
+                    MXN
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] font-medium text-neutral-500">
+                  Ingresa manualmente el importe total en Pesos Mexicanos (sin flechas ni incrementos automáticos).
+                </p>
               </div>
 
               <div>

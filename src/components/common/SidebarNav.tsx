@@ -43,6 +43,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
           badge: 'Viajes & Boletos',
           items: [
             { id: 'search', label: 'Buscar Itinerarios', icon: <Search className="w-5 h-5" /> },
+            { id: 'tours', label: 'Tours y Viajes', icon: <Palmtree className="w-5 h-5" /> },
             { id: 'seats', label: 'Selección de Asientos', icon: <Grid className="w-5 h-5" /> },
             { id: 'tickets', label: 'Mis Boletos Digitales', icon: <Ticket className="w-5 h-5" /> },
             { id: 'rentals', label: 'Renta de Autos y Vans', icon: <Car className="w-5 h-5" /> },

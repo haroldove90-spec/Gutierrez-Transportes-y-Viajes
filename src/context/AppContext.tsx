@@ -1674,7 +1674,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateRentalCarAvailabilityInSupabase(data.vehicleId, false).catch(() => {});
     }
 
-    // 4. Registrar en la agenda de asignaciones y Supabase
+    // 4. Determinar plantilla de asientos y registrar viaje para reservación de clientes
+    const matchedVehicle = vehicles.find(v => v.id === data.vehicleId);
+    const chosenTemplate = seatTemplates.find(t => t.id === data.layoutTemplateId)
+      || getTemplateForVehicle(seatTemplates, matchedVehicle?.layoutTemplateId, matchedVehicle?.capacity || 19);
+
+    const tourTripId = `trip-tour-${Date.now()}`;
+    const calculatedPerSeatPrice = data.pricePerSeat && data.pricePerSeat > 0
+      ? data.pricePerSeat
+      : (chosenTemplate.totalSeats > 0 ? Math.round(data.totalAmount / chosenTemplate.totalSeats) : 550);
+
+    const generatedSeats = buildSeatsFromTemplate(chosenTemplate);
+
+    const tourTrip: TripSchedule = {
+      id: tourTripId,
+      routeTitle: `🌴 Tour Especial: ${data.destination}`,
+      origin: data.origin || 'Colima / Manzanillo',
+      destination: data.destination,
+      date: data.startDate,
+      departureTime: data.startTime || '08:00 AM',
+      endDate: data.endDate,
+      estimatedArrival: data.returnTime || '20:00 PM',
+      vehicleId: data.vehicleId,
+      driverId: data.driverId,
+      layoutTemplateId: chosenTemplate.id,
+      status: 'scheduled',
+      seats: generatedSeats,
+      stops: routeStops.filter(s => s.isActive),
+      basePrice: calculatedPerSeatPrice,
+      occupiedSeatsCount: 0,
+      totalRevenue: 0,
+      isTour: true,
+      tourFolio: folio,
+      notes: data.notes
+    };
+
+    newAssignment.tripId = tourTripId;
+    newAssignment.layoutTemplateId = chosenTemplate.id;
+    newAssignment.pricePerSeat = calculatedPerSeatPrice;
+    newAssignment.isPublicBookingAvailable = true;
+
+    // Agregar el viaje a trips para que aparezca instantáneamente en el rol cliente
+    setTrips(prev => [tourTrip, ...prev]);
+    saveTripToSupabase(tourTrip).catch(() => {});
+
+    // 5. Registrar en la agenda de asignaciones y Supabase
     setCharterAssignments(prev => [newAssignment, ...prev]);
     saveCharterAssignmentToSupabase(newAssignment).catch(() => {});
 
