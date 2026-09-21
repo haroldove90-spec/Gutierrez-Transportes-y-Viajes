@@ -168,6 +168,8 @@ export interface TripSchedule {
   totalRevenue: number;
   isTour?: boolean; // Indica si es un viaje turístico o especial
   tourFolio?: string;
+  isFull?: boolean; // Indica si el viaje se vendió en su totalidad (100% ocupado)
+  isActiveForBooking?: boolean; // Si está activo o desactivado para compras de clientes
   notes?: string;
 }
 

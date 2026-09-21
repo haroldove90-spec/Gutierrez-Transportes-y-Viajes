@@ -7,6 +7,7 @@ import {
   Map, 
   Bus, 
   Users, 
+  User,
   FileText, 
   DollarSign, 
   PlusCircle, 
@@ -47,6 +48,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
           { id: 'manifest', label: 'Manifiesto', icon: <Users className="w-5 h-5 text-white" /> },
           { id: 'expenses', label: 'Gastos Ruta', icon: <Receipt className="w-5 h-5 text-white" /> },
           { id: 'timeline', label: 'Bitácora', icon: <History className="w-5 h-5 text-white" /> },
+          { id: 'profile', label: 'Mi Perfil', icon: <User className="w-5 h-5 text-white" /> },
         ];
       case 'secretaria':
         return [

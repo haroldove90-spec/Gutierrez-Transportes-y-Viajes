@@ -7,6 +7,7 @@ import {
   Map, 
   Bus, 
   Users, 
+  User,
   FileText, 
   DollarSign, 
   PlusCircle, 
@@ -59,6 +60,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
             { id: 'manifest', label: 'Manifiesto de Pasaje', icon: <Users className="w-5 h-5" /> },
             { id: 'expenses', label: 'Gastos de Ruta', icon: <Receipt className="w-5 h-5" /> },
             { id: 'timeline', label: 'Bitácora de Paradas', icon: <History className="w-5 h-5" /> },
+            { id: 'profile', label: 'Mi Perfil & Foto', icon: <User className="w-5 h-5" /> },
           ]
         };
       case 'secretaria':

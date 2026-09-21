@@ -54,12 +54,17 @@ CREATE TABLE IF NOT EXISTS public.drivers (
     name TEXT NOT NULL,
     phone TEXT NOT NULL,
     license_type TEXT DEFAULT 'Federal Tipo B',
+    license_number TEXT,
     license_expiry DATE,
+    avatar TEXT,
     rating NUMERIC(3,1) DEFAULT 4.9,
     status TEXT NOT NULL DEFAULT 'available',
     emergency_contact TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE public.drivers ADD COLUMN IF NOT EXISTS avatar TEXT;
+ALTER TABLE public.drivers ADD COLUMN IF NOT EXISTS license_number TEXT;
+ALTER TABLE public.drivers ADD COLUMN IF NOT EXISTS license_expiry DATE;
 
 -- 4. TABLA: CORRIDAS / VIAJES PROGRAMADOS (TRIPS)
 CREATE TABLE IF NOT EXISTS public.trips (
@@ -80,10 +85,16 @@ CREATE TABLE IF NOT EXISTS public.trips (
     total_revenue NUMERIC(10,2) NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'scheduled',
     current_scale TEXT,
+    layout_template_id TEXT,
+    is_full BOOLEAN DEFAULT FALSE,
+    is_active_for_booking BOOLEAN DEFAULT TRUE,
     seats JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS layout_template_id TEXT;
+ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS is_full BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS is_active_for_booking BOOLEAN DEFAULT TRUE;
 
 -- 5. TABLA: RESERVAS Y BOLETOS (BOOKINGS)
 CREATE TABLE IF NOT EXISTS public.bookings (
@@ -512,8 +523,8 @@ export const SupabaseSqlModal: React.FC<SupabaseSqlModalProps> = ({ onClose }) =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-6 bg-black/75 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl border border-neutral-200 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/75 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] flex flex-col shadow-2xl border border-neutral-200 overflow-hidden">
         
         {/* Header */}
         <div className="p-5 md:p-6 bg-neutral-900 text-white flex items-center justify-between border-b border-neutral-800">

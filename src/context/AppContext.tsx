@@ -121,6 +121,7 @@ interface AppContextType {
   addTrip: (tripData: Omit<TripSchedule, 'id' | 'seats' | 'occupiedSeatsCount' | 'totalRevenue'>) => TripSchedule;
   updateTrip: (id: string, updates: Partial<TripSchedule>) => boolean;
   deleteTrip: (id: string) => boolean;
+  toggleTripBookingStatus: (tripId: string) => boolean;
 
   // Operations & Maintenance & Agenda de Servicios
   addVehicle: (vehicleData: Omit<Vehicle, 'id'>) => Vehicle;
@@ -1031,26 +1032,48 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       checkInStatus: 'pending'
     };
 
-    // Mark seats as permanently SOLD in trip
+    // Mark seats as permanently SOLD in trip & check if trip is 100% full
+    let soldOutAdminNotice: string | null = null;
+
     setTrips(prev => prev.map(t => {
       if (t.id !== bookingData.tripId) return t;
-      return {
+
+      const updatedOccupied = t.occupiedSeatsCount + bookingData.seatNumbers.length;
+      const updatedSeats = t.seats.map(s => {
+        if (bookingData.seatNumbers.includes(s.number)) {
+          return {
+            ...s,
+            status: 'sold' as const,
+            passengerName: bookingData.passengerName,
+            ticketId: bookingId,
+            lockedUntil: undefined
+          };
+        }
+        return s;
+      });
+
+      const totalStandardSeats = updatedSeats.filter(s => s.type === 'standard' || (!s.type && s.number > 0)).length || t.totalSeats;
+      const soldSeatsCount = updatedSeats.filter(s => s.status === 'sold').length;
+      const isTripComplete = soldSeatsCount >= totalStandardSeats && totalStandardSeats > 0;
+
+      if (isTripComplete) {
+        soldOutAdminNotice = `🚨 ¡VIAJE VENDIDO AL 100%! La corrida "${t.routeTitle}" (${t.date} ${t.departureTime}) ha vendido la totalidad de sus ${totalStandardSeats} asientos. El viaje se ha desactivado automáticamente en el rol cliente.`;
+      }
+
+      const updatedTrip: TripSchedule = {
         ...t,
-        occupiedSeatsCount: t.occupiedSeatsCount + bookingData.seatNumbers.length,
+        occupiedSeatsCount: updatedOccupied,
         totalRevenue: t.totalRevenue + bookingData.totalAmount,
-        seats: t.seats.map(s => {
-          if (bookingData.seatNumbers.includes(s.number)) {
-            return {
-              ...s,
-              status: 'sold',
-              passengerName: bookingData.passengerName,
-              ticketId: bookingId,
-              lockedUntil: undefined
-            };
-          }
-          return s;
-        })
+        seats: updatedSeats,
+        isFull: isTripComplete,
+        isActiveForBooking: !isTripComplete
       };
+
+      saveTripToSupabase(updatedTrip).catch(err => {
+        console.warn('Supabase sync trip notice:', err);
+      });
+
+      return updatedTrip;
     }));
 
     setBookings(prev => [newBooking, ...prev]);
@@ -1070,7 +1093,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       `Vendido a ${bookingData.passengerName} ($${bookingData.totalAmount} MXN)`
     );
 
-    showNotification(`¡Boleto ${bookingId} emitido exitosamente!`, 'success');
+    if (soldOutAdminNotice) {
+      showNotification(soldOutAdminNotice, 'warning');
+      addAuditEntry(
+        'VIAJE_VENDIDO_TOTALMENTE',
+        'TripSchedule',
+        bookingData.tripId,
+        'Disponible',
+        '100% Vendido - Desactivado automáticamente para reservaciones de clientes'
+      );
+    } else {
+      showNotification(`¡Boleto ${bookingId} emitido exitosamente!`, 'success');
+    }
+
     return newBooking;
   };
 
@@ -1078,24 +1113,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const booking = bookings.find(b => b.id === bookingId);
     if (!booking) return false;
 
-    // Release seats
+    // Release seats and update trip fullness status
     setTrips(prev => prev.map(t => {
       if (t.id !== booking.tripId) return t;
-      return {
+
+      const updatedOccupied = Math.max(0, t.occupiedSeatsCount - booking.seatNumbers.length);
+      const updatedSeats = t.seats.map(s => {
+        if (booking.seatNumbers.includes(s.number)) {
+          return {
+            ...s,
+            status: 'available' as const,
+            passengerName: undefined,
+            ticketId: undefined,
+            lockedUntil: undefined
+          };
+        }
+        return s;
+      });
+
+      const totalStandardSeats = updatedSeats.filter(s => s.type === 'standard' || (!s.type && s.number > 0)).length || t.totalSeats;
+      const soldSeatsCount = updatedSeats.filter(s => s.status === 'sold').length;
+      const isTripComplete = soldSeatsCount >= totalStandardSeats && totalStandardSeats > 0;
+
+      const updatedTrip: TripSchedule = {
         ...t,
-        occupiedSeatsCount: Math.max(0, t.occupiedSeatsCount - booking.seatNumbers.length),
-        seats: t.seats.map(s => {
-          if (booking.seatNumbers.includes(s.number)) {
-            return {
-              ...s,
-              status: 'available',
-              passengerName: undefined,
-              ticketId: undefined
-            };
-          }
-          return s;
-        })
+        occupiedSeatsCount: updatedOccupied,
+        seats: updatedSeats,
+        isFull: isTripComplete,
+        isActiveForBooking: !isTripComplete
       };
+
+      saveTripToSupabase(updatedTrip).catch(() => {});
+      return updatedTrip;
     }));
 
     setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, paymentStatus: 'refunded', checkInStatus: 'no_show' } : b));
@@ -1564,6 +1613,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addAuditEntry('BORRADO_CORRIDA', 'TripSchedule', id, 'eliminado', 'Corrida eliminada');
     showNotification('Viaje eliminado definitivamente de la programación.', 'info');
     return true;
+  };
+
+  const toggleTripBookingStatus = (tripId: string): boolean => {
+    let targetTrip: TripSchedule | undefined;
+    setTrips(prev => prev.map(t => {
+      if (t.id !== tripId) return t;
+      const currentActive = t.isActiveForBooking !== false && !t.isFull;
+      const updated: TripSchedule = {
+        ...t,
+        isActiveForBooking: !currentActive
+      };
+      targetTrip = updated;
+      return updated;
+    }));
+
+    if (targetTrip) {
+      saveTripToSupabase(targetTrip).catch(() => {});
+      const statusText = targetTrip.isActiveForBooking ? 'reactivado para reservaciones de clientes' : 'desactivado para reservaciones de clientes';
+      showNotification(`Viaje ${statusText}.`, 'info');
+      addAuditEntry('TOGGLE_ESTATUS_RESERVACION', 'TripSchedule', tripId, 'Modificado', `Estatus para cliente: ${targetTrip.isActiveForBooking ? 'Activo' : 'Desactivado'}`);
+      return true;
+    }
+    return false;
   };
 
   // Seat Layout Templates Operations (Diagramas de Asientos)
@@ -2276,6 +2348,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addTrip,
         updateTrip,
         deleteTrip,
+        toggleTripBookingStatus,
         addVehicle,
         updateVehicle,
         deleteVehicle,

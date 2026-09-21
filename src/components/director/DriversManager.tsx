@@ -17,7 +17,10 @@ import {
   Clock,
   ArrowRightLeft,
   X,
-  RefreshCw
+  RefreshCw,
+  Upload,
+  Camera,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Driver } from '../../types';
 
@@ -32,7 +35,8 @@ export const DriversManager: React.FC = () => {
     assignDriverToVehicle, 
     releaseDriverFromService,
     sendManualWakeUpAlarm,
-    syncWithSupabase
+    syncWithSupabase,
+    showNotification
   } = useApp();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,6 +82,35 @@ export const DriversManager: React.FC = () => {
     };
   }, [drivers]);
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit: boolean = false) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showNotification('Por favor selecciona un archivo de imagen válido (JPG, PNG, WebP).', 'error');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification('La imagen es demasiado pesada. Elige una foto menor a 5MB.', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        if (isEdit) {
+          setEditingDriver(prev => prev ? ({ ...prev, avatar: result }) : null);
+        } else {
+          setCreateForm(prev => ({ ...prev, avatar: result }));
+        }
+        showNotification('Fotografía cargada correctamente.', 'success');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!createForm.name.trim() || !createForm.phone.trim()) return;
@@ -89,7 +122,7 @@ export const DriversManager: React.FC = () => {
       licenseExpiry: createForm.licenseExpiry || undefined,
       status: createForm.status,
       rating: 5.0,
-      avatar: createForm.avatar,
+      avatar: createForm.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       currentVehicleId: createForm.currentVehicleId || undefined
     });
 
@@ -114,7 +147,8 @@ export const DriversManager: React.FC = () => {
       phone: editingDriver.phone,
       licenseNumber: editingDriver.licenseNumber,
       licenseExpiry: editingDriver.licenseExpiry,
-      status: editingDriver.status
+      status: editingDriver.status,
+      avatar: editingDriver.avatar
     });
 
     if (editingDriver.currentVehicleId) {
@@ -404,8 +438,8 @@ export const DriversManager: React.FC = () => {
 
       {/* Modal: Dar de Alta Chofer */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border-2 border-neutral-200">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full max-h-[94vh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border-2 border-neutral-200">
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral-100 shrink-0 bg-white">
               <div>
                 <h3 className="text-base sm:text-lg font-black text-neutral-900">Dar de Alta a Nuevo Chofer</h3>
@@ -420,7 +454,7 @@ export const DriversManager: React.FC = () => {
             </div>
 
             <form onSubmit={handleCreateSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0 text-xs md:text-sm">
-              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3.5">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-3.5">
                 <div>
                   <label className="block font-black text-neutral-700 mb-1">Nombre Completo del Operador</label>
                   <input 
@@ -500,13 +534,39 @@ export const DriversManager: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block font-black text-neutral-700 mb-1">URL Avatar / Foto de Perfil</label>
-                  <input 
-                    type="url"
-                    value={createForm.avatar}
-                    onChange={e => setCreateForm(prev => ({ ...prev, avatar: e.target.value }))}
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs"
-                  />
+                  <label className="block font-black text-neutral-700 mb-1.5 flex items-center justify-between">
+                    <span>Fotografía del Chofer</span>
+                    <span className="text-[10px] text-orange-600 font-bold uppercase">Subir Archivo</span>
+                  </label>
+                  
+                  <div className="flex items-center gap-3.5 p-3.5 bg-neutral-50 rounded-2xl border-2 border-dashed border-neutral-300">
+                    <div className="relative shrink-0">
+                      <img
+                        src={createForm.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
+                        alt="Previsualización de Chofer"
+                        className="w-16 h-16 rounded-2xl object-cover border-2 border-orange-500 shadow-sm"
+                      />
+                      <span className="absolute -bottom-1 -right-1 bg-orange-600 text-white p-1 rounded-full shadow-xs">
+                        <Camera className="w-3 h-3" />
+                      </span>
+                    </div>
+
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <label className="inline-flex items-center gap-2 px-3.5 py-2 bg-neutral-900 hover:bg-orange-600 text-white rounded-xl text-xs font-black cursor-pointer transition-all shadow-xs active:scale-95">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Seleccionar / Tomar Foto</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handlePhotoUpload(e, false)}
+                          className="hidden"
+                        />
+                      </label>
+                      <p className="text-[11px] text-neutral-500 font-medium">
+                        Sube una foto desde tu galería o cámara (JPG, PNG o WebP).
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -532,8 +592,8 @@ export const DriversManager: React.FC = () => {
 
       {/* Modal: Editar Chofer */}
       {editingDriver && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border-2 border-neutral-200">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full max-h-[94vh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border-2 border-neutral-200">
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral-100 shrink-0 bg-white">
               <div>
                 <h3 className="text-base sm:text-lg font-black text-neutral-900">Editar Datos del Chofer</h3>
@@ -548,7 +608,44 @@ export const DriversManager: React.FC = () => {
             </div>
 
             <form onSubmit={handleEditSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0 text-xs md:text-sm">
-              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3.5">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-3.5">
+                {/* Fotografía de Perfil con opción de subir */}
+                <div>
+                  <label className="block font-black text-neutral-700 mb-1.5 flex items-center justify-between">
+                    <span>Fotografía del Chofer</span>
+                    <span className="text-[10px] text-orange-600 font-bold uppercase">Actualizar Foto</span>
+                  </label>
+                  
+                  <div className="flex items-center gap-3.5 p-3.5 bg-neutral-50 rounded-2xl border-2 border-dashed border-neutral-300">
+                    <div className="relative shrink-0">
+                      <img
+                        src={editingDriver.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
+                        alt={editingDriver.name}
+                        className="w-16 h-16 rounded-2xl object-cover border-2 border-orange-500 shadow-sm"
+                      />
+                      <span className="absolute -bottom-1 -right-1 bg-orange-600 text-white p-1 rounded-full shadow-xs">
+                        <Camera className="w-3 h-3" />
+                      </span>
+                    </div>
+
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <label className="inline-flex items-center gap-2 px-3.5 py-2 bg-neutral-900 hover:bg-orange-600 text-white rounded-xl text-xs font-black cursor-pointer transition-all shadow-xs active:scale-95">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Subir Nueva Foto</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handlePhotoUpload(e, true)}
+                          className="hidden"
+                        />
+                      </label>
+                      <p className="text-[11px] text-neutral-500 font-medium">
+                        Cambia la fotografía seleccionando un archivo desde tu dispositivo.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block font-black text-neutral-700 mb-1">Nombre Completo</label>
                   <input 

@@ -145,6 +145,11 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
   const totalAmount = seatSubtotal + parcelFee + petFee;
 
   const handleSelectTrip = (trip: TripSchedule) => {
+    const isSoldOut = trip.isFull === true || trip.isActiveForBooking === false || (trip.totalSeats - trip.occupiedSeatsCount) <= 0;
+    if (isSoldOut) {
+      showNotification('Este viaje se encuentra completamente vendido y desactivado para reservaciones.', 'warning');
+      return;
+    }
     setSelectedTripId(trip.id);
     setSelectedSeatNums([]);
     setActiveTab('seats');
@@ -488,18 +493,34 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between">
-                    <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-                      {trip.totalSeats - trip.occupiedSeatsCount} asientos disponibles
-                    </span>
-                    <button
-                      onClick={() => handleSelectTrip(trip)}
-                      className="px-4 py-2 bg-neutral-900 hover:bg-orange-600 text-white text-xs md:text-sm font-black rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
-                    >
-                      <span>Elegir Asientos</span>
-                      <Check className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  {(() => {
+                    const isSoldOut = trip.isFull === true || trip.isActiveForBooking === false || (trip.totalSeats - trip.occupiedSeatsCount) <= 0;
+                    return (
+                      <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between">
+                        {isSoldOut ? (
+                          <span className="text-xs font-black text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full flex items-center gap-1">
+                            🚨 COMPLETO (100% VENDIDO)
+                          </span>
+                        ) : (
+                          <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+                            {trip.totalSeats - trip.occupiedSeatsCount} asientos disponibles
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleSelectTrip(trip)}
+                          disabled={isSoldOut}
+                          className={`px-4 py-2 text-xs md:text-sm font-black rounded-xl transition-all flex items-center gap-1.5 ${
+                            isSoldOut
+                              ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed'
+                              : 'px-4 py-2 bg-neutral-900 hover:bg-orange-600 text-white cursor-pointer'
+                          }`}
+                        >
+                          <span>{isSoldOut ? 'Viaje Completo' : 'Elegir Asientos'}</span>
+                          {!isSoldOut && <Check className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               ))}
             </div>
@@ -559,6 +580,30 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
             </div>
           </div>
 
+          {/* Alerta si el viaje está vendido al 100% o desactivado */}
+          {(selectedTrip.isFull || selectedTrip.isActiveForBooking === false || (selectedTrip.totalSeats - selectedTrip.occupiedSeatsCount) <= 0) && (
+            <div className="bg-rose-50 border-2 border-rose-300 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-rose-900 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-rose-600 text-white rounded-2xl shrink-0 font-black text-xl">
+                  🚨
+                </div>
+                <div>
+                  <h4 className="text-sm sm:text-base font-black text-rose-900">¡Viaje 100% Vendido (Cupo Completo)!</h4>
+                  <p className="text-xs font-bold text-rose-700 mt-0.5">
+                    Todos los asientos de esta corrida han sido vendidos. El viaje ha sido desactivado automáticamente para nuevas compras.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab(selectedTrip.isTour ? 'tours' : 'search')}
+                className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-xl transition-colors shrink-0 cursor-pointer shadow-xs"
+              >
+                Ver Otros Horarios
+              </button>
+            </div>
+          )}
+
           {/* Seat Map Canvas Container */}
           {(() => {
             const tripTemplate = seatTemplates.find(t => t.id === selectedTrip.layoutTemplateId)
@@ -569,11 +614,15 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
               ? `${tripTemplate.name} (${selectedTrip.seats.filter(s => s.type === 'standard').length} Asientos)`
               : `Diagrama de Asientos (${selectedTrip.seats.filter(s => s.type === 'standard').length} Asientos)`;
 
+            const isTripUnavailable = selectedTrip.isFull || selectedTrip.isActiveForBooking === false || (selectedTrip.totalSeats - selectedTrip.occupiedSeatsCount) <= 0;
+
             return (
               <SeatDiagramViewer
+                template={tripTemplate}
                 seats={selectedTrip.seats}
                 selectedSeatNumbers={selectedSeatNums}
                 onSeatClick={(seatNum, seat) => {
+                  if (isTripUnavailable) return;
                   if (seat) {
                     toggleSeatSelection(seat);
                   } else {
@@ -581,9 +630,13 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                     if (found) toggleSeatSelection(found);
                   }
                 }}
-                interactive={true}
+                interactive={!isTripUnavailable}
                 title={diagramTitle}
-                subtitle="Toca los asientos para seleccionarlos. 🟢 Verde = Libre/Disponible, 🔴 Rojo = Vendido/Ocupado, 🟠 Naranja = Seleccionado"
+                subtitle={
+                  isTripUnavailable
+                    ? "🔴 Todos los asientos se encuentran ocupados o vendidos. Viaje cerrado."
+                    : "Toca los asientos para seleccionarlos. 🟢 Verde = Libre/Disponible, 🔴 Rojo = Vendido/Ocupado, 🟠 Naranja = Seleccionado"
+                }
               />
             );
           })()}
@@ -809,14 +862,19 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
                 <span className="text-2xl md:text-3xl font-black text-orange-600">${totalAmount} MXN</span>
               </div>
 
-              <button
-                type="submit"
-                disabled={selectedSeatNums.length === 0}
-                className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-base md:text-lg shadow-xl transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 cursor-pointer active:scale-98"
-              >
-                <ShieldCheck className="w-5 h-5 md:w-6 md:h-6" />
-                Pagar y Generar Boleto QR
-              </button>
+              {(() => {
+                const isTripUnavailable = selectedTrip.isFull || selectedTrip.isActiveForBooking === false || (selectedTrip.totalSeats - selectedTrip.occupiedSeatsCount) <= 0;
+                return (
+                  <button
+                    type="submit"
+                    disabled={selectedSeatNums.length === 0 || isTripUnavailable}
+                    className="w-full py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-base md:text-lg shadow-xl transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-98"
+                  >
+                    <ShieldCheck className="w-5 h-5 md:w-6 md:h-6" />
+                    {isTripUnavailable ? 'Viaje Completo (Sin Lugares)' : 'Pagar y Generar Boleto QR'}
+                  </button>
+                );
+              })()}
             </div>
           </form>
         </div>
@@ -1275,14 +1333,24 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
 
                       {/* Action Button */}
                       <div className="pt-2 border-t border-neutral-100">
-                        <button
-                          onClick={() => handleSelectTrip(trip)}
-                          className="w-full py-3 px-4 bg-neutral-900 hover:bg-purple-700 active:scale-[0.99] text-white rounded-xl text-xs md:text-sm font-black transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
-                        >
-                          <LayoutGrid className="w-4 h-4 text-purple-300" />
-                          <span>Elegir Asientos en Diagrama y Reservar</span>
-                          <Check className="w-4 h-4 text-emerald-400" />
-                        </button>
+                        {(() => {
+                          const isSoldOut = trip.isFull === true || trip.isActiveForBooking === false || freeSeats <= 0;
+                          return (
+                            <button
+                              onClick={() => handleSelectTrip(trip)}
+                              disabled={isSoldOut}
+                              className={`w-full py-3 px-4 rounded-xl text-xs md:text-sm font-black transition-all flex items-center justify-center gap-2 shadow-xs ${
+                                isSoldOut
+                                  ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed border border-neutral-300'
+                                  : 'bg-neutral-900 hover:bg-purple-700 active:scale-[0.99] text-white cursor-pointer'
+                              }`}
+                            >
+                              <LayoutGrid className="w-4 h-4 text-purple-300" />
+                              <span>{isSoldOut ? '🚨 Tour Completo (100% Vendido - Sin Lugares)' : 'Elegir Asientos en Diagrama y Reservar'}</span>
+                              {!isSoldOut && <Check className="w-4 h-4 text-emerald-400" />}
+                            </button>
+                          );
+                        })()}
                       </div>
                     </div>
                   );

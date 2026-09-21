@@ -31,8 +31,10 @@ export const TripsCalendarAgenda: React.FC = () => {
     drivers, 
     charterAssignments, 
     seatTemplates,
+    bookings,
     addTrip,
     deleteTrip,
+    toggleTripBookingStatus,
     sendManualWakeUpAlarm,
     syncWithSupabase
   } = useApp();
@@ -605,8 +607,8 @@ export const TripsCalendarAgenda: React.FC = () => {
 
       {/* Modal: Programar Corrida Regular */}
       {showAddTripModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border-2 border-neutral-200">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-lg w-full max-h-[94vh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border-2 border-neutral-200">
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral-100 shrink-0 bg-white">
               <div>
                 <h3 className="text-base sm:text-lg font-black text-neutral-900">Programar Nueva Corrida</h3>
@@ -621,7 +623,7 @@ export const TripsCalendarAgenda: React.FC = () => {
             </div>
 
             <form onSubmit={handleCreateTripSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0 text-xs md:text-sm">
-              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3.5">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-3.5">
                 <div>
                   <label className="block font-black text-neutral-700 mb-1">Título de la Ruta</label>
                   <input 
@@ -832,51 +834,179 @@ export const TripsCalendarAgenda: React.FC = () => {
         </div>
       )}
 
-      {/* Modal: View Trip Seat Diagram (🟢 Libres vs 🔴 Ocupados) */}
-      {viewingDiagramTrip && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden">
-          <div className="bg-white w-full max-w-xl rounded-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border border-neutral-200">
-            <div className="flex items-center justify-between border-b border-neutral-100 p-4 sm:p-6 shrink-0 bg-white">
-              <div>
-                <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-orange-600">Diagrama Operativo de Asientos</span>
-                <h3 className="text-base sm:text-lg font-black text-neutral-900">
-                  {viewingDiagramTrip.routeTitle}
-                </h3>
-                <p className="text-[11px] sm:text-xs text-neutral-500 font-medium">
-                  {viewingDiagramTrip.date} • Salida: {viewingDiagramTrip.departureTime}
-                </p>
+      {/* Modal: View Trip Seat Diagram (🟢 Libres vs 🔴 Ocupados) - SUPERVISIÓN EN VIVO */}
+      {viewingDiagramTrip && (() => {
+        const liveTrip = trips.find(t => t.id === viewingDiagramTrip.id) || viewingDiagramTrip;
+        const assignedTemplate = seatTemplates.find(t => t.id === liveTrip.layoutTemplateId)
+          || seatTemplates.find(t => t.totalSeats === liveTrip.seats.filter(s => s.type === 'standard').length)
+          || seatTemplates[0];
+
+        const tripBookings = bookings.filter(b => b.tripId === liveTrip.id);
+        const standardSeats = liveTrip.seats.filter(s => s.type === 'standard');
+        const occupiedSeats = standardSeats.filter(s => s.status === 'occupied');
+        const availableSeats = standardSeats.filter(s => s.status === 'available');
+        const isSoldOut = liveTrip.isFull === true || availableSeats.length === 0;
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+            <div className="bg-white w-full max-w-3xl rounded-2xl sm:rounded-3xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-neutral-200">
+              <div className="flex items-center justify-between border-b border-neutral-100 p-4 sm:p-6 shrink-0 bg-white">
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-orange-600">
+                      Supervisión de Asientos en Vivo
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                      En Vivo
+                    </span>
+                    {isSoldOut ? (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-800 border border-rose-300">
+                        🚨 100% Vendido (Cupo Lleno)
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-blue-100 text-blue-800 border border-blue-200">
+                        {availableSeats.length} Asientos Libres
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-neutral-900">
+                    {liveTrip.routeTitle}
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-neutral-500 font-medium">
+                    {liveTrip.date} • Salida: {liveTrip.departureTime} • Plantilla: {assignedTemplate?.name || 'Estándar'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setViewingDiagramTrip(null)}
+                  className="p-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 cursor-pointer transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                onClick={() => setViewingDiagramTrip(null)}
-                className="p-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Seat Diagram Viewer */}
-            <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
-              <SeatDiagramViewer
-                seats={viewingDiagramTrip.seats}
-                isAdminView={true}
-                interactive={false}
-                title={`Estado de Ocupación en Vivo`}
-                subtitle={`🟢 Verde = Asientos Disponibles | 🔴 Rojo = Asientos Ocupados/Vendidos`}
-              />
-            </div>
+              {/* Status Banner & Quick Controls */}
+              <div className="px-4 sm:px-6 py-3 bg-neutral-50 border-b border-neutral-100 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-4 text-xs font-black">
+                  <div className="flex items-center gap-1.5 text-emerald-700">
+                    <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                    <span>Libres: {availableSeats.length}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-rose-700">
+                    <span className="w-3 h-3 rounded-full bg-rose-500"></span>
+                    <span>Vendidos: {occupiedSeats.length} / {standardSeats.length}</span>
+                  </div>
+                </div>
 
-            <div className="p-4 sm:p-6 border-t border-neutral-100 flex justify-end shrink-0 bg-white">
-              <button
-                type="button"
-                onClick={() => setViewingDiagramTrip(null)}
-                className="px-5 py-2.5 bg-neutral-900 text-white rounded-xl font-black text-xs cursor-pointer hover:bg-neutral-800 transition-colors"
-              >
-                Cerrar Diagrama
-              </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleTripBookingStatus(liveTrip.id)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shadow-xs active:scale-95 ${
+                      liveTrip.isActiveForBooking === false || liveTrip.isFull
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        : 'bg-rose-600 hover:bg-rose-700 text-white'
+                    }`}
+                  >
+                    {liveTrip.isActiveForBooking === false || liveTrip.isFull
+                      ? '✓ Reactivar Venta a Clientes'
+                      : '🚫 Desactivar Venta a Clientes'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Seat Diagram Viewer & Passenger Manifest */}
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-6">
+                <SeatDiagramViewer
+                  template={assignedTemplate || undefined}
+                  seats={liveTrip.seats}
+                  isAdminView={true}
+                  interactive={true}
+                  title={`Diagrama Operativo: ${assignedTemplate?.name || 'Autobús / Camioneta'}`}
+                  subtitle="Toca o haz clic sobre cualquier asiento rojo (ocupado) para inspeccionar quién lo reservó."
+                />
+
+                {/* Manifiesto de Pasajeros y Asientos Reservados en Vivo */}
+                <div className="bg-white rounded-2xl border-2 border-neutral-200 overflow-hidden shadow-xs">
+                  <div className="p-3.5 bg-neutral-900 text-white flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-orange-400" />
+                      <h4 className="text-xs sm:text-sm font-black uppercase tracking-wider">
+                        Pasajeros y Asientos Reservados ({tripBookings.length} Boletos Emitidos)
+                      </h4>
+                    </div>
+                    <span className="text-[11px] text-neutral-400 font-bold">
+                      Actualización Automática
+                    </span>
+                  </div>
+
+                  {tripBookings.length === 0 ? (
+                    <div className="p-6 text-center text-xs text-neutral-400 font-medium">
+                      No hay boletos reservados todavía para este viaje. Los asientos aparecerán aquí en vivo tan pronto los clientes reserven.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto max-h-60 overflow-y-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-neutral-100 text-neutral-600 uppercase font-black text-[10px] sticky top-0">
+                          <tr>
+                            <th className="p-2.5">Asientos</th>
+                            <th className="p-2.5">Pasajero</th>
+                            <th className="p-2.5">Teléfono</th>
+                            <th className="p-2.5">Abordaje</th>
+                            <th className="p-2.5">Folio</th>
+                            <th className="p-2.5">Estado</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-100 font-medium">
+                          {tripBookings.map((b) => (
+                            <tr key={b.id} className="hover:bg-orange-50/50">
+                              <td className="p-2.5 font-black text-orange-600 whitespace-nowrap">
+                                #{b.seatNumbers.join(', #')}
+                              </td>
+                              <td className="p-2.5 font-bold text-neutral-900 whitespace-nowrap">
+                                {b.passengerName}
+                              </td>
+                              <td className="p-2.5 text-neutral-600 whitespace-nowrap">
+                                {b.passengerPhone}
+                              </td>
+                              <td className="p-2.5 text-neutral-600 max-w-[140px] truncate" title={b.boardingStop}>
+                                {b.boardingStop}
+                              </td>
+                              <td className="p-2.5 font-mono text-[11px] text-neutral-500 whitespace-nowrap">
+                                {b.ticketNumber}
+                              </td>
+                              <td className="p-2.5 whitespace-nowrap">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                                  b.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                                }`}>
+                                  {b.paymentStatus === 'paid' ? '✓ Pagado' : 'Pendiente'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6 border-t border-neutral-100 flex items-center justify-between shrink-0 bg-white">
+                <div className="text-[11px] text-neutral-500 font-bold">
+                  Total Asientos: {standardSeats.length} • Ocupación: {Math.round((occupiedSeats.length / Math.max(1, standardSeats.length)) * 100)}%
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setViewingDiagramTrip(null)}
+                  className="px-5 py-2.5 bg-neutral-900 text-white rounded-xl font-black text-xs cursor-pointer hover:bg-neutral-800 transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

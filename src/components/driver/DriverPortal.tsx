@@ -18,7 +18,13 @@ import {
   Palmtree,
   BellRing,
   Volume2,
-  AlertTriangle
+  AlertTriangle,
+  User,
+  Upload,
+  ShieldCheck,
+  CheckCircle2,
+  Save,
+  X
 } from 'lucide-react';
 import { TripExpense } from '../../types';
 import { DriverWakeUpAlarmModal } from './DriverWakeUpAlarmModal';
@@ -40,6 +46,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
     addExpense, 
     updateTripStatus, 
     checkInPassenger, 
+    updateDriver,
     showNotification,
     driverAlarms,
     activeAlarm,
@@ -104,6 +111,73 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
 
     setShowExpenseForm(false);
     setNotes('');
+  };
+
+  // Driver Profile editing state
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: currentDriver?.name || '',
+    phone: currentDriver?.phone || '',
+    licenseNumber: currentDriver?.licenseNumber || '',
+    licenseExpiry: currentDriver?.licenseExpiry || '2028-12-31',
+    avatar: currentDriver?.avatar || ''
+  });
+
+  // Sync profile form when currentDriver changes
+  useEffect(() => {
+    if (currentDriver) {
+      setProfileForm({
+        name: currentDriver.name,
+        phone: currentDriver.phone,
+        licenseNumber: currentDriver.licenseNumber || '',
+        licenseExpiry: currentDriver.licenseExpiry || '2028-12-31',
+        avatar: currentDriver.avatar
+      });
+    }
+  }, [currentDriver?.id]);
+
+  const handleProfilePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showNotification('Por favor selecciona un archivo de imagen válido (JPG, PNG, WebP).', 'error');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification('La fotografía no debe superar los 5MB.', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        setProfileForm(prev => ({ ...prev, avatar: result }));
+        showNotification('Fotografía seleccionada correctamente.', 'success');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profileForm.name.trim() || !profileForm.phone.trim()) {
+      showNotification('Nombre y teléfono son obligatorios.', 'error');
+      return;
+    }
+
+    updateDriver(currentDriver.id, {
+      name: profileForm.name.trim(),
+      phone: profileForm.phone.trim(),
+      licenseNumber: profileForm.licenseNumber.trim() || undefined,
+      licenseExpiry: profileForm.licenseExpiry || undefined,
+      avatar: profileForm.avatar
+    });
+
+    showNotification('¡Tus datos personales y foto de perfil han sido actualizados con éxito!', 'success');
+    setShowProfileModal(false);
   };
 
   return (
@@ -195,15 +269,24 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
             />
             <div>
               <h3 className="text-base md:text-lg font-black text-white leading-tight">{currentDriver.name}</h3>
-              <div className="flex items-center gap-1.5 text-xs md:text-sm font-mono mt-1">
+              <div className="flex flex-wrap items-center gap-2 mt-1.5">
                 <a 
                   href={`tel:${currentDriver.phone.replace(/[\s+]/g, '')}`}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-neutral-800/90 hover:bg-neutral-800 text-orange-400 hover:text-orange-300 rounded-lg border border-neutral-700/70 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-neutral-800/90 hover:bg-neutral-800 text-orange-400 hover:text-orange-300 rounded-lg border border-neutral-700/70 transition-colors text-xs font-mono"
                   title="Llamar o contactar al chofer"
                 >
                   <Phone className="w-3.5 h-3.5 shrink-0" />
                   <span className="font-bold">{currentDriver.phone}</span>
                 </a>
+                <button
+                  type="button"
+                  onClick={() => setShowProfileModal(true)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-600/30 hover:bg-orange-600 text-orange-200 hover:text-white rounded-lg border border-orange-500/40 transition-colors text-xs font-black cursor-pointer shadow-xs active:scale-95"
+                  title="Ver y actualizar foto y datos del chofer"
+                >
+                  <User className="w-3.5 h-3.5 shrink-0" />
+                  <span>Mi Perfil & Foto</span>
+                </button>
               </div>
             </div>
           </div>
@@ -547,11 +630,291 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
         </div>
       )}
 
+      {/* Tab 5: Mi Perfil & Foto del Chofer */}
+      {activeTab === 'profile' && (
+        <div className="max-w-3xl mx-auto w-full space-y-6">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border-2 border-neutral-200">
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-5 mb-6">
+              <div>
+                <span className="text-xs font-black uppercase tracking-wider text-orange-600">
+                  Credencial del Operador
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-neutral-900 mt-1">
+                  Mi Perfil & Datos Personales
+                </h3>
+                <p className="text-xs sm:text-sm text-neutral-500 font-medium">
+                  Actualiza tu fotografía y tus datos de contacto registrados en el sistema
+                </p>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-xs font-black uppercase ${
+                currentDriver.status === 'available'
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                  : currentDriver.status === 'in_service' || currentDriver.status === 'charter_service'
+                  ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                  : 'bg-amber-100 text-amber-800 border border-amber-300'
+              }`}>
+                {currentDriver.status === 'available' ? '✓ Disponible' : currentDriver.status === 'in_service' ? 'En Servicio' : currentDriver.status === 'charter_service' ? 'En Tour' : 'En Descanso'}
+              </span>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-6">
+              {/* Photo Upload Section */}
+              <div className="flex flex-col sm:flex-row items-center gap-6 p-4 sm:p-6 bg-neutral-50 rounded-2xl border-2 border-dashed border-neutral-300">
+                <div className="relative group shrink-0">
+                  <img
+                    src={profileForm.avatar || currentDriver.avatar}
+                    alt={profileForm.name}
+                    className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover border-4 border-white shadow-xl group-hover:opacity-90 transition-opacity"
+                  />
+                  <div className="absolute -bottom-2 -right-2 p-2 bg-orange-600 text-white rounded-full shadow-lg border-2 border-white">
+                    <Camera className="w-4 h-4" />
+                  </div>
+                </div>
+
+                <div className="flex-1 text-center sm:text-left space-y-2">
+                  <h4 className="text-sm font-black text-neutral-900">
+                    Fotografía del Chofer
+                  </h4>
+                  <p className="text-xs text-neutral-500 font-medium">
+                    Sube una foto clara y de frente para que los pasajeros y la administración puedan identificarte con facilidad.
+                  </p>
+                  <div>
+                    <label className="inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-black cursor-pointer shadow-md transition-all active:scale-95">
+                      <Upload className="w-4 h-4" />
+                      <span>Subir Nueva Fotografía</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfilePhotoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <p className="text-[11px] text-neutral-400 font-bold mt-1.5">
+                      Formatos: JPG, PNG, WEBP (Máx. 5MB)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Personal Data Fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-black uppercase text-neutral-700 mb-1.5">
+                    Nombre Completo del Operador *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profileForm.name}
+                    onChange={e => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-sm focus:border-orange-600 focus:outline-none"
+                    placeholder="Ej. Juan Pérez García"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase text-neutral-700 mb-1.5">
+                    Teléfono Celular / WhatsApp *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={profileForm.phone}
+                    onChange={e => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
+                    className="w-full p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-sm focus:border-orange-600 focus:outline-none"
+                    placeholder="Ej. +52 312 555 0192"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase text-neutral-700 mb-1.5">
+                    Número de Licencia Federal
+                  </label>
+                  <input
+                    type="text"
+                    value={profileForm.licenseNumber}
+                    onChange={e => setProfileForm(prev => ({ ...prev, licenseNumber: e.target.value }))}
+                    className="w-full p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-sm focus:border-orange-600 focus:outline-none"
+                    placeholder="Ej. FED-998822-B"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase text-neutral-700 mb-1.5">
+                    Fecha de Vencimiento de Licencia
+                  </label>
+                  <input
+                    type="date"
+                    value={profileForm.licenseExpiry}
+                    onChange={e => setProfileForm(prev => ({ ...prev, licenseExpiry: e.target.value }))}
+                    className="w-full p-3.5 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-sm focus:border-orange-600 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Assignment & Fleet Info (Read-only badges) */}
+              <div className="p-4 bg-orange-50/60 rounded-2xl border border-orange-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <Bus className="w-4 h-4 text-orange-600" />
+                  <span className="font-bold text-neutral-700">Unidad de Flotilla Asignada:</span>
+                  <span className="font-black text-orange-600">Unidad {driverVehicle.unitNumber} ({driverVehicle.model})</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span className="font-bold text-neutral-700">Calificación del Conductor:</span>
+                  <span className="font-black text-neutral-900">⭐ {currentDriver.rating.toFixed(1)} / 5.0</span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-black text-sm shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Guardar Cambios en Mi Perfil</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Modal: Ver y Editar Perfil y Fotografía */}
+      {showProfileModal && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-lg rounded-2xl sm:rounded-3xl max-h-[94vh] sm:max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border-2 border-neutral-200">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral-100 shrink-0 bg-white">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-orange-100 text-orange-600">
+                  <User className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-neutral-900">
+                    Mi Perfil & Fotografía
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-neutral-500 font-medium">
+                    Actualiza tu foto de identificación y datos de contacto
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-800 hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="flex flex-col flex-1 overflow-hidden min-h-0">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-4">
+                {/* Photo Upload Box */}
+                <div className="flex flex-col sm:flex-row items-center gap-4 p-4 bg-neutral-50 rounded-2xl border-2 border-dashed border-neutral-300">
+                  <img
+                    src={profileForm.avatar || currentDriver.avatar}
+                    alt={profileForm.name}
+                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-orange-500 shadow-md shrink-0"
+                  />
+                  <div className="flex-1 text-center sm:text-left space-y-1.5">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-neutral-800">
+                      Fotografía del Operador
+                    </h4>
+                    <label className="inline-flex items-center gap-2 px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-black cursor-pointer shadow-xs transition-all active:scale-95">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Subir Fotografía</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfilePhotoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <p className="text-[10px] text-neutral-400 font-bold">
+                      JPG, PNG, WEBP (cámara o galería)
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
+                    Nombre Completo *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profileForm.name}
+                    onChange={e => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs sm:text-sm focus:border-orange-600 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
+                    Teléfono / WhatsApp *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={profileForm.phone}
+                    onChange={e => setProfileForm(prev => ({ ...prev, phone: e.target.value }))}
+                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs sm:text-sm focus:border-orange-600 focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
+                      Licencia Federal
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.licenseNumber}
+                      onChange={e => setProfileForm(prev => ({ ...prev, licenseNumber: e.target.value }))}
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs sm:text-sm focus:border-orange-600 focus:outline-none"
+                      placeholder="Ej. FED-8822"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
+                      Vigencia
+                    </label>
+                    <input
+                      type="date"
+                      value={profileForm.licenseExpiry}
+                      onChange={e => setProfileForm(prev => ({ ...prev, licenseExpiry: e.target.value }))}
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs sm:text-sm focus:border-orange-600 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-neutral-100 shrink-0 bg-white">
+                <button
+                  type="button"
+                  onClick={() => setShowProfileModal(false)}
+                  className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl font-black text-xs cursor-pointer transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-black text-xs shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Guardar Perfil</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Modal to register new on-road expense */}
       {showExpenseForm && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in">
-          <div className="relative bg-white w-full max-w-sm sm:max-w-md my-auto rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 border-2 border-neutral-200 max-h-[90dvh] overflow-y-auto no-scrollbar">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto animate-in fade-in">
+          <div className="relative bg-white w-full max-w-sm sm:max-w-md my-auto rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 border-2 border-neutral-200 max-h-[92dvh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-3 shrink-0">
               <h3 className="text-base font-black uppercase text-neutral-900 flex items-center gap-2">
                 <Receipt className="w-5 h-5 text-orange-600" /> Captura de Comprobante
               </h3>
@@ -560,7 +923,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
               </button>
             </div>
 
-            <form onSubmit={handleCreateExpense} className="space-y-3">
+            <form onSubmit={handleCreateExpense} className="flex-1 overflow-y-auto min-h-0 space-y-3">
               <div>
                 <label className="text-xs font-black text-neutral-700 uppercase tracking-wider">Tipo de Gasto</label>
                 <select
@@ -623,7 +986,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
 
               <button
                 type="submit"
-                className="w-full py-3.5 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-sm shadow-md transition-colors cursor-pointer"
+                className="w-full py-3.5 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-sm shadow-md transition-colors cursor-pointer shrink-0 mt-2"
               >
                 Guardar y Enviar a Finanzas
               </button>
