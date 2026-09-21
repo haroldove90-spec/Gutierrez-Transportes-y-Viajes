@@ -45,7 +45,7 @@ export const RentalCatalog: React.FC<RentalCatalogProps> = ({ onSelectCarForQuot
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto bg-neutral-100 p-4 md:p-6 lg:p-8 space-y-6">
+    <div className="flex-1 min-w-0 w-full max-w-full flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar bg-neutral-100 p-3 sm:p-4 md:p-6 lg:p-8 space-y-6">
       
       {/* Hero Header */}
       <div className="bg-neutral-950 text-white rounded-3xl p-6 md:p-8 border border-neutral-800 shadow-xl relative overflow-hidden">

@@ -15,7 +15,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   isSidebarOpen = true
 }) => {
   return (
-    <main className="flex-1 overflow-hidden bg-neutral-100 flex flex-row w-full h-full">
+    <main className="flex-1 overflow-hidden bg-neutral-100 flex flex-row w-full max-w-full h-full min-w-0">
       {/* Left Sidebar Navigation on Fullscreen / Desktop / Tablet */}
       <SidebarNav 
         activeTab={activeTab} 
@@ -24,7 +24,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 h-full flex flex-col bg-white overflow-hidden">
+      <div className="flex-1 h-full flex flex-col bg-white overflow-hidden min-w-0 max-w-full w-full">
         {children}
       </div>
     </main>

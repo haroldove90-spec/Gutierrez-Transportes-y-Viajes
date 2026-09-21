@@ -44,7 +44,7 @@ export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab, setAc
   const netMarginPercent = Math.round(((totalIncomeToday - totalApprovedExpenses) / (totalIncomeToday || 1)) * 100);
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar bg-neutral-100 p-4 md:p-6 lg:p-8 space-y-6">
+    <div className="flex-1 min-w-0 w-full max-w-full flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar bg-neutral-100 p-3 sm:p-4 md:p-6 lg:p-8 space-y-6">
       {/* Tab 1: Métricas (Las métricas ejecutivas ahora son exclusivas de este módulo) */}
       {(activeTab === 'executive' || activeTab === 'metricas') && (
         <div className="max-w-6xl mx-auto w-full space-y-6">

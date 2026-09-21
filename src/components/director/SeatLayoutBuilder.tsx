@@ -748,7 +748,7 @@ export const SeatLayoutBuilder: React.FC = () => {
               </div>
 
               {/* Trip Selector */}
-              <div className="min-w-[280px]">
+              <div className="w-full sm:w-auto sm:min-w-[240px] sm:max-w-xs">
                 <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">
                   Seleccionar Salida / Corrida:
                 </label>

@@ -133,7 +133,7 @@ function AppContent() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-white font-sans text-neutral-900">
+    <div className="flex flex-col h-screen w-full max-w-full overflow-hidden bg-white font-sans text-neutral-900">
       
       {/* Top Header - ONLY shown inside portals, HIDDEN on Home */}
       {currentRole !== 'home' && (

@@ -235,7 +235,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar bg-neutral-100 p-4 md:p-6 lg:p-8 space-y-6">
+    <div className="flex-1 min-w-0 w-full max-w-full flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar bg-neutral-100 p-3 sm:p-4 md:p-6 lg:p-8 space-y-6">
       {/* Floating Emergency Wake-Up Alarm Modal */}
       <DriverWakeUpAlarmModal currentDriverId={currentDriver.id} />
 

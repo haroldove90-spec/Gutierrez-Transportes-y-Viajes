@@ -63,7 +63,7 @@ export const FinancePortal: React.FC<FinancePortalProps> = ({ activeTab, setActi
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar bg-neutral-100 p-4 md:p-6 lg:p-8 space-y-6">
+    <div className="flex-1 min-w-0 w-full max-w-full flex flex-col overflow-y-auto overflow-x-hidden no-scrollbar bg-neutral-100 p-3 sm:p-4 md:p-6 lg:p-8 space-y-6">
       {/* Top Financial KPI Summary */}
       <div className="max-w-5xl mx-auto w-full bg-black text-white p-6 md:p-8 rounded-3xl border-2 border-neutral-800 shadow-md space-y-4">
         <div className="flex items-center justify-between">

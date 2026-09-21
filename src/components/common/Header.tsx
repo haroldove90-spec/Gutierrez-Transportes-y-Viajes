@@ -58,9 +58,9 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="bg-orange-600 text-white border-b-2 border-orange-700 shadow-lg shrink-0 sticky top-0 z-40 select-none">
+    <header className="bg-orange-600 text-white border-b-2 border-orange-700 shadow-lg shrink-0 sticky top-0 z-40 select-none w-full max-w-full overflow-hidden">
       {/* Top Banner Bar */}
-      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 py-2 md:py-2.5 flex items-center justify-between gap-2">
+      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 py-2 md:py-2.5 flex items-center justify-between gap-2 w-full max-w-full">
         
         {/* Left Section: Hamburger Toggle (DESKTOP/TABLET ONLY) + Brand Logo */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -135,7 +135,7 @@ export const Header: React.FC<HeaderProps> = ({
 
               {/* Alerts Dropdown Popover */}
               {showAlertsDropdown && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border-2 border-neutral-200 text-neutral-900 z-50 p-3 space-y-2 animate-fadeIn">
+                <div className="absolute right-0 mt-2 w-72 sm:w-96 max-w-[calc(100vw-1.5rem)] bg-white rounded-2xl shadow-2xl border-2 border-neutral-200 text-neutral-900 z-50 p-3 space-y-2 animate-fadeIn">
                   <div className="flex items-center justify-between border-b border-neutral-100 pb-2">
                     <span className="text-xs font-black uppercase text-neutral-900 flex items-center gap-1.5">
                       <Bell className="w-3.5 h-3.5 text-orange-600" /> Alertas de Ventas en Vivo

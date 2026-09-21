@@ -94,21 +94,25 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
   if (navItems.length === 0) return null;
 
   return (
-    <nav className="md:hidden bg-orange-600 border-t border-orange-700 px-2 py-1.5 shrink-0 z-30 shadow-2xl">
-      <div className="flex items-center justify-around max-w-lg mx-auto">
+    <nav className="md:hidden bg-orange-600 border-t border-orange-700 px-1 py-1 shrink-0 z-30 shadow-2xl w-full max-w-full overflow-hidden">
+      <div className={`flex items-center gap-1 w-full max-w-full py-0.5 ${
+        navItems.length > 5 
+          ? 'overflow-x-auto no-scrollbar scroll-smooth justify-start px-2' 
+          : 'justify-around px-1'
+      }`}>
         {navItems.map(item => {
           const isActive = activeTab === item.id;
           return (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all relative ${
+              className={`flex flex-col items-center justify-center py-1 px-2.5 sm:px-3 rounded-xl transition-all relative shrink-0 ${
                 isActive
                   ? 'bg-black/30 text-white font-extrabold shadow-inner ring-1 ring-white/30 scale-105'
                   : 'text-white/85 hover:text-white hover:bg-orange-700/60 font-medium'
               }`}
             >
-              <div className="p-1 rounded-lg">
+              <div className="p-0.5 sm:p-1 rounded-lg">
                 {item.icon}
               </div>
               <span className="text-[10px] tracking-tight mt-0.5 whitespace-nowrap text-white font-bold">

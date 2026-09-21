@@ -289,7 +289,10 @@ export const TripsCalendarAgenda: React.FC = () => {
             </div>
           </div>
 
-          {/* Days of week header */}
+          {/* Days of week header & Grid with horizontal scroll on mobile */}
+          <div className="overflow-x-auto no-scrollbar pb-1">
+            <div className="min-w-[460px] sm:min-w-0">
+              {/* Days of week header */}
           <div className="grid grid-cols-7 gap-1 text-center font-black text-[11px] md:text-xs text-neutral-400 uppercase py-2 border-b border-neutral-100">
             <span>Dom</span>
             <span>Lun</span>
@@ -370,6 +373,8 @@ export const TripsCalendarAgenda: React.FC = () => {
                 </button>
               );
             })}
+              </div>
+            </div>
           </div>
 
           {/* Legend */}
