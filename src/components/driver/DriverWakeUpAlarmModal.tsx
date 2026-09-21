@@ -33,12 +33,8 @@ export const DriverWakeUpAlarmModal: React.FC<DriverWakeUpAlarmModalProps> = ({ 
     return null;
   }
 
-  // If filtered by driver, only show if it matches (or if no currentDriverId specified)
-  if (currentDriverId && activeAlarm.driverId !== currentDriverId) {
-    return null;
-  }
-
   const driver = drivers.find(d => d.id === activeAlarm.driverId);
+  const isTargetDriver = !currentDriverId || activeAlarm.driverId === currentDriverId;
   const isTwoHour = activeAlarm.type === 'two_hour_reminder';
   const isManualWake = activeAlarm.type === 'admin_manual_wake';
   const isAssignment = activeAlarm.type === 'new_trip_assigned';

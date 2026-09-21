@@ -20,7 +20,9 @@ import {
   RefreshCw,
   LayoutGrid
 } from 'lucide-react';
-import { CharterAssignment } from '../../types';
+import { CharterAssignment, TripSchedule, Booking } from '../../types';
+import { buildSeatsFromTemplate, getTemplateForVehicle } from '../../data/seatLayoutTemplates';
+import { LiveTripSupervisionModal } from '../modals/LiveTripSupervisionModal';
 
 export const ToursManager: React.FC = () => {
   const { 
@@ -29,6 +31,10 @@ export const ToursManager: React.FC = () => {
     rentalCars,
     drivers, 
     seatTemplates,
+    trips,
+    bookings,
+    routeStops,
+    addTrip,
     assignDriverToCharter, 
     completeCharterAssignment,
     sendManualWakeUpAlarm,
@@ -39,6 +45,7 @@ export const ToursManager: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'upcoming' | 'completed'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedSupervisionTripId, setSelectedSupervisionTripId] = useState<string | null>(null);
 
   // Form for new tour registration
   const todayStr = new Date().toISOString().substring(0, 10);
@@ -200,6 +207,106 @@ export const ToursManager: React.FC = () => {
     if (window.confirm(`¿Confirmas finalizar el tour ${folio}? Esto liberará la unidad y al chofer para nuevos servicios en flotilla.`)) {
       completeCharterAssignment(tourId);
     }
+  };
+
+  // Helper to retrieve or automatically generate a TripSchedule for monitoring Tour seats & bookings
+  const getOrCreateTourTripId = (tour: CharterAssignment): string => {
+    // 1. Check if linked trip already exists in trips
+    const existingTrip = trips.find(t => 
+      (tour.tripId && t.id === tour.tripId) || 
+      (t.tourFolio && t.tourFolio === tour.folio) ||
+      (t.isTour && t.destination.toLowerCase().trim() === tour.destination.toLowerCase().trim() && t.date === tour.startDate)
+    );
+
+    if (existingTrip) {
+      return existingTrip.id;
+    }
+
+    // 2. If not found, create a tour trip so seat diagram & bookings can be monitored live
+    const veh = vehicles.find(v => v.id === tour.vehicleId);
+    const chosenTemplate = seatTemplates.find(tmpl => tmpl.id === tour.layoutTemplateId)
+      || getTemplateForVehicle(seatTemplates, veh?.layoutTemplateId, veh?.capacity || 19);
+
+    const generatedSeats = buildSeatsFromTemplate(chosenTemplate);
+    const tourTripId = tour.tripId || `trip-tour-${tour.id || Date.now()}`;
+
+    const newTourTrip: TripSchedule = {
+      id: tourTripId,
+      routeTitle: `🌴 Tour: ${tour.origin} ➔ ${tour.destination}`,
+      origin: tour.origin,
+      destination: tour.destination,
+      date: tour.startDate,
+      departureTime: tour.startTime || '08:00 AM',
+      endDate: tour.endDate,
+      estimatedArrival: tour.returnTime || '20:00 PM',
+      vehicleId: tour.vehicleId,
+      driverId: tour.driverId,
+      layoutTemplateId: chosenTemplate.id,
+      status: tour.status === 'completed' ? 'completed' : 'scheduled',
+      seats: generatedSeats,
+      stops: routeStops.filter(s => s.isActive),
+      basePrice: tour.pricePerSeat || 650,
+      occupiedSeatsCount: 0,
+      totalRevenue: 0,
+      isTour: true,
+      tourFolio: tour.folio,
+      driverAccepted: tour.driverAccepted,
+      driverAcceptedAt: tour.driverAcceptedAt,
+      driverRejectionReason: tour.driverRejectionReason,
+      notes: tour.notes
+    };
+
+    addTrip(newTourTrip);
+    return tourTripId;
+  };
+
+  // Computes sold, reserved, and available seat metrics for a tour
+  const getTourSeatMetrics = (tour: CharterAssignment) => {
+    const linkedTrip = trips.find(t => 
+      (tour.tripId && t.id === tour.tripId) || 
+      (t.tourFolio && t.tourFolio === tour.folio) ||
+      (t.isTour && t.destination.toLowerCase().trim() === tour.destination.toLowerCase().trim() && t.date === tour.startDate)
+    );
+
+    const tmpl = seatTemplates.find(t => t.id === tour.layoutTemplateId);
+    const totalSeats = linkedTrip?.seats?.filter(s => s.type === 'standard' || (!s.type && s.number > 0)).length 
+      || tmpl?.totalSeats 
+      || 19;
+
+    const tourBookings = linkedTrip ? bookings.filter(b => b.tripId === linkedTrip.id) : [];
+    
+    let paidSeats = 0;
+    let pendingSeats = 0;
+    let paidRevenue = 0;
+
+    tourBookings.forEach(b => {
+      if (b.paymentStatus === 'paid') {
+        paidSeats += b.seatNumbers.length;
+        paidRevenue += b.totalAmount;
+      } else if (b.paymentStatus === 'pending') {
+        pendingSeats += b.seatNumbers.length;
+      }
+    });
+
+    if (linkedTrip && tourBookings.length === 0 && linkedTrip.occupiedSeatsCount > 0) {
+      paidSeats = linkedTrip.occupiedSeatsCount;
+      paidRevenue = linkedTrip.totalRevenue;
+    }
+
+    const occupiedSeats = paidSeats + pendingSeats;
+    const availableSeats = Math.max(0, totalSeats - occupiedSeats);
+    const occupancyPercent = totalSeats > 0 ? Math.min(100, Math.round((occupiedSeats / totalSeats) * 100)) : 0;
+
+    return {
+      totalSeats,
+      paidSeats,
+      pendingSeats,
+      occupiedSeats,
+      availableSeats,
+      occupancyPercent,
+      paidRevenue,
+      hasTrip: !!linkedTrip
+    };
   };
 
   return (
@@ -405,16 +512,18 @@ export const ToursManager: React.FC = () => {
                       </p>
                       <div className="mt-1">
                         {tour.driverAccepted ? (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
-                            ✓ Confirmado por Chofer
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-xs">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-700 shrink-0" />
+                            ✓ Confirmado por Chofer {tour.driverAcceptedAt ? `(${new Date(tour.driverAcceptedAt).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })})` : ''}
                           </span>
                         ) : tour.driverRejectionReason ? (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-100 text-rose-800 border border-rose-200" title={tour.driverRejectionReason}>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300" title={tour.driverRejectionReason}>
+                            <AlertCircle className="w-3 h-3 text-rose-600 shrink-0" />
                             ✕ Rechazado: {tour.driverRejectionReason}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-200">
-                            ⏳ Pendiente de Aceptación
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                            ⏳ Pendiente de Aceptación por Chofer
                           </span>
                         )}
                       </div>
@@ -429,36 +538,91 @@ export const ToursManager: React.FC = () => {
                     </div>
                   )}
 
+                  {/* Seat Status & Monitoring Widget */}
                   {(() => {
+                    const metrics = getTourSeatMetrics(tour);
                     const tmpl = seatTemplates.find(t => t.id === tour.layoutTemplateId);
-                    return tmpl ? (
-                      <div className="mt-2 flex items-center justify-between text-[11px] bg-purple-100/70 text-purple-900 px-3 py-1.5 rounded-xl font-bold border border-purple-200">
-                        <span className="flex items-center gap-1.5">
-                          <LayoutGrid className="w-3.5 h-3.5 text-purple-700" />
-                          Diagrama: {tmpl.name} ({tmpl.totalSeats} asientos)
-                        </span>
-                        <span className="text-emerald-700 font-black">
-                          {tour.pricePerSeat ? `$${tour.pricePerSeat} MXN/asiento` : 'Visible a Clientes'}
-                        </span>
+
+                    return (
+                      <div className="mt-3 p-3.5 bg-gradient-to-br from-purple-50/90 via-indigo-50/60 to-purple-100/40 rounded-2xl border border-purple-200 text-xs space-y-2.5 shadow-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-black text-purple-950 flex items-center gap-1.5">
+                            <LayoutGrid className="w-4 h-4 text-purple-700 shrink-0" />
+                            <span>Ocupación de Asientos ({tmpl?.name || 'Sprinter / Van'}):</span>
+                          </span>
+                          <span className="font-mono font-black text-purple-900 bg-white/95 px-2 py-0.5 rounded-md border border-purple-200">
+                            {metrics.occupiedSeats} / {metrics.totalSeats} Plazas ({metrics.occupancyPercent}%)
+                          </span>
+                        </div>
+
+                        {/* Visual Progress bar */}
+                        <div className="w-full bg-neutral-200/90 h-2.5 rounded-full overflow-hidden flex shadow-inner">
+                          <div 
+                            className="bg-emerald-500 h-full transition-all duration-300" 
+                            style={{ width: `${metrics.totalSeats > 0 ? (metrics.paidSeats / metrics.totalSeats) * 100 : 0}%` }} 
+                            title={`${metrics.paidSeats} Pagados`}
+                          />
+                          <div 
+                            className="bg-amber-400 h-full transition-all duration-300" 
+                            style={{ width: `${metrics.totalSeats > 0 ? (metrics.pendingSeats / metrics.totalSeats) * 100 : 0}%` }} 
+                            title={`${metrics.pendingSeats} Reservados (Por Pagar)`}
+                          />
+                        </div>
+
+                        {/* Breakdown chips */}
+                        <div className="flex flex-wrap items-center justify-between gap-1.5 text-[11px] font-bold">
+                          <span className="text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-300">
+                            ✓ <strong>{metrics.paidSeats}</strong> Pagados
+                          </span>
+                          <span className="text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-md border border-amber-300">
+                            ⏳ <strong>{metrics.pendingSeats}</strong> Reservados
+                          </span>
+                          <span className="text-blue-800 bg-blue-100/90 px-2 py-0.5 rounded-md border border-blue-300">
+                            ◎ <strong>{metrics.availableSeats}</strong> Libres
+                          </span>
+                          <span className="text-purple-900 font-mono font-black ml-auto">
+                            {tour.pricePerSeat ? `$${tour.pricePerSeat} MXN/asiento` : `$${tour.totalAmount.toLocaleString()} MXN`}
+                          </span>
+                        </div>
+
+                        {/* Interactive Button to View Seats in Template */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const tripId = getOrCreateTourTripId(tour);
+                            setSelectedSupervisionTripId(tripId);
+                          }}
+                          className="w-full mt-1 py-2.5 px-4 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer active:scale-98"
+                          title="Ver plantilla gráfica de asientos, boletos vendidos, reservados y pasajeros"
+                        >
+                          <LayoutGrid className="w-4 h-4 text-purple-200 shrink-0" />
+                          <span>Ver Estatus de Asientos en Plantilla ({metrics.occupiedSeats}/{metrics.totalSeats})</span>
+                        </button>
                       </div>
-                    ) : null;
+                    );
                   })()}
                 </div>
 
                 {/* Bottom Actions */}
                 <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2 text-xs">
                   <button
-                    onClick={() => sendManualWakeUpAlarm(tour.driverId, tour.id, `Tour ${tour.folio} hacia ${tour.destination}. Salida: ${tour.startDate} a las ${tour.startTime}`)}
-                    className="px-3 py-1.5 bg-neutral-100 hover:bg-purple-50 hover:text-purple-700 text-neutral-700 rounded-xl font-bold transition-colors cursor-pointer flex items-center gap-1 border border-neutral-200"
-                    title="Enviar recordatorio sonoro al chofer"
+                    type="button"
+                    onClick={() => sendManualWakeUpAlarm(
+                      tour.driverId, 
+                      tour.tripId || tour.id, 
+                      `¡Recordatorio de Tour Especial! Destino: ${tour.destination}. Salida: ${tour.startDate} a las ${tour.startTime || '08:00 AM'}. Unidad: ${tour.unitNumber}. Confirma tu asistencia en tu celular.`
+                    )}
+                    className="px-3.5 py-2 bg-neutral-100 hover:bg-purple-50 hover:text-purple-700 text-neutral-700 rounded-xl font-bold transition-colors cursor-pointer flex items-center gap-1.5 border border-neutral-200"
+                    title="Enviar recordatorio flotante y alarma sonora al chofer"
                   >
                     <BellRing className="w-3.5 h-3.5 text-purple-600" /> Recordar al Chofer
                   </button>
 
                   {!isCompleted && (
                     <button
+                      type="button"
                       onClick={() => handleCompleteTour(tour.id, tour.folio)}
-                      className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" /> Finalizar & Liberar Flotilla
                     </button>
@@ -847,6 +1011,14 @@ export const ToursManager: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Live Seat & Passenger Supervision Modal for Tour */}
+      {selectedSupervisionTripId && (
+        <LiveTripSupervisionModal
+          tripId={selectedSupervisionTripId}
+          onClose={() => setSelectedSupervisionTripId(null)}
+        />
       )}
     </div>
   );

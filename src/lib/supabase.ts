@@ -97,7 +97,12 @@ export async function fetchTripsFromSupabase(): Promise<TripSchedule[] | null> {
       seats: Array.isArray(t.seats) ? t.seats : [],
       stops: Array.isArray(t.stops) ? t.stops : ROUTE_STOPS,
       layoutTemplateId: t.layout_template_id || undefined,
-      endDate: t.end_date || t.date
+      endDate: t.end_date || t.date,
+      driverAccepted: t.driver_accepted ?? (t.driverAccepted || false),
+      driverAcceptedAt: t.driver_accepted_at || t.driverAcceptedAt || undefined,
+      driverRejectionReason: t.driver_rejection_reason || t.driverRejectionReason || undefined,
+      isTour: t.is_tour ?? (t.isTour || false),
+      tourFolio: t.tour_folio || t.tourFolio || undefined
     }));
   } catch {
     return null;
@@ -109,7 +114,7 @@ export async function fetchTripsFromSupabase(): Promise<TripSchedule[] | null> {
  */
 export async function saveTripToSupabase(trip: TripSchedule): Promise<boolean> {
   try {
-    const { error } = await supabase.from('trips').upsert({
+    const fullPayload: any = {
       id: trip.id,
       route_title: trip.routeTitle,
       origin: trip.origin,
@@ -127,9 +132,40 @@ export async function saveTripToSupabase(trip: TripSchedule): Promise<boolean> {
       current_scale: trip.currentScale || null,
       seats: trip.seats || [],
       layout_template_id: trip.layoutTemplateId || null,
-      end_date: trip.endDate || trip.date
-    });
-    return !error;
+      end_date: trip.endDate || trip.date,
+      driver_accepted: trip.driverAccepted ?? false,
+      driver_accepted_at: trip.driverAcceptedAt || null,
+      driver_rejection_reason: trip.driverRejectionReason || null,
+      is_tour: trip.isTour ?? false,
+      tour_folio: trip.tourFolio || null
+    };
+
+    const { error } = await supabase.from('trips').upsert(fullPayload);
+    if (error) {
+      const basePayload: any = {
+        id: trip.id,
+        route_title: trip.routeTitle,
+        origin: trip.origin,
+        destination: trip.destination,
+        date: trip.date,
+        departure_time: trip.departureTime,
+        estimated_arrival: trip.estimatedArrival,
+        driver_id: trip.driverId || null,
+        vehicle_id: trip.vehicleId || null,
+        base_price: trip.basePrice,
+        total_seats: trip.seats?.length || 19,
+        occupied_seats_count: trip.occupiedSeatsCount || 0,
+        total_revenue: trip.totalRevenue || 0,
+        status: trip.status || 'scheduled',
+        current_scale: trip.currentScale || null,
+        seats: trip.seats || [],
+        layout_template_id: trip.layoutTemplateId || null,
+        end_date: trip.endDate || trip.date
+      };
+      const { error: fallbackErr } = await supabase.from('trips').upsert(basePayload);
+      return !fallbackErr;
+    }
+    return true;
   } catch {
     return false;
   }
@@ -453,7 +489,14 @@ export async function fetchCharterAssignmentsFromSupabase(): Promise<CharterAssi
       totalAmount: Number(c.total_amount || 0),
       status: (c.status as any) || 'upcoming',
       notes: c.notes || '',
-      createdAt: c.created_at || new Date().toISOString()
+      createdAt: c.created_at || new Date().toISOString(),
+      driverAccepted: c.driver_accepted ?? (c.driverAccepted || false),
+      driverAcceptedAt: c.driver_accepted_at || c.driverAcceptedAt || undefined,
+      driverRejectionReason: c.driver_rejection_reason || c.driverRejectionReason || undefined,
+      tripId: c.trip_id || c.tripId || undefined,
+      layoutTemplateId: c.layout_template_id || c.layoutTemplateId || undefined,
+      pricePerSeat: c.price_per_seat ? Number(c.price_per_seat) : undefined,
+      isPublicBookingAvailable: c.is_public_booking_available ?? true
     }));
   } catch {
     return null;
@@ -465,7 +508,7 @@ export async function fetchCharterAssignmentsFromSupabase(): Promise<CharterAssi
  */
 export async function saveCharterAssignmentToSupabase(charter: CharterAssignment): Promise<boolean> {
   try {
-    const { error } = await supabase.from('charter_assignments').upsert({
+    const fullPayload: any = {
       id: charter.id,
       type: 'charter',
       client_name: charter.clientName,
@@ -481,9 +524,43 @@ export async function saveCharterAssignmentToSupabase(charter: CharterAssignment
       start_time: charter.startTime || '08:00 AM',
       return_time: charter.returnTime || '20:00 PM',
       notes: charter.notes || null,
-      passengers_count: 14
-    });
-    return !error;
+      passengers_count: 14,
+      folio: charter.folio,
+      total_amount: charter.totalAmount,
+      status: charter.status,
+      trip_id: charter.tripId || null,
+      driver_accepted: charter.driverAccepted ?? false,
+      driver_accepted_at: charter.driverAcceptedAt || null,
+      driver_rejection_reason: charter.driverRejectionReason || null,
+      layout_template_id: charter.layoutTemplateId || null,
+      price_per_seat: charter.pricePerSeat || 0,
+      is_public_booking_available: charter.isPublicBookingAvailable ?? true
+    };
+
+    const { error } = await supabase.from('charter_assignments').upsert(fullPayload);
+    if (error) {
+      const basePayload: any = {
+        id: charter.id,
+        type: 'charter',
+        client_name: charter.clientName,
+        service_title: `Tour a ${charter.destination}`,
+        origin: charter.origin,
+        destination: charter.destination,
+        vehicle_id: charter.vehicleId,
+        unit_number: charter.unitNumber,
+        driver_id: charter.driverId,
+        driver_name: charter.driverName,
+        start_date: charter.startDate,
+        end_date: charter.endDate,
+        start_time: charter.startTime || '08:00 AM',
+        return_time: charter.returnTime || '20:00 PM',
+        notes: charter.notes || null,
+        passengers_count: 14
+      };
+      const { error: fallbackError } = await supabase.from('charter_assignments').upsert(basePayload);
+      return !fallbackError;
+    }
+    return true;
   } catch {
     return false;
   }

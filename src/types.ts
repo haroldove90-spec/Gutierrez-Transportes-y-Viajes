@@ -365,3 +365,22 @@ export interface DriverAlarm {
   acknowledgedAt?: string;
   triggeredBy: string;
 }
+
+export interface DriverAcceptedEvent {
+  id: string;
+  driverId: string;
+  driverName: string;
+  driverAvatar?: string;
+  driverPhone?: string;
+  tripId?: string;
+  charterId?: string;
+  title: string;
+  origin: string;
+  destination: string;
+  unitNumber: string;
+  date: string;
+  departureTime: string;
+  acceptedAt: string;
+  type: 'route' | 'tour';
+  folio?: string;
+}

@@ -75,6 +75,13 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
     } catch {}
   }, [selectedDriverId]);
 
+  // If an urgent alarm or trip reminder is triggered for an operator, focus on that driver
+  useEffect(() => {
+    if (activeAlarm && activeAlarm.driverId && activeAlarm.driverId !== selectedDriverId) {
+      setSelectedDriverId(activeAlarm.driverId);
+    }
+  }, [activeAlarm]);
+
   const currentDriver = drivers.find(d => d.id === selectedDriverId) || drivers[0];
   const driverVehicle = vehicles.find(v => v.id === currentDriver.currentVehicleId) || vehicles[0];
   const assignedTrips = trips.filter(t => t.driverId === currentDriver.id);

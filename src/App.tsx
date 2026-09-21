@@ -12,12 +12,21 @@ import { FinancePortal } from './components/finance/FinancePortal';
 import { DirectorPortal } from './components/director/DirectorPortal';
 import { TicketModal } from './components/modals/TicketModal';
 import { QRScannerModal } from './components/modals/QRScannerModal';
+import { DriverAcceptedNotificationModal } from './components/modals/DriverAcceptedNotificationModal';
 import { SplashScreen } from './components/common/SplashScreen';
 import { Booking } from './types';
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 
 function AppContent() {
-  const { currentRole, setCurrentRole, notification, activeTicket, setActiveTicket } = useApp();
+  const { 
+    currentRole, 
+    setCurrentRole, 
+    notification, 
+    activeTicket, 
+    setActiveTicket,
+    activeDriverAcceptedNotification,
+    dismissDriverAcceptedNotification
+  } = useApp();
   
   // Splash Screen state on initial launch - ONLY show if not already logged in to a role
   const [showSplash, setShowSplash] = useState<boolean>(() => {
@@ -231,6 +240,24 @@ function AppContent() {
       {isScannerOpen && (
         <QRScannerModal
           onClose={() => setIsScannerOpen(false)}
+        />
+      )}
+
+      {/* Driver Accepted Trip / Tour Notification Modal for Admin & Operations */}
+      {activeDriverAcceptedNotification && (
+        <DriverAcceptedNotificationModal
+          notification={activeDriverAcceptedNotification}
+          onClose={dismissDriverAcceptedNotification}
+          onViewTrip={(notif) => {
+            dismissDriverAcceptedNotification();
+            if (notif.type === 'tour') {
+              setCurrentRole('director');
+              setActiveTab('tours');
+            } else {
+              setCurrentRole('director');
+              setActiveTab('agenda');
+            }
+          }}
         />
       )}
 

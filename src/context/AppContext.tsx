@@ -17,7 +17,8 @@ import {
   CharterAssignment,
   DriverAlarm,
   SeatLayoutTemplate,
-  SaleAlert
+  SaleAlert,
+  DriverAcceptedEvent
 } from '../types';
 import {
   DEFAULT_SEAT_TEMPLATES,
@@ -195,6 +196,10 @@ interface AppContextType {
   requestSoundAndNotificationPermission: () => Promise<boolean>;
   playAlarmSoundTest: () => void;
   stopAlarmSound: () => void;
+
+  // Real-time Driver Acceptance Notifications (Admin Pop-up)
+  activeDriverAcceptedNotification: DriverAcceptedEvent | null;
+  dismissDriverAcceptedNotification: () => void;
 
   notification: { message: string; type: 'success' | 'error' | 'info' | 'warning' } | null;
   showNotification: (message: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
@@ -653,7 +658,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (e) {}
   }, [driverAlarms]);
 
-  const [activeAlarm, setActiveAlarm] = useState<DriverAlarm | null>(null);
+  const [activeAlarm, setActiveAlarm] = useState<DriverAlarm | null>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_active_driver_alarm_v1');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  });
+
+  const [activeDriverAcceptedNotification, setActiveDriverAcceptedNotification] = useState<DriverAcceptedEvent | null>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_driver_accepted_notification_v1');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  });
+
+  const dismissDriverAcceptedNotification = () => {
+    setActiveDriverAcceptedNotification(null);
+    try {
+      localStorage.removeItem('gutierrez_driver_accepted_notification_v1');
+    } catch {}
+  };
   const [soundPermissionGranted, setSoundPermissionGranted] = useState<boolean>(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       return Notification.permission === 'granted';
@@ -782,6 +808,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (activeAlarm?.id === alarmId) {
       setActiveAlarm(null);
     }
+    try {
+      localStorage.removeItem('gutierrez_active_driver_alarm_v1');
+    } catch {}
     showNotification('¡Alarma apagada con éxito! Has confirmado asistencia y conocimiento de tu viaje.', 'success');
     addAuditEntry('ALARMA_DESPERTADOR_APAGADA', 'DriverAlarm', alarmId, undefined, 'Chofer apagó la alarma y confirmó asistencia.');
   };
@@ -791,6 +820,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       acknowledgeAlarm(activeAlarm.id);
     } else {
       stopAlarmSound();
+      try {
+        localStorage.removeItem('gutierrez_active_driver_alarm_v1');
+      } catch {}
     }
   };
 
@@ -802,18 +834,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const trip = trips.find(t => t.id === tripId) || trips.find(t => t.driverId === driverId);
-    const veh = vehicles.find(v => v.id === (trip?.vehicleId || driver.currentVehicleId));
+    const charter = charterAssignments.find(c => c.id === tripId || c.tripId === tripId || c.driverId === driverId);
+    const veh = vehicles.find(v => v.id === (trip?.vehicleId || charter?.vehicleId || driver.currentVehicleId));
+
+    const destination = trip?.destination || charter?.destination || 'tu destino';
+    const departureTime = trip?.departureTime || charter?.startTime || 'programada';
+    const routeDetails = trip?.routeTitle || (charter ? `🌴 Tour Turístico: ${charter.origin} ➔ ${charter.destination} (${charter.folio})` : `Viaje a ${destination}`);
+    const unitNumber = veh?.unitNumber || charter?.unitNumber || trip?.unitNumber || 'Unidad Asignada';
 
     const newAlarm: DriverAlarm = {
       id: `alarm-manual-${driverId}-${Date.now()}`,
       driverId,
-      tripId: trip?.id,
+      tripId: trip?.id || charter?.tripId || charter?.id,
       type: 'admin_manual_wake',
-      title: '🚨 DESPERTADOR URGENTE DE ADMINISTRACIÓN',
-      message: note || `La Administración ha activado esta alarma sonora en tu celular. ¡Despierta y confirma inmediatamente tu salida del viaje a ${trip?.destination || 'Ruta'}!`,
-      routeDetails: trip?.routeTitle,
-      unitNumber: veh?.unitNumber,
-      departureTime: trip?.departureTime,
+      title: '🚨 RECORDATORIO DE VIAJE DESDE ADMINISTRACIÓN',
+      message: note || `¡Atención! La Administración te recuerda presentarte puntual para tu viaje programado hacia ${destination} en la unidad ${unitNumber}. Salida: ${departureTime}. Por favor confirma de recibido.`,
+      routeDetails,
+      unitNumber,
+      departureTime,
       createdAt: new Date().toISOString(),
       status: 'active',
       triggeredBy: 'Administración / Despacho Central'
@@ -821,6 +859,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setDriverAlarms(prev => [newAlarm, ...prev]);
     setActiveAlarm(newAlarm);
+    try {
+      localStorage.setItem('gutierrez_active_driver_alarm_v1', JSON.stringify(newAlarm));
+    } catch {}
     startAlarmSound();
 
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
@@ -838,10 +879,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       'Driver',
       driverId,
       undefined,
-      `Alarma despertador manual enviada a ${driver.name} por Administración.`
+      `Alarma / Recordatorio de viaje enviado a ${driver.name} por Administración.`
     );
 
-    showNotification(`¡Alarma despertador enviada con sonido a ${driver.name}!`, 'success');
+    showNotification(`¡Recordatorio de viaje enviado con alarma flotante a ${driver.name}!`, 'success');
     return true;
   };
 
@@ -1478,6 +1519,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (acceptedTrip) {
       saveTripToSupabase(acceptedTrip).catch(() => {});
+
+      // Synchronize linked charter if this trip was generated for a tour
+      let linkedCharter: CharterAssignment | undefined;
+      setCharterAssignments(prev => prev.map(c => {
+        if (c.tripId === tripId || (acceptedTrip?.tourFolio && c.folio === acceptedTrip.tourFolio)) {
+          linkedCharter = {
+            ...c,
+            driverAccepted: true,
+            driverAcceptedAt: nowIso,
+            driverRejectionReason: undefined
+          };
+          return linkedCharter;
+        }
+        return c;
+      }));
+      if (linkedCharter) {
+        saveCharterAssignmentToSupabase(linkedCharter).catch(() => {});
+      }
+
+      const driverObj = drivers.find(d => d.id === acceptedTrip!.driverId);
+      const vehObj = vehicles.find(v => v.id === acceptedTrip!.vehicleId);
+      const notificationEvent: DriverAcceptedEvent = {
+        id: `accept-${Date.now()}`,
+        driverId: acceptedTrip.driverId,
+        driverName: driverObj?.name || 'Operador',
+        driverAvatar: driverObj?.avatar,
+        driverPhone: driverObj?.phone,
+        tripId: acceptedTrip.id,
+        charterId: linkedCharter?.id,
+        title: acceptedTrip.routeTitle,
+        origin: acceptedTrip.origin,
+        destination: acceptedTrip.destination,
+        unitNumber: vehObj?.unitNumber || 'Unidad Asignada',
+        date: acceptedTrip.date,
+        departureTime: acceptedTrip.departureTime,
+        acceptedAt: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+        type: acceptedTrip.isTour ? 'tour' : 'route',
+        folio: acceptedTrip.tourFolio || linkedCharter?.folio
+      };
+      setActiveDriverAcceptedNotification(notificationEvent);
+      try {
+        localStorage.setItem('gutierrez_driver_accepted_notification_v1', JSON.stringify(notificationEvent));
+      } catch {}
+
       addAuditEntry(
         'CHOFER_ACEPTO_VIAJE',
         'TripSchedule',
@@ -1485,7 +1570,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         'Pendiente de Aceptación',
         `El chofer confirmó y aceptó la asignación para la ruta ${acceptedTrip.routeTitle} (${acceptedTrip.date} ${acceptedTrip.departureTime})`
       );
-      showNotification(`¡Has aceptado el viaje a ${acceptedTrip.destination}! Se notificó a la Administración.`, 'success');
+      showNotification(`¡Has aceptado el viaje a ${acceptedTrip.destination}! Se notificó a la Administración en tiempo real.`, 'success');
       return true;
     }
     return false;
@@ -1537,6 +1622,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
 
     if (acceptedCharter) {
+      saveCharterAssignmentToSupabase(acceptedCharter).catch(() => {});
+
+      // Synchronize linked trip in trips table if it exists
+      let linkedTripUpdated: TripSchedule | undefined;
+      setTrips(prev => prev.map(t => {
+        if (t.id === acceptedCharter!.tripId || (acceptedCharter!.folio && t.tourFolio === acceptedCharter!.folio)) {
+          linkedTripUpdated = {
+            ...t,
+            driverAccepted: true,
+            driverAcceptedAt: nowIso,
+            driverRejectionReason: undefined
+          };
+          return linkedTripUpdated;
+        }
+        return t;
+      }));
+      if (linkedTripUpdated) {
+        saveTripToSupabase(linkedTripUpdated).catch(() => {});
+      }
+
+      const driverObj = drivers.find(d => d.id === acceptedCharter!.driverId);
+      const vehObj = vehicles.find(v => v.id === acceptedCharter!.vehicleId);
+      const notificationEvent: DriverAcceptedEvent = {
+        id: `accept-charter-${Date.now()}`,
+        driverId: acceptedCharter.driverId,
+        driverName: acceptedCharter.driverName || driverObj?.name || 'Operador',
+        driverAvatar: driverObj?.avatar,
+        driverPhone: acceptedCharter.driverPhone || driverObj?.phone,
+        tripId: acceptedCharter.tripId || linkedTripUpdated?.id,
+        charterId: acceptedCharter.id,
+        title: `Tour Especial a ${acceptedCharter.destination}`,
+        origin: acceptedCharter.origin,
+        destination: acceptedCharter.destination,
+        unitNumber: acceptedCharter.unitNumber || vehObj?.unitNumber || 'Unidad Asignada',
+        date: acceptedCharter.startDate,
+        departureTime: acceptedCharter.startTime || '08:00 AM',
+        acceptedAt: new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' }),
+        type: 'tour',
+        folio: acceptedCharter.folio
+      };
+      setActiveDriverAcceptedNotification(notificationEvent);
+      try {
+        localStorage.setItem('gutierrez_driver_accepted_notification_v1', JSON.stringify(notificationEvent));
+      } catch {}
+
       addAuditEntry(
         'CHOFER_ACEPTO_TOUR',
         'CharterAssignment',
@@ -1544,7 +1674,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         'Pendiente',
         `El operador aceptó el tour particular folio ${acceptedCharter.folio} con destino a ${acceptedCharter.destination}`
       );
-      showNotification(`¡Servicio Turístico a ${acceptedCharter.destination} aceptado y confirmado!`, 'success');
+      showNotification(`¡Servicio Turístico a ${acceptedCharter.destination} aceptado y confirmado! Se notificó a la Administración.`, 'success');
       return true;
     }
     return false;
@@ -2712,6 +2842,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         requestSoundAndNotificationPermission,
         playAlarmSoundTest,
         stopAlarmSound,
+        activeDriverAcceptedNotification,
+        dismissDriverAcceptedNotification,
         notification,
         showNotification,
         saleAlerts,
