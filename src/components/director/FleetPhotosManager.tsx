@@ -22,6 +22,7 @@ import {
   Briefcase
 } from 'lucide-react';
 import { RentalCar } from '../../types';
+import { VehiclePhotoUploader } from '../common/VehiclePhotoUploader';
 
 // Oficial Supabase storage vehicle photos uploaded by user
 export const OFFICIAL_VEHICLE_PHOTOS = [
@@ -561,117 +562,16 @@ export const FleetPhotosManager: React.FC = () => {
               </button>
             </div>
 
-            {/* Live Preview */}
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-wider text-neutral-700 flex items-center justify-between">
-                <span>Vista Previa de la Fotografía</span>
-                {inputUrl && !previewError && (
-                  <span className="text-emerald-600 text-[11px] font-bold flex items-center gap-1">
-                    <Check className="w-3.5 h-3.5" /> Enlace válido
-                  </span>
-                )}
-              </label>
-
-              <div className="relative h-56 w-full rounded-2xl bg-neutral-900 overflow-hidden border-2 border-neutral-300 flex items-center justify-center">
-                {inputUrl && !previewError ? (
-                  <img
-                    src={inputUrl}
-                    alt="Previsualización"
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover"
-                    onError={() => setPreviewError(true)}
-                  />
-                ) : (
-                  <div className="text-center p-6 text-neutral-400">
-                    <Car className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                    <p className="text-xs font-bold">
-                      {previewError ? 'Error al cargar imagen. Verifica la URL.' : 'Ingresa una URL o selecciona una foto abajo'}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Custom URL Input */}
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-wider text-neutral-700">
-                Enlace Directo de la Fotografía (URL)
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  value={inputUrl}
-                  onChange={(e) => {
-                    setInputUrl(e.target.value);
-                    setPreviewError(false);
-                  }}
-                  placeholder="https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/..."
-                  className="flex-1 px-4 py-3 rounded-xl border-2 border-neutral-300 text-xs md:text-sm font-mono focus:border-orange-500 focus:outline-none bg-neutral-50"
-                />
-                {inputUrl && (
-                  <button
-                    onClick={() => {
-                      setInputUrl('');
-                      setPreviewError(false);
-                    }}
-                    className="px-3 py-2 rounded-xl bg-neutral-200 hover:bg-neutral-300 text-neutral-700 font-bold text-xs"
-                  >
-                    Limpiar
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Quick Pick from Official Photos */}
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-wider text-neutral-700 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-orange-500" />
-                Fotografías Oficiales de Flotilla Supabase
-              </label>
-              
-              <div className="grid grid-cols-3 gap-2.5 max-h-48 overflow-y-auto p-1 bg-neutral-50 rounded-2xl border border-neutral-200">
-                {OFFICIAL_VEHICLE_PHOTOS.map((photo, idx) => {
-                  const isSelected = inputUrl === photo.url;
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        setInputUrl(photo.url);
-                        setPreviewError(false);
-                      }}
-                      className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col gap-1.5 relative ${
-                        isSelected
-                          ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-500/40'
-                          : 'border-neutral-200 hover:border-neutral-400 bg-white'
-                      }`}
-                    >
-                      <div className="h-14 w-full rounded-lg bg-neutral-900 overflow-hidden relative">
-                        <img
-                          src={photo.url}
-                          alt={photo.title}
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover"
-                        />
-                        {isSelected && (
-                          <div className="absolute inset-0 bg-orange-600/50 flex items-center justify-center">
-                            <Check className="w-5 h-5 text-white" />
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-[11px] font-black text-neutral-900 line-clamp-1 leading-tight">
-                          {photo.title}
-                        </p>
-                        <p className="text-[10px] text-neutral-500">
-                          {photo.category} • {photo.capacity} Pax
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            {/* Integrated Photo Uploader: Upload / URL / Presets */}
+            <VehiclePhotoUploader
+              value={inputUrl}
+              onChange={(url) => {
+                setInputUrl(url);
+                setPreviewError(false);
+              }}
+              label="Fotografía del Vehículo"
+              helperText="Sube una foto desde tu dispositivo móvil o computadora, pega una URL web o selecciona de la flotilla oficial."
+            />
 
             {/* Modal Actions */}
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-200">
@@ -864,34 +764,13 @@ export const FleetPhotosManager: React.FC = () => {
                 </div>
               </div>
 
-              {/* Photo selection for new car */}
-              <div>
-                <label className="text-xs font-black uppercase text-neutral-700 block mb-1">
-                  Fotografía de la Unidad (URL)
-                </label>
-                <input
-                  type="url"
-                  value={newCarForm.image}
-                  onChange={(e) => setNewCarForm({ ...newCarForm, image: e.target.value })}
-                  className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs font-mono mb-2"
-                />
-
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {OFFICIAL_VEHICLE_PHOTOS.map((p, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setNewCarForm({ ...newCarForm, image: p.url })}
-                      className={`shrink-0 w-20 h-14 rounded-lg overflow-hidden border-2 transition-all ${
-                        newCarForm.image === p.url ? 'border-orange-600 ring-2 ring-orange-500/40' : 'border-neutral-200'
-                      }`}
-                      title={p.title}
-                    >
-                      <img src={p.url} alt={p.title} className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Photo selection for new car with upload / URL / presets */}
+              <VehiclePhotoUploader
+                value={newCarForm.image}
+                onChange={(url) => setNewCarForm({ ...newCarForm, image: url })}
+                label="Fotografía del Auto / Van"
+                helperText="Sube una foto desde tu dispositivo móvil o PC, ingresa una URL web o elige de la flota oficial."
+              />
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200">
                 <button
@@ -1024,6 +903,14 @@ export const FleetPhotosManager: React.FC = () => {
                   />
                 </div>
               </div>
+
+              {/* Photo uploader for editing car */}
+              <VehiclePhotoUploader
+                value={editingCar.image}
+                onChange={(url) => setEditingCar({ ...editingCar, image: url })}
+                label="Fotografía del Vehículo"
+                helperText="Puedes actualizar la fotografía subiendo una nueva o cambiando el enlace."
+              />
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200">
                 <button

@@ -25,6 +25,7 @@ import { RouteLocationsManager } from '../common/RouteLocationsManager';
 import { RouteFaresManager } from '../common/RouteFaresManager';
 import { DriverAssignmentsSchedule } from './DriverAssignmentsSchedule';
 import { SeatLayoutBuilder } from '../director/SeatLayoutBuilder';
+import { VehiclePhotoUploader } from '../common/VehiclePhotoUploader';
 import { Vehicle, VehicleCategory } from '../../types';
 
 interface OperationsPortalProps {
@@ -809,51 +810,13 @@ export const OperationsPortal: React.FC<OperationsPortalProps> = ({ activeTab, s
                 </div>
               </div>
 
-              {/* Photo URL & Quick Presets */}
-              <div>
-                <label className="text-xs font-black text-neutral-700 uppercase tracking-wider block mb-1">
-                  Fotografía de la Unidad (URL Web)
-                </label>
-                <input
-                  type="url"
-                  value={vehicleForm.image}
-                  onChange={e => setVehicleForm({ ...vehicleForm, image: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl font-bold text-neutral-900 text-xs focus:border-orange-500 focus:bg-white transition-all outline-none font-mono"
-                />
-                
-                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                  <span className="text-[10px] text-neutral-400 font-bold uppercase">Presets:</span>
-                  <button
-                    type="button"
-                    onClick={() => setVehicleForm({ ...vehicleForm, image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/toyotahiacede15pasajeros.png' })}
-                    className="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-md font-bold cursor-pointer"
-                  >
-                    Van Hiace
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setVehicleForm({ ...vehicleForm, image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/vento.png' })}
-                    className="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-md font-bold cursor-pointer"
-                  >
-                    Auto Sedán
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setVehicleForm({ ...vehicleForm, image: 'https://lyjuhvqpvomryytxyztr.supabase.co/storage/v1/object/public/autos/l200mitsubishi.png' })}
-                    className="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-md font-bold cursor-pointer"
-                  >
-                    Camión L200
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setVehicleForm({ ...vehicleForm, image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop&q=60' })}
-                    className="text-[10px] bg-neutral-100 hover:bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-md font-bold cursor-pointer"
-                  >
-                    Autobús Foráneo
-                  </button>
-                </div>
-              </div>
+              {/* Photo Uploader: Upload from device / URL / Presets */}
+              <VehiclePhotoUploader
+                value={vehicleForm.image}
+                onChange={(url) => setVehicleForm({ ...vehicleForm, image: url })}
+                label="Fotografía de la Unidad"
+                helperText="Sube una foto desde tu equipo, pega un enlace web o elige del catálogo oficial."
+              />
 
               {/* Actions */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">

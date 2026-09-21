@@ -334,6 +334,25 @@ DROP POLICY IF EXISTS "Permitir modificacion de alarmas chofer" ON public.driver
 CREATE POLICY "Permitir lectura de alarmas chofer" ON public.driver_alarms FOR SELECT USING (true);
 CREATE POLICY "Permitir modificacion de alarmas chofer" ON public.driver_alarms FOR ALL USING (true);
 
+-- 13. ALMACENAMIENTO DE FOTOGRAFÍAS (SUPABASE STORAGE: BUCKET 'autos')
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('autos', 'autos', true, 52428800, ARRAY['image/png', 'image/jpeg', 'image/webp', 'image/jpg'])
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "Permitir lectura publica en autos" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir subida publica en autos" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir actualizacion publica en autos" ON storage.objects;
+DROP POLICY IF EXISTS "Permitir eliminacion publica en autos" ON storage.objects;
+
+CREATE POLICY "Permitir lectura publica en autos" ON storage.objects FOR SELECT USING (bucket_id = 'autos');
+CREATE POLICY "Permitir subida publica en autos" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'autos');
+CREATE POLICY "Permitir actualizacion publica en autos" ON storage.objects FOR UPDATE USING (bucket_id = 'autos') WITH CHECK (bucket_id = 'autos');
+CREATE POLICY "Permitir eliminacion publica en autos" ON storage.objects FOR DELETE USING (bucket_id = 'autos');
+
+-- Asegurar columna image en tabla vehicles y rental_cars
+ALTER TABLE public.vehicles ADD COLUMN IF NOT EXISTS image TEXT;
+ALTER TABLE public.rental_cars ADD COLUMN IF NOT EXISTS image TEXT;
+
 -- ============================================================================
 -- SEED DATA OFICIAL
 -- ============================================================================

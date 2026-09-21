@@ -668,3 +668,103 @@ export async function updateRentalCarAvailabilityInSupabase(id: string, availabl
   }
 }
 
+/**
+ * Compresses an image file client-side to ensure quick uploads and low footprint.
+ */
+export async function compressImage(file: File, maxWidth = 1280, maxHeight = 960, quality = 0.85): Promise<{ blob: Blob; dataUrl: string }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          return resolve({ blob: file, dataUrl: event.target?.result as string });
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve({ blob, dataUrl });
+            } else {
+              resolve({ blob: file, dataUrl });
+            }
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => reject(new Error('No se pudo procesar la imagen'));
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Uploads a vehicle photo: attempts Supabase Storage bucket 'autos',
+ * and seamlessly falls back to optimized Base64 dataUrl if Supabase Storage is not yet configured with policies.
+ */
+export async function uploadVehiclePhoto(file: File): Promise<{ url: string; storageType: 'cloud' | 'local'; error?: string }> {
+  try {
+    const { blob, dataUrl } = await compressImage(file);
+    
+    // Generate clean unique filename
+    const cleanName = file.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 7);
+    const fileName = `foto_${timestamp}_${random}_${cleanName.slice(0, 20)}.jpg`;
+
+    // Attempt upload to Supabase storage bucket 'autos'
+    const { data, error } = await supabase.storage
+      .from('autos')
+      .upload(fileName, blob, {
+        contentType: 'image/jpeg',
+        upsert: true
+      });
+
+    if (!error && data) {
+      const { data: publicUrlData } = supabase.storage.from('autos').getPublicUrl(fileName);
+      if (publicUrlData && publicUrlData.publicUrl) {
+        return {
+          url: publicUrlData.publicUrl,
+          storageType: 'cloud'
+        };
+      }
+    }
+
+    // If storage upload returned an error (e.g. bucket doesn't exist or RLS), fallback to the compressed data URL
+    return {
+      url: dataUrl,
+      storageType: 'local',
+      error: error?.message
+    };
+  } catch (err: any) {
+    return {
+      url: '',
+      storageType: 'local',
+      error: err?.message || 'Error al procesar la imagen'
+    };
+  }
+}
+
+
