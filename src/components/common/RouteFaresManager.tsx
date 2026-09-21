@@ -748,10 +748,10 @@ export const RouteFaresManager: React.FC = () => {
       {/* MODAL: CREAR / EDITAR TARIFA DE RUTA */}
       {/* ======================================================== */}
       {isFareModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border-2 border-neutral-300 overflow-hidden flex flex-col max-h-[92vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200 overflow-hidden">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl border-2 border-neutral-300 overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh]">
             {/* Modal Header */}
-            <div className="bg-neutral-900 text-white p-5 flex items-center justify-between">
+            <div className="bg-neutral-900 text-white p-4 sm:p-5 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
                 <DollarSign className="w-5 h-5 text-orange-500" />
                 <div>
@@ -772,7 +772,8 @@ export const RouteFaresManager: React.FC = () => {
             </div>
 
             {/* Modal Body */}
-            <form onSubmit={handleFareSubmit} className="p-6 overflow-y-auto space-y-4 text-xs md:text-sm">
+            <form onSubmit={handleFareSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0 text-xs md:text-sm">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
               {/* Origin & Destination */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -904,8 +905,10 @@ export const RouteFaresManager: React.FC = () => {
                 </label>
               </div>
 
+              </div>
+
               {/* Action Buttons */}
-              <div className="pt-3 border-t border-neutral-200 flex items-center justify-end gap-2">
+              <div className="p-4 sm:p-5 border-t border-neutral-200 flex items-center justify-end gap-2 shrink-0 bg-white">
                 <button
                   type="button"
                   onClick={() => setIsFareModalOpen(false)}

@@ -1871,9 +1871,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const approveException = (exceptionId: string) => {
-    setExceptions(prev => prev.map(e => e.id === exceptionId ? { ...e, status: 'approved', approvedBy: 'Dirección General' } : e));
-    addAuditEntry('APROBACION_EXCEPCION_DIRECCION', 'ExceptionRequest', exceptionId, 'pending', 'approved');
-    showNotification('Excepción autorizada por Dirección.', 'success');
+    setExceptions(prev => prev.map(e => e.id === exceptionId ? { ...e, status: 'approved', approvedBy: 'Admin' } : e));
+    addAuditEntry('APROBACION_EXCEPCION_ADMIN', 'ExceptionRequest', exceptionId, 'pending', 'approved');
+    showNotification('Excepción autorizada por Admin.', 'success');
   };
 
   // Route Stops CRUD Handlers

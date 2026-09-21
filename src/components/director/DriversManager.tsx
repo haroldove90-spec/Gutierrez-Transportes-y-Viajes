@@ -404,12 +404,12 @@ export const DriversManager: React.FC = () => {
 
       {/* Modal: Dar de Alta Chofer */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl border-2 border-neutral-200 space-y-5">
-            <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border-2 border-neutral-200">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral-100 shrink-0 bg-white">
               <div>
-                <h3 className="text-lg font-black text-neutral-900">Dar de Alta a Nuevo Chofer</h3>
-                <p className="text-xs text-neutral-500 font-medium">Registra los datos oficiales del operador</p>
+                <h3 className="text-base sm:text-lg font-black text-neutral-900">Dar de Alta a Nuevo Chofer</h3>
+                <p className="text-[11px] sm:text-xs text-neutral-500 font-medium">Registra los datos oficiales del operador</p>
               </div>
               <button 
                 onClick={() => setShowCreateModal(false)}
@@ -419,106 +419,108 @@ export const DriversManager: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateSubmit} className="space-y-3.5 text-xs md:text-sm">
-              <div>
-                <label className="block font-black text-neutral-700 mb-1">Nombre Completo del Operador</label>
-                <input 
-                  type="text"
-                  placeholder="Ej. Juan Carlos Ramos Solís"
-                  value={createForm.name}
-                  onChange={e => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
-                  required
-                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleCreateSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0 text-xs md:text-sm">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3.5">
                 <div>
-                  <label className="block font-black text-neutral-700 mb-1">Teléfono Móvil / WhatsApp</label>
+                  <label className="block font-black text-neutral-700 mb-1">Nombre Completo del Operador</label>
                   <input 
-                    type="tel"
-                    placeholder="+52 314 123 4567"
-                    value={createForm.phone}
-                    onChange={e => setCreateForm(prev => ({ ...prev, phone: e.target.value }))}
+                    type="text"
+                    placeholder="Ej. Juan Carlos Ramos Solís"
+                    value={createForm.name}
+                    onChange={e => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
                     required
                     className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
                   />
                 </div>
 
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Número de Licencia</label>
-                  <input 
-                    type="text"
-                    placeholder="LIC-FED-78291"
-                    value={createForm.licenseNumber}
-                    onChange={e => setCreateForm(prev => ({ ...prev, licenseNumber: e.target.value }))}
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 font-mono"
-                  />
-                </div>
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Teléfono Móvil / WhatsApp</label>
+                    <input 
+                      type="tel"
+                      placeholder="+52 314 123 4567"
+                      value={createForm.phone}
+                      onChange={e => setCreateForm(prev => ({ ...prev, phone: e.target.value }))}
+                      required
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    />
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Vigencia de Licencia</label>
-                  <input 
-                    type="date"
-                    value={createForm.licenseExpiry}
-                    onChange={e => setCreateForm(prev => ({ ...prev, licenseExpiry: e.target.value }))}
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Número de Licencia</label>
+                    <input 
+                      type="text"
+                      placeholder="LIC-FED-78291"
+                      value={createForm.licenseNumber}
+                      onChange={e => setCreateForm(prev => ({ ...prev, licenseNumber: e.target.value }))}
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Vigencia de Licencia</label>
+                    <input 
+                      type="date"
+                      value={createForm.licenseExpiry}
+                      onChange={e => setCreateForm(prev => ({ ...prev, licenseExpiry: e.target.value }))}
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Estatus Inicial</label>
+                    <select
+                      value={createForm.status}
+                      onChange={e => setCreateForm(prev => ({ ...prev, status: e.target.value as Driver['status'] }))}
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    >
+                      <option value="available">Disponible</option>
+                      <option value="resting">En Descanso</option>
+                      <option value="in_service">En Servicio</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block font-black text-neutral-700 mb-1">Estatus Inicial</label>
+                  <label className="block font-black text-neutral-700 mb-1">Asignar Unidad Inicial (Opcional)</label>
                   <select
-                    value={createForm.status}
-                    onChange={e => setCreateForm(prev => ({ ...prev, status: e.target.value as Driver['status'] }))}
+                    value={createForm.currentVehicleId}
+                    onChange={e => setCreateForm(prev => ({ ...prev, currentVehicleId: e.target.value }))}
                     className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
                   >
-                    <option value="available">Disponible</option>
-                    <option value="resting">En Descanso</option>
-                    <option value="in_service">En Servicio</option>
+                    <option value="">Sin unidad asignada (Disponible en base)</option>
+                    {vehicles.filter(v => v.status !== 'maintenance').map(v => (
+                      <option key={v.id} value={v.id}>
+                        {v.unitNumber} ({v.model} - {v.capacity} pl.)
+                      </option>
+                    ))}
                   </select>
+                </div>
+
+                <div>
+                  <label className="block font-black text-neutral-700 mb-1">URL Avatar / Foto de Perfil</label>
+                  <input 
+                    type="url"
+                    value={createForm.avatar}
+                    onChange={e => setCreateForm(prev => ({ ...prev, avatar: e.target.value }))}
+                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs"
+                  />
                 </div>
               </div>
 
-              <div>
-                <label className="block font-black text-neutral-700 mb-1">Asignar Unidad Inicial (Opcional)</label>
-                <select
-                  value={createForm.currentVehicleId}
-                  onChange={e => setCreateForm(prev => ({ ...prev, currentVehicleId: e.target.value }))}
-                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                >
-                  <option value="">Sin unidad asignada (Disponible en base)</option>
-                  {vehicles.filter(v => v.status !== 'maintenance').map(v => (
-                    <option key={v.id} value={v.id}>
-                      {v.unitNumber} ({v.model} - {v.capacity} pl.)
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-black text-neutral-700 mb-1">URL Avatar / Foto de Perfil</label>
-                <input 
-                  type="url"
-                  value={createForm.avatar}
-                  onChange={e => setCreateForm(prev => ({ ...prev, avatar: e.target.value }))}
-                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 text-xs"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
+              <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-neutral-100 shrink-0 bg-white">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-5 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl font-black cursor-pointer transition-colors"
+                  className="px-5 py-2.5 sm:py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl font-black cursor-pointer transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-black shadow-lg cursor-pointer transition-all active:scale-98"
+                  className="px-6 py-2.5 sm:py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-black shadow-lg cursor-pointer transition-all active:scale-98"
                 >
                   Guardar y Dar de Alta
                 </button>
@@ -530,12 +532,12 @@ export const DriversManager: React.FC = () => {
 
       {/* Modal: Editar Chofer */}
       {editingDriver && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl border-2 border-neutral-200 space-y-5">
-            <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border-2 border-neutral-200">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral-100 shrink-0 bg-white">
               <div>
-                <h3 className="text-lg font-black text-neutral-900">Editar Datos del Chofer</h3>
-                <p className="text-xs text-neutral-500 font-medium">{editingDriver.name}</p>
+                <h3 className="text-base sm:text-lg font-black text-neutral-900">Editar Datos del Chofer</h3>
+                <p className="text-[11px] sm:text-xs text-neutral-500 font-medium">{editingDriver.name}</p>
               </div>
               <button 
                 onClick={() => setEditingDriver(null)}
@@ -545,94 +547,96 @@ export const DriversManager: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleEditSubmit} className="space-y-3.5 text-xs md:text-sm">
-              <div>
-                <label className="block font-black text-neutral-700 mb-1">Nombre Completo</label>
-                <input 
-                  type="text"
-                  value={editingDriver.name}
-                  onChange={e => setEditingDriver(prev => prev ? ({ ...prev, name: e.target.value }) : null)}
-                  required
-                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleEditSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0 text-xs md:text-sm">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3.5">
                 <div>
-                  <label className="block font-black text-neutral-700 mb-1">Teléfono</label>
+                  <label className="block font-black text-neutral-700 mb-1">Nombre Completo</label>
                   <input 
-                    type="tel"
-                    value={editingDriver.phone}
-                    onChange={e => setEditingDriver(prev => prev ? ({ ...prev, phone: e.target.value }) : null)}
+                    type="text"
+                    value={editingDriver.name}
+                    onChange={e => setEditingDriver(prev => prev ? ({ ...prev, name: e.target.value }) : null)}
                     required
                     className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
                   />
                 </div>
 
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Licencia Federal</label>
-                  <input 
-                    type="text"
-                    value={editingDriver.licenseNumber || ''}
-                    onChange={e => setEditingDriver(prev => prev ? ({ ...prev, licenseNumber: e.target.value }) : null)}
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 font-mono"
-                  />
-                </div>
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Teléfono</label>
+                    <input 
+                      type="tel"
+                      value={editingDriver.phone}
+                      onChange={e => setEditingDriver(prev => prev ? ({ ...prev, phone: e.target.value }) : null)}
+                      required
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    />
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Vigencia</label>
-                  <input 
-                    type="date"
-                    value={editingDriver.licenseExpiry || ''}
-                    onChange={e => setEditingDriver(prev => prev ? ({ ...prev, licenseExpiry: e.target.value }) : null)}
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Licencia Federal</label>
+                    <input 
+                      type="text"
+                      value={editingDriver.licenseNumber || ''}
+                      onChange={e => setEditingDriver(prev => prev ? ({ ...prev, licenseNumber: e.target.value }) : null)}
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900 font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Vigencia</label>
+                    <input 
+                      type="date"
+                      value={editingDriver.licenseExpiry || ''}
+                      onChange={e => setEditingDriver(prev => prev ? ({ ...prev, licenseExpiry: e.target.value }) : null)}
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Estatus</label>
+                    <select
+                      value={editingDriver.status}
+                      onChange={e => setEditingDriver(prev => prev ? ({ ...prev, status: e.target.value as Driver['status'] }) : null)}
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    >
+                      <option value="available">Disponible</option>
+                      <option value="in_service">En Ruta Regular</option>
+                      <option value="charter_service">En Tour Turístico</option>
+                      <option value="resting">En Descanso</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block font-black text-neutral-700 mb-1">Estatus</label>
+                  <label className="block font-black text-neutral-700 mb-1">Unidad Asignada</label>
                   <select
-                    value={editingDriver.status}
-                    onChange={e => setEditingDriver(prev => prev ? ({ ...prev, status: e.target.value as Driver['status'] }) : null)}
+                    value={editingDriver.currentVehicleId || ''}
+                    onChange={e => setEditingDriver(prev => prev ? ({ ...prev, currentVehicleId: e.target.value }) : null)}
                     className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
                   >
-                    <option value="available">Disponible</option>
-                    <option value="in_service">En Ruta Regular</option>
-                    <option value="charter_service">En Tour Turístico</option>
-                    <option value="resting">En Descanso</option>
+                    <option value="">Sin unidad asignada</option>
+                    {vehicles.filter(v => v.status !== 'maintenance').map(v => (
+                      <option key={v.id} value={v.id}>
+                        {v.unitNumber} ({v.model} - {v.capacity} pl.)
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
 
-              <div>
-                <label className="block font-black text-neutral-700 mb-1">Unidad Asignada</label>
-                <select
-                  value={editingDriver.currentVehicleId || ''}
-                  onChange={e => setEditingDriver(prev => prev ? ({ ...prev, currentVehicleId: e.target.value }) : null)}
-                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                >
-                  <option value="">Sin unidad asignada</option>
-                  {vehicles.filter(v => v.status !== 'maintenance').map(v => (
-                    <option key={v.id} value={v.id}>
-                      {v.unitNumber} ({v.model} - {v.capacity} pl.)
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
+              <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-neutral-100 shrink-0 bg-white">
                 <button
                   type="button"
                   onClick={() => setEditingDriver(null)}
-                  className="px-5 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl font-black cursor-pointer transition-colors"
+                  className="px-5 py-2.5 sm:py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl font-black cursor-pointer transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-black shadow-lg cursor-pointer transition-all active:scale-98"
+                  className="px-6 py-2.5 sm:py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-black shadow-lg cursor-pointer transition-all active:scale-98"
                 >
                   Actualizar Datos
                 </button>
@@ -643,18 +647,18 @@ export const DriversManager: React.FC = () => {
       )}
       {/* Modal: Confirmación Baja de Chofer */}
       {driverToDelete && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-2 border-neutral-200 space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+          <div className="bg-white rounded-3xl max-w-md w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden p-6 shadow-2xl border-2 border-neutral-200 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shrink-0">
               <Trash2 className="w-6 h-6" />
             </div>
-            <div className="text-center">
-              <h3 className="text-lg font-black text-neutral-900">¿Dar de baja chofer?</h3>
+            <div className="text-center overflow-y-auto flex-1">
+              <h3 className="text-base sm:text-lg font-black text-neutral-900">¿Dar de baja chofer?</h3>
               <p className="text-xs text-neutral-500 mt-1">
                 ¿Estás seguro de eliminar a <span className="font-bold text-neutral-800">{driverToDelete.name}</span>? Se desvinculará de cualquier vehículo y se borrará definitivamente del sistema y de Supabase.
               </p>
             </div>
-            <div className="flex gap-3 pt-2">
+            <div className="flex gap-3 pt-2 shrink-0">
               <button
                 type="button"
                 onClick={() => setDriverToDelete(null)}

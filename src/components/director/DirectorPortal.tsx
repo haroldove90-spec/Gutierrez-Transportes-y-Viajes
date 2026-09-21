@@ -49,7 +49,7 @@ export const DirectorPortal: React.FC<DirectorPortalProps> = ({ activeTab, setAc
               <div className="flex items-center gap-3">
                 <Shield className="w-6 h-6 text-orange-500" />
                 <div>
-                  <h3 className="text-base md:text-lg font-black uppercase tracking-wider text-white">Dirección General</h3>
+                  <h3 className="text-base md:text-lg font-black uppercase tracking-wider text-white">Panel Admin</h3>
                   <p className="text-xs md:text-sm text-neutral-400">Supervisión Ejecutiva e Indicadores Financieros</p>
                 </div>
               </div>

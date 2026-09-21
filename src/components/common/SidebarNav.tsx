@@ -99,8 +99,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
         };
       case 'director':
         return {
-          title: 'Dirección General',
-          badge: 'Control Ejecutivo',
+          title: 'Admin',
+          badge: 'Control Total',
           items: [
             { id: 'executive', label: 'Métricas', icon: <TrendingUp className="w-5 h-5" /> },
             { id: 'agenda', label: 'Agenda', icon: <CalendarDays className="w-5 h-5" /> },

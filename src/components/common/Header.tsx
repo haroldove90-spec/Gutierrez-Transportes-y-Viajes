@@ -36,10 +36,10 @@ export const Header: React.FC<HeaderProps> = ({
   const roleOptions: { id: UserRole; label: string; icon: React.ReactNode }[] = [
     { id: 'pasajero', label: 'Pasajero / Cliente', icon: <User className="w-4 h-4 md:w-5 md:h-5 text-orange-400" /> },
     { id: 'conductor', label: 'Conductor / Operador', icon: <Truck className="w-4 h-4 md:w-5 md:h-5 text-white" /> },
+    { id: 'director', label: 'Admin', icon: <Shield className="w-4 h-4 md:w-5 md:h-5 text-white" /> },
     { id: 'secretaria', label: 'Secretaría / Mostrador', icon: <Briefcase className="w-4 h-4 md:w-5 md:h-5 text-emerald-400" /> },
     { id: 'operaciones', label: 'Operaciones y Taller', icon: <Compass className="w-4 h-4 md:w-5 md:h-5 text-amber-400" /> },
     { id: 'finanzas', label: 'Finanzas y Control', icon: <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-orange-300" /> },
-    { id: 'director', label: 'Dirección General', icon: <Shield className="w-4 h-4 md:w-5 md:h-5 text-white" /> },
   ];
 
   const currentRoleInfo = roleOptions.find(r => r.id === currentRole) || {

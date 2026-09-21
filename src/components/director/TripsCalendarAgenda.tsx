@@ -605,12 +605,12 @@ export const TripsCalendarAgenda: React.FC = () => {
 
       {/* Modal: Programar Corrida Regular */}
       {showAddTripModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl border-2 border-neutral-200 space-y-5">
-            <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border-2 border-neutral-200">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral-100 shrink-0 bg-white">
               <div>
-                <h3 className="text-lg font-black text-neutral-900">Programar Nueva Corrida</h3>
-                <p className="text-xs text-neutral-500 font-medium">Asigna unidad y chofer a la salida en calendario</p>
+                <h3 className="text-base sm:text-lg font-black text-neutral-900">Programar Nueva Corrida</h3>
+                <p className="text-[11px] sm:text-xs text-neutral-500 font-medium">Asigna unidad y chofer a la salida en calendario</p>
               </div>
               <button 
                 onClick={() => setShowAddTripModal(false)}
@@ -620,207 +620,209 @@ export const TripsCalendarAgenda: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateTripSubmit} className="space-y-3.5 text-xs md:text-sm">
-              <div>
-                <label className="block font-black text-neutral-700 mb-1">Título de la Ruta</label>
-                <input 
-                  type="text"
-                  value={newTripForm.routeTitle}
-                  onChange={e => setNewTripForm(prev => ({ ...prev, routeTitle: e.target.value }))}
-                  required
-                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleCreateTripSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0 text-xs md:text-sm">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3.5">
                 <div>
-                  <label className="block font-black text-neutral-700 mb-1">Origen</label>
+                  <label className="block font-black text-neutral-700 mb-1">Título de la Ruta</label>
                   <input 
                     type="text"
-                    value={newTripForm.origin}
-                    onChange={e => setNewTripForm(prev => ({ ...prev, origin: e.target.value }))}
+                    value={newTripForm.routeTitle}
+                    onChange={e => setNewTripForm(prev => ({ ...prev, routeTitle: e.target.value }))}
                     required
                     className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
                   />
-                </div>
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Destino</label>
-                  <input 
-                    type="text"
-                    value={newTripForm.destination}
-                    onChange={e => setNewTripForm(prev => ({ ...prev, destination: e.target.value }))}
-                    required
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
-                </div>
-              </div>
-
-              {/* Horario y Fechas de Inicio y Terminación del Viaje */}
-              <div className="p-3.5 bg-orange-50/60 rounded-2xl border-2 border-orange-200/80 space-y-3">
-                <div className="flex items-center gap-1.5 text-orange-800">
-                  <CalendarIcon className="w-4 h-4 text-orange-600" />
-                  <span className="text-xs font-black uppercase tracking-wider">Fechas y Horarios del Viaje</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* Inicio de Viaje */}
-                  <div className="bg-white p-3 rounded-xl border border-orange-200 space-y-2">
-                    <span className="text-xs font-black text-neutral-800 uppercase flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-orange-600" /> Inicio de Viaje
-                    </span>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Fecha de Inicio</label>
-                        <input 
-                          type="date"
-                          value={newTripForm.date}
-                          onChange={e => setNewTripForm(prev => ({ ...prev, date: e.target.value }))}
-                          required
-                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Hora de Inicio</label>
-                        <input 
-                          type="text"
-                          value={newTripForm.departureTime}
-                          onChange={e => setNewTripForm(prev => ({ ...prev, departureTime: e.target.value }))}
-                          placeholder="07:00 AM"
-                          required
-                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
-                        />
-                      </div>
-                    </div>
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Origen</label>
+                    <input 
+                      type="text"
+                      value={newTripForm.origin}
+                      onChange={e => setNewTripForm(prev => ({ ...prev, origin: e.target.value }))}
+                      required
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Destino</label>
+                    <input 
+                      type="text"
+                      value={newTripForm.destination}
+                      onChange={e => setNewTripForm(prev => ({ ...prev, destination: e.target.value }))}
+                      required
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    />
+                  </div>
+                </div>
+
+                {/* Horario y Fechas de Inicio y Terminación del Viaje */}
+                <div className="p-3.5 bg-orange-50/60 rounded-2xl border-2 border-orange-200/80 space-y-3">
+                  <div className="flex items-center gap-1.5 text-orange-800">
+                    <CalendarIcon className="w-4 h-4 text-orange-600" />
+                    <span className="text-xs font-black uppercase tracking-wider">Fechas y Horarios del Viaje</span>
                   </div>
 
-                  {/* Terminación de Viaje */}
-                  <div className="bg-white p-3 rounded-xl border border-orange-200 space-y-2">
-                    <span className="text-xs font-black text-neutral-800 uppercase flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Terminación de Viaje
-                    </span>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Fecha de Fin</label>
-                        <input 
-                          type="date"
-                          value={newTripForm.endDate || newTripForm.date}
-                          onChange={e => setNewTripForm(prev => ({ ...prev, endDate: e.target.value }))}
-                          required
-                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
-                        />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Inicio de Viaje */}
+                    <div className="bg-white p-3 rounded-xl border border-orange-200 space-y-2">
+                      <span className="text-xs font-black text-neutral-800 uppercase flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5 text-orange-600" /> Inicio de Viaje
+                      </span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Fecha de Inicio</label>
+                          <input 
+                            type="date"
+                            value={newTripForm.date}
+                            onChange={e => setNewTripForm(prev => ({ ...prev, date: e.target.value }))}
+                            required
+                            className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Hora de Inicio</label>
+                          <input 
+                            type="text"
+                            value={newTripForm.departureTime}
+                            onChange={e => setNewTripForm(prev => ({ ...prev, departureTime: e.target.value }))}
+                            placeholder="07:00 AM"
+                            required
+                            className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Hora de Fin</label>
-                        <input 
-                          type="text"
-                          value={newTripForm.estimatedArrival}
-                          onChange={e => setNewTripForm(prev => ({ ...prev, estimatedArrival: e.target.value }))}
-                          placeholder="11:00 AM"
-                          required
-                          className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
-                        />
+                    </div>
+
+                    {/* Terminación de Viaje */}
+                    <div className="bg-white p-3 rounded-xl border border-orange-200 space-y-2">
+                      <span className="text-xs font-black text-neutral-800 uppercase flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Terminación de Viaje
+                      </span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Fecha de Fin</label>
+                          <input 
+                            type="date"
+                            value={newTripForm.endDate || newTripForm.date}
+                            onChange={e => setNewTripForm(prev => ({ ...prev, endDate: e.target.value }))}
+                            required
+                            className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black text-neutral-500 uppercase mb-1">Hora de Fin</label>
+                          <input 
+                            type="text"
+                            value={newTripForm.estimatedArrival}
+                            onChange={e => setNewTripForm(prev => ({ ...prev, estimatedArrival: e.target.value }))}
+                            placeholder="11:00 AM"
+                            required
+                            className="w-full p-2 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-xs text-neutral-900"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block font-black text-neutral-700 mb-1">Tarifa Base por Boleto ($ MXN)</label>
-                <input 
-                  type="number"
-                  value={newTripForm.basePrice}
-                  onChange={e => setNewTripForm(prev => ({ ...prev, basePrice: Number(e.target.value) }))}
-                  required
-                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-black text-neutral-700 mb-1">Unidad Flotilla</label>
+                  <label className="block font-black text-neutral-700 mb-1">Tarifa Base por Boleto ($ MXN)</label>
+                  <input 
+                    type="number"
+                    value={newTripForm.basePrice}
+                    onChange={e => setNewTripForm(prev => ({ ...prev, basePrice: Number(e.target.value) }))}
+                    required
+                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Unidad Flotilla</label>
+                    <select
+                      value={newTripForm.vehicleId}
+                      onChange={e => {
+                        const vId = e.target.value;
+                        const selectedV = vehicles.find(v => v.id === vId);
+                        const matchingTemplate = seatTemplates.find(t => t.id === selectedV?.layoutTemplateId)
+                          || seatTemplates.find(t => t.totalSeats === selectedV?.capacity)
+                          || seatTemplates[0];
+                        setNewTripForm(prev => ({ 
+                          ...prev, 
+                          vehicleId: vId,
+                          layoutTemplateId: matchingTemplate?.id || prev.layoutTemplateId
+                        }));
+                      }}
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                      required
+                    >
+                      {vehicles.length === 0 ? (
+                        <option value="">-- No hay camionetas registradas --</option>
+                      ) : (
+                        vehicles.filter(v => v.status !== 'maintenance').map(v => (
+                          <option key={v.id} value={v.id}>
+                            {v.unitNumber} ({v.model} - {v.capacity} pl.)
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Diagrama de Asientos</label>
+                    <select
+                      value={newTripForm.layoutTemplateId}
+                      onChange={e => setNewTripForm(prev => ({ ...prev, layoutTemplateId: e.target.value }))}
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                      required
+                    >
+                      {seatTemplates.map(tmpl => (
+                        <option key={tmpl.id} value={tmpl.id}>
+                          {tmpl.name} ({tmpl.totalSeats} asientos • {tmpl.vehicleType.toUpperCase()})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-black text-neutral-700 mb-1">Chofer Asignado</label>
                   <select
-                    value={newTripForm.vehicleId}
-                    onChange={e => {
-                      const vId = e.target.value;
-                      const selectedV = vehicles.find(v => v.id === vId);
-                      const matchingTemplate = seatTemplates.find(t => t.id === selectedV?.layoutTemplateId)
-                        || seatTemplates.find(t => t.totalSeats === selectedV?.capacity)
-                        || seatTemplates[0];
-                      setNewTripForm(prev => ({ 
-                        ...prev, 
-                        vehicleId: vId,
-                        layoutTemplateId: matchingTemplate?.id || prev.layoutTemplateId
-                      }));
-                    }}
+                    value={newTripForm.driverId}
+                    onChange={e => setNewTripForm(prev => ({ ...prev, driverId: e.target.value }))}
                     className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
                     required
                   >
-                    {vehicles.length === 0 ? (
-                      <option value="">-- No hay camionetas registradas --</option>
+                    {drivers.length === 0 ? (
+                      <option value="">-- No hay choferes registrados --</option>
                     ) : (
-                      vehicles.filter(v => v.status !== 'maintenance').map(v => (
-                        <option key={v.id} value={v.id}>
-                          {v.unitNumber} ({v.model} - {v.capacity} pl.)
+                      drivers.map(d => (
+                        <option key={d.id} value={d.id}>
+                          {d.name} {d.status === 'available' ? '(✓ Disponible)' : `(${d.status})`}
                         </option>
                       ))
                     )}
                   </select>
-                </div>
-
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Diagrama de Asientos</label>
-                  <select
-                    value={newTripForm.layoutTemplateId}
-                    onChange={e => setNewTripForm(prev => ({ ...prev, layoutTemplateId: e.target.value }))}
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                    required
-                  >
-                    {seatTemplates.map(tmpl => (
-                      <option key={tmpl.id} value={tmpl.id}>
-                        {tmpl.name} ({tmpl.totalSeats} asientos • {tmpl.vehicleType.toUpperCase()})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-black text-neutral-700 mb-1">Chofer Asignado</label>
-                <select
-                  value={newTripForm.driverId}
-                  onChange={e => setNewTripForm(prev => ({ ...prev, driverId: e.target.value }))}
-                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  required
-                >
-                  {drivers.length === 0 ? (
-                    <option value="">-- No hay choferes registrados --</option>
-                  ) : (
-                    drivers.map(d => (
-                      <option key={d.id} value={d.id}>
-                        {d.name} {d.status === 'available' ? '(✓ Disponible)' : `(${d.status})`}
-                      </option>
-                    ))
+                  {drivers.length === 0 && (
+                    <p className="mt-1 text-[11px] font-bold text-rose-600">
+                      ⚠️ No hay choferes registrados en el sistema. Registra uno en el módulo "Choferes".
+                    </p>
                   )}
-                </select>
-                {drivers.length === 0 && (
-                  <p className="mt-1 text-[11px] font-bold text-rose-600">
-                    ⚠️ No hay choferes registrados en el sistema. Registra uno en el módulo "Choferes".
-                  </p>
-                )}
+                </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
+              <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-neutral-100 shrink-0 bg-white">
                 <button
                   type="button"
                   onClick={() => setShowAddTripModal(false)}
-                  className="px-5 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl font-black cursor-pointer transition-colors"
+                  className="px-5 py-2.5 sm:py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl font-black cursor-pointer transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-black shadow-lg cursor-pointer transition-all active:scale-98"
+                  className="px-6 py-2.5 sm:py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-black shadow-lg cursor-pointer transition-all active:scale-98"
                 >
                   Guardar en Agenda
                 </button>
@@ -832,15 +834,15 @@ export const TripsCalendarAgenda: React.FC = () => {
 
       {/* Modal: View Trip Seat Diagram (🟢 Libres vs 🔴 Ocupados) */}
       {viewingDiagramTrip && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-3xl p-6 md:p-8 shadow-2xl border border-neutral-200 max-h-[90vh] overflow-y-auto space-y-4">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+          <div className="bg-white w-full max-w-xl rounded-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border border-neutral-200">
+            <div className="flex items-center justify-between border-b border-neutral-100 p-4 sm:p-6 shrink-0 bg-white">
               <div>
-                <span className="text-xs font-black uppercase tracking-wider text-orange-600">Diagrama Operativo de Asientos</span>
-                <h3 className="text-lg font-black text-neutral-900">
+                <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-orange-600">Diagrama Operativo de Asientos</span>
+                <h3 className="text-base sm:text-lg font-black text-neutral-900">
                   {viewingDiagramTrip.routeTitle}
                 </h3>
-                <p className="text-xs text-neutral-500 font-medium">
+                <p className="text-[11px] sm:text-xs text-neutral-500 font-medium">
                   {viewingDiagramTrip.date} • Salida: {viewingDiagramTrip.departureTime}
                 </p>
               </div>
@@ -853,15 +855,17 @@ export const TripsCalendarAgenda: React.FC = () => {
             </div>
 
             {/* Seat Diagram Viewer */}
-            <SeatDiagramViewer
-              seats={viewingDiagramTrip.seats}
-              isAdminView={true}
-              interactive={false}
-              title={`Estado de Ocupación en Vivo`}
-              subtitle={`🟢 Verde = Asientos Disponibles | 🔴 Rojo = Asientos Ocupados/Vendidos`}
-            />
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
+              <SeatDiagramViewer
+                seats={viewingDiagramTrip.seats}
+                isAdminView={true}
+                interactive={false}
+                title={`Estado de Ocupación en Vivo`}
+                subtitle={`🟢 Verde = Asientos Disponibles | 🔴 Rojo = Asientos Ocupados/Vendidos`}
+              />
+            </div>
 
-            <div className="pt-3 border-t border-neutral-100 flex justify-end">
+            <div className="p-4 sm:p-6 border-t border-neutral-100 flex justify-end shrink-0 bg-white">
               <button
                 type="button"
                 onClick={() => setViewingDiagramTrip(null)}

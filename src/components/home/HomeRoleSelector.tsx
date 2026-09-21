@@ -19,38 +19,50 @@ interface HomeRoleSelectorProps {
 
 export const HomeRoleSelector: React.FC<HomeRoleSelectorProps> = ({ onSelectRole }) => {
   const { setShowSupabaseModal, supabaseConnected } = useApp();
-  const roles: { id: UserRole; name: string; icon: React.ReactNode }[] = [
+  
+  // Roles activos en el sistema. Los módulos 'secretaria', 'operaciones' y 'finanzas' 
+  // están desactivados temporalmente por solicitud del usuario y listos para reactivarse cuando sea requerido.
+  const roles: { id: UserRole; name: string; icon: React.ReactNode; active: boolean }[] = [
     {
       id: 'pasajero',
       name: 'Pasajero / Cliente',
       icon: <User className="w-10 h-10 md:w-12 md:h-12 text-orange-600" />,
+      active: true,
     },
     {
       id: 'conductor',
       name: 'Conductor / Operador',
       icon: <Truck className="w-10 h-10 md:w-12 md:h-12 text-black" />,
+      active: true,
     },
+    {
+      id: 'director',
+      name: 'Admin',
+      icon: <ShieldCheck className="w-10 h-10 md:w-12 md:h-12 text-orange-600" />,
+      active: true,
+    },
+    // Módulos desactivados temporalmente:
     {
       id: 'secretaria',
       name: 'Secretaría / Mostrador',
       icon: <Briefcase className="w-10 h-10 md:w-12 md:h-12 text-orange-600" />,
+      active: false,
     },
     {
       id: 'operaciones',
       name: 'Operaciones y Taller',
       icon: <Compass className="w-10 h-10 md:w-12 md:h-12 text-black" />,
+      active: false,
     },
     {
       id: 'finanzas',
       name: 'Finanzas y Control',
       icon: <DollarSign className="w-10 h-10 md:w-12 md:h-12 text-orange-600" />,
-    },
-    {
-      id: 'director',
-      name: 'Dirección General',
-      icon: <ShieldCheck className="w-10 h-10 md:w-12 md:h-12 text-black" />,
+      active: false,
     },
   ];
+
+  const activeRoles = roles.filter(r => r.active);
 
   return (
     <div className="flex-1 w-full min-h-screen bg-white text-neutral-900 flex flex-col items-center justify-between p-4 sm:p-8 md:p-12 overflow-y-auto">
@@ -65,13 +77,13 @@ export const HomeRoleSelector: React.FC<HomeRoleSelectorProps> = ({ onSelectRole
           </p>
         </div>
 
-        {/* 2-Column Grid on Mobile, 2 or 3 Columns on Tablet/Desktop with larger cards */}
-        <div className="w-full grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-10">
-          {roles.map((role) => (
+        {/* 3-Column Grid on Tablet/Desktop, 1 or 2 on Mobile */}
+        <div className="w-full max-w-3xl grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-10">
+          {activeRoles.map((role) => (
             <button
               key={role.id}
               onClick={() => onSelectRole(role.id)}
-              className="group flex flex-col items-center justify-center p-5 sm:p-7 rounded-3xl bg-neutral-50 hover:bg-orange-50 border-2 border-neutral-200 hover:border-orange-600 transition-all duration-200 shadow-sm hover:shadow-xl hover:shadow-orange-600/15 active:scale-95 text-center cursor-pointer min-h-[150px] sm:min-h-[180px]"
+              className="group flex flex-col items-center justify-center p-6 sm:p-8 rounded-3xl bg-neutral-50 hover:bg-orange-50 border-2 border-neutral-200 hover:border-orange-600 transition-all duration-200 shadow-sm hover:shadow-xl hover:shadow-orange-600/15 active:scale-95 text-center cursor-pointer min-h-[170px] sm:min-h-[200px]"
             >
               {/* Icon Centered on Top */}
               <div className="p-4 rounded-2xl bg-white border-2 border-neutral-200 group-hover:border-orange-500 group-hover:bg-orange-600/10 transition-all mb-4 group-hover:scale-110 shadow-xs">
@@ -79,7 +91,7 @@ export const HomeRoleSelector: React.FC<HomeRoleSelectorProps> = ({ onSelectRole
               </div>
 
               {/* Role Name Underneath */}
-              <span className="font-black text-sm sm:text-base md:text-lg text-neutral-900 group-hover:text-orange-600 transition-colors leading-snug">
+              <span className="font-black text-base sm:text-lg text-neutral-900 group-hover:text-orange-600 transition-colors leading-snug">
                 {role.name}
               </span>
             </button>

@@ -515,8 +515,8 @@ export const RouteLocationsManager: React.FC = () => {
 
       {/* MODAL: Agregar / Editar Ubicación */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg my-auto bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-neutral-300 flex flex-col max-h-[92dvh]">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg my-auto bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-neutral-300 flex flex-col max-h-[92dvh] sm:max-h-[88vh]">
             {/* Modal Header */}
             <div className="bg-black px-5 py-4 text-white flex items-center justify-between border-b border-neutral-800 shrink-0">
               <div className="flex items-center gap-2.5">
@@ -537,7 +537,8 @@ export const RouteLocationsManager: React.FC = () => {
             </div>
 
             {/* Modal Body */}
-            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 text-xs md:text-sm">
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0 text-xs md:text-sm">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
               {/* Name */}
               <div>
                 <label className="block text-xs font-black text-neutral-700 uppercase tracking-wider mb-1">
@@ -772,18 +773,20 @@ export const RouteLocationsManager: React.FC = () => {
                 />
               </div>
 
+              </div>
+
               {/* Action Buttons */}
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-neutral-200">
+              <div className="p-4 sm:p-5 flex items-center justify-end gap-2 border-t border-neutral-200 shrink-0 bg-white">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-3 rounded-2xl font-black text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+                  className="px-5 py-2.5 sm:py-3 rounded-2xl font-black text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-orange-600 hover:bg-orange-700 active:scale-95 text-white rounded-2xl font-black shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                  className="px-6 py-2.5 sm:py-3 bg-orange-600 hover:bg-orange-700 active:scale-95 text-white rounded-2xl font-black shadow-lg transition-all cursor-pointer flex items-center gap-2"
                 >
                   <Check className="w-4 h-4" />
                   <span>{editingStop ? 'Guardar Cambios' : 'Registrar Ubicación'}</span>

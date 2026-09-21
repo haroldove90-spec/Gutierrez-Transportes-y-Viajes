@@ -431,12 +431,12 @@ export const ToursManager: React.FC = () => {
 
       {/* Modal: Registrar Nuevo Tour */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl border-2 border-neutral-200 space-y-5 max-h-[90vh] overflow-y-auto no-scrollbar">
-            <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+          <div className="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl border-2 border-neutral-200">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-neutral-100 shrink-0 bg-white">
               <div>
-                <h3 className="text-lg font-black text-neutral-900">Registrar Nuevo Tour o Viaje Especial</h3>
-                <p className="text-xs text-neutral-500 font-medium">Contrato particular con bloqueo de unidad y asignación de chofer</p>
+                <h3 className="text-base sm:text-lg font-black text-neutral-900">Registrar Nuevo Tour o Viaje Especial</h3>
+                <p className="text-[11px] sm:text-xs text-neutral-500 font-medium">Contrato particular con bloqueo de unidad y asignación de chofer</p>
               </div>
               <button 
                 onClick={() => setShowCreateModal(false)}
@@ -446,56 +446,57 @@ export const ToursManager: React.FC = () => {
               </button>
             </div>
 
-            <form onSubmit={handleCreateSubmit} className="space-y-4 text-xs md:text-sm">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Nombre del Cliente o Grupo</label>
-                  <input 
-                    type="text"
-                    placeholder="Ej. Familia Martínez / Excursión Mazamitla"
-                    value={form.clientName}
-                    onChange={e => setForm(prev => ({ ...prev, clientName: e.target.value }))}
-                    required
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
+            <form onSubmit={handleCreateSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0 text-xs md:text-sm">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Nombre del Cliente o Grupo</label>
+                    <input 
+                      type="text"
+                      placeholder="Ej. Familia Martínez / Excursión Mazamitla"
+                      value={form.clientName}
+                      onChange={e => setForm(prev => ({ ...prev, clientName: e.target.value }))}
+                      required
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Teléfono Móvil del Cliente</label>
+                    <input 
+                      type="tel"
+                      placeholder="+52 314 987 6543"
+                      value={form.clientPhone}
+                      onChange={e => setForm(prev => ({ ...prev, clientPhone: e.target.value }))}
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Teléfono Móvil del Cliente</label>
-                  <input 
-                    type="tel"
-                    placeholder="+52 314 987 6543"
-                    value={form.clientPhone}
-                    onChange={e => setForm(prev => ({ ...prev, clientPhone: e.target.value }))}
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
-                </div>
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Origen</label>
+                    <input 
+                      type="text"
+                      value={form.origin}
+                      onChange={e => setForm(prev => ({ ...prev, origin: e.target.value }))}
+                      required
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    />
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Origen</label>
-                  <input 
-                    type="text"
-                    value={form.origin}
-                    onChange={e => setForm(prev => ({ ...prev, origin: e.target.value }))}
-                    required
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
+                  <div>
+                    <label className="block font-black text-neutral-700 mb-1">Destino del Tour</label>
+                    <input 
+                      type="text"
+                      placeholder="Ej. Mazamitla / Puerto Vallarta / Tapalpa"
+                      value={form.destination}
+                      onChange={e => setForm(prev => ({ ...prev, destination: e.target.value }))}
+                      required
+                      className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
+                    />
+                  </div>
                 </div>
-
-                <div>
-                  <label className="block font-black text-neutral-700 mb-1">Destino del Tour</label>
-                  <input 
-                    type="text"
-                    placeholder="Ej. Mazamitla / Puerto Vallarta / Tapalpa"
-                    value={form.destination}
-                    onChange={e => setForm(prev => ({ ...prev, destination: e.target.value }))}
-                    required
-                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-bold text-neutral-900"
-                  />
-                </div>
-              </div>
 
               {/* Horario y Fechas de Inicio y Terminación del Viaje */}
               <div className="p-3.5 bg-purple-50/60 rounded-2xl border-2 border-purple-200/80 space-y-3">
@@ -678,17 +679,19 @@ export const ToursManager: React.FC = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
+              </div>
+
+              <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-neutral-100 shrink-0 bg-white">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-5 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl font-black cursor-pointer transition-colors"
+                  className="px-5 py-2.5 sm:py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl font-black cursor-pointer transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black shadow-lg cursor-pointer transition-all active:scale-98"
+                  className="px-6 py-2.5 sm:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-black shadow-lg cursor-pointer transition-all active:scale-98"
                 >
                   Registrar Tour & Asignar
                 </button>

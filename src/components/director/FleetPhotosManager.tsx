@@ -536,11 +536,11 @@ export const FleetPhotosManager: React.FC = () => {
       {/* MODAL 1: CAMBIAR FOTO DE VEHÍCULO */}
       {/* ========================================================================= */}
       {editingPhotoCar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl border-2 border-neutral-800 shadow-2xl max-w-2xl w-full p-6 md:p-8 space-y-6 my-8 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4 overflow-hidden">
+          <div className="bg-white rounded-3xl border-2 border-neutral-800 shadow-2xl max-w-2xl w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-neutral-200 pb-4">
+            <div className="flex items-center justify-between border-b border-neutral-200 p-4 sm:p-6 shrink-0 bg-white">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center">
                   <Camera className="w-5 h-5" />
@@ -556,29 +556,31 @@ export const FleetPhotosManager: React.FC = () => {
               </div>
               <button
                 onClick={() => setEditingPhotoCar(null)}
-                className="p-2 rounded-xl text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors"
+                className="p-2 rounded-xl text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Integrated Photo Uploader: Upload / URL / Presets */}
-            <VehiclePhotoUploader
-              value={inputUrl}
-              onChange={(url) => {
-                setInputUrl(url);
-                setPreviewError(false);
-              }}
-              label="Fotografía del Vehículo"
-              helperText="Sube una foto desde tu dispositivo móvil o computadora, pega una URL web o selecciona de la flotilla oficial."
-            />
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
+              <VehiclePhotoUploader
+                value={inputUrl}
+                onChange={(url) => {
+                  setInputUrl(url);
+                  setPreviewError(false);
+                }}
+                label="Fotografía del Vehículo"
+                helperText="Sube una foto desde tu dispositivo móvil o computadora, pega una URL web o selecciona de la flotilla oficial."
+              />
+            </div>
 
             {/* Modal Actions */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-neutral-200">
+            <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-neutral-200 shrink-0 bg-white">
               <button
                 type="button"
                 onClick={() => setEditingPhotoCar(null)}
-                className="px-5 py-2.5 rounded-xl border border-neutral-300 hover:bg-neutral-100 font-bold text-xs md:text-sm text-neutral-700"
+                className="px-5 py-2.5 rounded-xl border border-neutral-300 hover:bg-neutral-100 font-bold text-xs md:text-sm text-neutral-700 cursor-pointer"
               >
                 Cancelar
               </button>
@@ -599,10 +601,10 @@ export const FleetPhotosManager: React.FC = () => {
       {/* MODAL 2: AGREGAR NUEVO AUTO O VAN AL CATÁLOGO */}
       {/* ========================================================================= */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl border-2 border-neutral-800 shadow-2xl max-w-2xl w-full p-6 md:p-8 space-y-6 my-8 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4 overflow-hidden">
+          <div className="bg-white rounded-3xl border-2 border-neutral-800 shadow-2xl max-w-2xl w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             
-            <div className="flex items-center justify-between border-b border-neutral-200 pb-4">
+            <div className="flex items-center justify-between border-b border-neutral-200 p-4 sm:p-6 shrink-0 bg-white">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center">
                   <Plus className="w-6 h-6 stroke-[3]" />
@@ -618,13 +620,14 @@ export const FleetPhotosManager: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-2 rounded-xl text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors"
+                className="p-2 rounded-xl text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveNewCar} className="space-y-4">
+            <form onSubmit={handleSaveNewCar} className="flex flex-col flex-1 overflow-hidden min-h-0">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-black uppercase text-neutral-700 block mb-1">
@@ -772,17 +775,19 @@ export const FleetPhotosManager: React.FC = () => {
                 helperText="Sube una foto desde tu dispositivo móvil o PC, ingresa una URL web o elige de la flota oficial."
               />
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200">
+              </div>
+
+              <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-neutral-200 shrink-0 bg-white">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-5 py-2.5 rounded-xl border border-neutral-300 hover:bg-neutral-100 font-bold text-xs text-neutral-700"
+                  className="px-5 py-2.5 rounded-xl border border-neutral-300 hover:bg-neutral-100 font-bold text-xs text-neutral-700 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black text-xs md:text-sm shadow-md flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black text-xs md:text-sm shadow-md flex items-center gap-2 cursor-pointer transition-all active:scale-98"
                 >
                   <Plus className="w-4 h-4" /> Guardar y Publicar Auto
                 </button>
@@ -796,10 +801,10 @@ export const FleetPhotosManager: React.FC = () => {
       {/* MODAL 3: EDITAR DETALLES Y TARIFAS */}
       {/* ========================================================================= */}
       {editingCar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl border-2 border-neutral-800 shadow-2xl max-w-xl w-full p-6 md:p-8 space-y-6 my-8 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4 overflow-hidden">
+          <div className="bg-white rounded-3xl border-2 border-neutral-800 shadow-2xl max-w-xl w-full max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             
-            <div className="flex items-center justify-between border-b border-neutral-200 pb-4">
+            <div className="flex items-center justify-between border-b border-neutral-200 p-4 sm:p-6 shrink-0 bg-white">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-neutral-100 text-neutral-900 flex items-center justify-center">
                   <Edit3 className="w-5 h-5" />
@@ -815,13 +820,14 @@ export const FleetPhotosManager: React.FC = () => {
               </div>
               <button
                 onClick={() => setEditingCar(null)}
-                className="p-2 rounded-xl text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors"
+                className="p-2 rounded-xl text-neutral-400 hover:text-black hover:bg-neutral-100 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEditCar} className="space-y-4">
+            <form onSubmit={handleSaveEditCar} className="flex flex-col flex-1 overflow-hidden min-h-0">
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-black uppercase text-neutral-700 block mb-1">
@@ -912,17 +918,19 @@ export const FleetPhotosManager: React.FC = () => {
                 helperText="Puedes actualizar la fotografía subiendo una nueva o cambiando el enlace."
               />
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-200">
+              </div>
+
+              <div className="flex items-center justify-end gap-3 p-4 sm:p-6 border-t border-neutral-200 shrink-0 bg-white">
                 <button
                   type="button"
                   onClick={() => setEditingCar(null)}
-                  className="px-5 py-2.5 rounded-xl border border-neutral-300 hover:bg-neutral-100 font-bold text-xs text-neutral-700"
+                  className="px-5 py-2.5 rounded-xl border border-neutral-300 hover:bg-neutral-100 font-bold text-xs text-neutral-700 cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-neutral-900 hover:bg-orange-600 text-white font-black text-xs md:text-sm shadow-md transition-colors"
+                  className="px-6 py-2.5 rounded-xl bg-neutral-900 hover:bg-orange-600 text-white font-black text-xs md:text-sm shadow-md transition-colors cursor-pointer"
                 >
                   Guardar Cambios
                 </button>
@@ -936,8 +944,8 @@ export const FleetPhotosManager: React.FC = () => {
       {/* MODAL 4: CONFIRMACIÓN DE ELIMINACIÓN PERMANENTE */}
       {/* ========================================================================= */}
       {carToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl border-2 border-red-500 shadow-2xl max-w-md w-full p-6 md:p-8 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl border-2 border-red-500 shadow-2xl max-w-md w-full p-5 sm:p-8 space-y-5 animate-in fade-in zoom-in-95 duration-150 my-auto">
             <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
               <AlertTriangle className="w-6 h-6 stroke-[2.5]" />
             </div>
