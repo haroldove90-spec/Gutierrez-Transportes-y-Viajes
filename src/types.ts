@@ -145,6 +145,9 @@ export interface CharterAssignment {
   pricePerSeat?: number; // Precio por asiento para venta individual a clientes
   isPublicBookingAvailable?: boolean; // Disponible en módulo de reservación para clientes
   tripId?: string; // ID del viaje programado sincronizado
+  driverAccepted?: boolean; // Chofer ha aceptado el servicio
+  driverAcceptedAt?: string; // Fecha y hora de aceptación
+  driverRejectionReason?: string; // Motivo si el chofer lo rechaza o reporta inconveniente
 }
 
 export interface TripSchedule {
@@ -172,6 +175,9 @@ export interface TripSchedule {
   isFull?: boolean; // Indica si el viaje se vendió en su totalidad (100% ocupado)
   isActiveForBooking?: boolean; // Si está activo o desactivado para compras de clientes
   notes?: string;
+  driverAccepted?: boolean; // Chofer ha aceptado y confirmado el viaje
+  driverAcceptedAt?: string; // Fecha y hora de confirmación del chofer
+  driverRejectionReason?: string; // Motivo si el chofer rechaza el viaje
 }
 
 export interface BookingPassenger {

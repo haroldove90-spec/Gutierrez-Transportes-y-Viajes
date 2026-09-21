@@ -509,6 +509,23 @@ export const TripsCalendarAgenda: React.FC = () => {
                               <Phone className="w-2.5 h-2.5 text-emerald-600" /> {driver.phone}
                             </p>
                           )}
+                          {event.tripObj && (
+                            <div className="mt-1">
+                              {event.tripObj.driverAccepted ? (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                  ✓ Chofer Confirmado
+                                </span>
+                              ) : event.tripObj.driverRejectionReason ? (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-100 text-rose-800 border border-rose-200" title={event.tripObj.driverRejectionReason}>
+                                  ✕ Rechazado: {event.tripObj.driverRejectionReason}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-200">
+                                  ⏳ Pendiente Chofer
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
 

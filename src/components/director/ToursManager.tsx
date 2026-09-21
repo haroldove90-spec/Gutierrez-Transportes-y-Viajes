@@ -403,6 +403,21 @@ export const ToursManager: React.FC = () => {
                       <p className="font-black text-neutral-900 flex items-center gap-1">
                         <User className="w-3.5 h-3.5 text-orange-600" /> {tour.driverName}
                       </p>
+                      <div className="mt-1">
+                        {tour.driverAccepted ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            ✓ Confirmado por Chofer
+                          </span>
+                        ) : tour.driverRejectionReason ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-100 text-rose-800 border border-rose-200" title={tour.driverRejectionReason}>
+                            ✕ Rechazado: {tour.driverRejectionReason}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-200">
+                            ⏳ Pendiente de Aceptación
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 

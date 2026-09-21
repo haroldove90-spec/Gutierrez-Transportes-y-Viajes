@@ -47,6 +47,11 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
     updateTripStatus, 
     checkInPassenger, 
     updateDriver,
+    acceptAssignedTrip,
+    rejectAssignedTrip,
+    charterAssignments,
+    acceptCharterAssignment,
+    rejectCharterAssignment,
     showNotification,
     driverAlarms,
     activeAlarm,
@@ -69,10 +74,52 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
       localStorage.setItem('gutierrez_driver_id_v1', selectedDriverId);
     } catch {}
   }, [selectedDriverId]);
+
   const currentDriver = drivers.find(d => d.id === selectedDriverId) || drivers[0];
   const driverVehicle = vehicles.find(v => v.id === currentDriver.currentVehicleId) || vehicles[0];
   const assignedTrips = trips.filter(t => t.driverId === currentDriver.id);
-  const activeTrip = assignedTrips[0] || trips[0];
+  
+  // Trip selection state
+  const [selectedTripId, setSelectedTripId] = useState<string>('');
+  const activeTrip = assignedTrips.find(t => t.id === selectedTripId) || assignedTrips[0] || trips[0];
+
+  useEffect(() => {
+    if (assignedTrips.length > 0 && !assignedTrips.some(t => t.id === selectedTripId)) {
+      setSelectedTripId(assignedTrips[0].id);
+    }
+  }, [selectedDriverId, assignedTrips.length]);
+
+  // Pending assignments for this driver
+  const pendingTrips = assignedTrips.filter(t => !t.driverAccepted && t.status !== 'cancelled' && t.status !== 'completed');
+  const driverCharters = charterAssignments.filter(c => c.driverId === currentDriver.id && c.status === 'active');
+  const pendingCharters = driverCharters.filter(c => !c.driverAccepted);
+
+  // Rejection modal state
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectItem, setRejectItem] = useState<{ type: 'trip' | 'charter'; id: string; title: string } | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+
+  const handleOpenReject = (type: 'trip' | 'charter', id: string, title: string) => {
+    setRejectItem({ type, id, title });
+    setRejectionReason('');
+    setShowRejectModal(true);
+  };
+
+  const handleConfirmReject = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rejectItem) return;
+    if (!rejectionReason.trim()) {
+      showNotification('Por favor ingresa o selecciona un motivo del reporte.', 'warning');
+      return;
+    }
+    if (rejectItem.type === 'trip') {
+      rejectAssignedTrip(rejectItem.id, rejectionReason.trim());
+    } else {
+      rejectCharterAssignment(rejectItem.id, rejectionReason.trim());
+    }
+    setShowRejectModal(false);
+    setRejectItem(null);
+  };
 
   // Passengers on this active trip
   const tripBookings = bookings.filter(b => b.tripId === activeTrip.id);
@@ -311,8 +358,203 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
       {/* Tab 1: Mi Viaje Activo & Bitácora de Tiempos */}
       {activeTab === 'trip' && (
         <div className="max-w-5xl mx-auto w-full space-y-6">
+          {/* BANNER URGENTE: Viajes o Tours Asignados Pendientes de Aceptación */}
+          {(pendingTrips.length > 0 || pendingCharters.length > 0) && (
+            <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/10 border-2 border-amber-400/80 rounded-3xl p-5 md:p-6 shadow-md space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500 text-neutral-950 flex items-center justify-center font-black shrink-0 animate-pulse shadow-sm">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base md:text-lg font-black text-amber-950">
+                      ¡Tienes {pendingTrips.length + pendingCharters.length} Asignación(es) Pendiente(s) por Aceptar!
+                    </h3>
+                    <p className="text-xs md:text-sm text-amber-900/90 font-medium">
+                      La administración te programó para operar este servicio. Por favor confirma tu asistencia para que despacho y pasajeros tengan certeza.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-amber-200 text-amber-900 border border-amber-300 shrink-0">
+                  Acción Requerida
+                </span>
+              </div>
+
+              {/* Lista de Viajes de Ruta Pendientes */}
+              <div className="space-y-3">
+                {pendingTrips.map(pTrip => {
+                  const pVeh = vehicles.find(v => v.id === pTrip.vehicleId);
+                  return (
+                    <div key={pTrip.id} className="bg-white rounded-2xl p-4 border border-amber-300/80 shadow-sm space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <span className="text-[10px] font-black uppercase tracking-wider text-orange-600 bg-orange-100 px-2 py-0.5 rounded-md">
+                            {pTrip.isTour ? '🌴 Tour Turístico' : '🚌 Ruta Troncal Regular'}
+                          </span>
+                          <h4 className="text-base font-black text-neutral-900 mt-1">
+                            {pTrip.routeTitle}
+                          </h4>
+                          <p className="text-xs text-neutral-500 font-bold">
+                            {pTrip.origin} ➔ {pTrip.destination}
+                          </p>
+                        </div>
+                        <div className="text-left sm:text-right bg-neutral-50 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+                          <span className="text-xs font-black text-neutral-900 block">
+                            Fecha: {pTrip.date}
+                          </span>
+                          <span className="text-xs text-orange-600 font-bold flex items-center sm:justify-end gap-1">
+                            <Clock className="w-3.5 h-3.5" /> Salida: {pTrip.departureTime}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs bg-neutral-50 p-2.5 rounded-xl border border-neutral-100">
+                        <div>
+                          <span className="text-[10px] text-neutral-400 font-black uppercase block">Unidad Asignada</span>
+                          <p className="font-black text-neutral-800 truncate">{pVeh?.unitNumber || 'Unidad'} ({pVeh?.model || 'Van'})</p>
+                          <p className="text-[10px] text-neutral-500 font-mono">Placa: {pVeh?.plate || 'S/P'}</p>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-neutral-400 font-black uppercase block">Pasajeros Reservados</span>
+                          <p className="font-black text-neutral-800">{pTrip.occupiedSeatsCount} asientos</p>
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <span className="text-[10px] text-neutral-400 font-black uppercase block">Llegada Estimada</span>
+                          <p className="font-black text-neutral-800">{pTrip.estimatedArrival}</p>
+                        </div>
+                      </div>
+
+                      {pTrip.notes && (
+                        <p className="text-xs text-neutral-600 bg-neutral-50 p-2.5 rounded-xl italic">
+                          <span className="font-bold not-italic text-neutral-700">Nota de Administración: </span>
+                          {pTrip.notes}
+                        </p>
+                      )}
+
+                      <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-neutral-100">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            acceptAssignedTrip(pTrip.id);
+                            setSelectedTripId(pTrip.id);
+                          }}
+                          className="flex-1 min-w-[200px] py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl font-black text-xs md:text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          ✓ Aceptar Viaje y Confirmar Asistencia
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenReject('trip', pTrip.id, `${pTrip.routeTitle} (${pTrip.date} ${pTrip.departureTime})`)}
+                          className="py-3 px-4 bg-white hover:bg-rose-50 text-neutral-600 hover:text-rose-700 border border-neutral-300 hover:border-rose-300 rounded-xl font-bold text-xs md:text-sm transition-all cursor-pointer"
+                        >
+                          ✕ Rechazar / Reportar Inconveniente
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Lista de Tours Particulares Pendientes */}
+                {pendingCharters.map(pCharter => (
+                  <div key={pCharter.id} className="bg-white rounded-2xl p-4 border border-purple-300/80 shadow-sm space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 bg-purple-100 px-2 py-0.5 rounded-md">
+                          🌴 Servicio Turístico / Charter Folio {pCharter.folio}
+                        </span>
+                        <h4 className="text-base font-black text-neutral-900 mt-1">
+                          Destino: {pCharter.destination}
+                        </h4>
+                        <p className="text-xs text-neutral-500 font-bold">
+                          Cliente: {pCharter.clientName} {pCharter.clientPhone && `• Tel: ${pCharter.clientPhone}`}
+                        </p>
+                      </div>
+                      <div className="text-left sm:text-right bg-neutral-50 sm:bg-transparent p-2 sm:p-0 rounded-xl">
+                        <span className="text-xs font-black text-neutral-900 block">
+                          {pCharter.startDate} al {pCharter.endDate}
+                        </span>
+                        <span className="text-xs text-purple-700 font-bold flex items-center sm:justify-end gap-1">
+                          <Clock className="w-3.5 h-3.5" /> Salida: {pCharter.startTime || '08:00 AM'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {pCharter.notes && (
+                      <p className="text-xs text-neutral-600 bg-neutral-50 p-2.5 rounded-xl italic">
+                        <span className="font-bold not-italic text-neutral-700">Instrucciones: </span>
+                        {pCharter.notes}
+                      </p>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-neutral-100">
+                      <button
+                        type="button"
+                        onClick={() => acceptCharterAssignment(pCharter.id)}
+                        className="flex-1 min-w-[200px] py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl font-black text-xs md:text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        ✓ Aceptar Servicio Turístico
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenReject('charter', pCharter.id, `Tour a ${pCharter.destination} (${pCharter.folio})`)}
+                        className="py-3 px-4 bg-white hover:bg-rose-50 text-neutral-600 hover:text-rose-700 border border-neutral-300 hover:border-rose-300 rounded-xl font-bold text-xs md:text-sm transition-all cursor-pointer"
+                      >
+                        ✕ Rechazar / Reportar Inconveniente
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Selector de Viajes Asignados si el conductor tiene varios */}
+          {assignedTrips.length > 1 && (
+            <div className="bg-white rounded-2xl p-3 md:p-4 border border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+              <span className="text-xs font-black uppercase text-neutral-500 tracking-wider flex items-center gap-1.5">
+                <Bus className="w-4 h-4 text-orange-600" />
+                Mis Viajes Asignados ({assignedTrips.length}):
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {assignedTrips.map(t => {
+                  const isSelected = t.id === activeTrip.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setSelectedTripId(t.id)}
+                      className={`px-3 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer ${
+                        isSelected
+                          ? 'bg-neutral-900 text-white shadow-sm ring-2 ring-orange-500/50'
+                          : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700'
+                      }`}
+                    >
+                      <span>{t.departureTime}</span>
+                      <span className="truncate max-w-[140px]">{t.destination}</span>
+                      {t.driverAccepted ? (
+                        <span className="inline-flex items-center text-[10px] text-emerald-400 font-bold">
+                          ✓ Aceptado
+                        </span>
+                      ) : t.driverRejectionReason ? (
+                        <span className="inline-flex items-center text-[10px] text-rose-400 font-bold">
+                          ✕ Rechazado
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-1.5 py-0.2 bg-amber-400 text-neutral-950 rounded text-[9px] font-black animate-pulse">
+                          Pendiente
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Card de Viaje Turístico Particular si aplica */}
-          {(currentDriver.status === 'charter_service' || currentDriver.charterDetails) && (
+          {(currentDriver.status === 'charter_service' || currentDriver.charterDetails || driverCharters.length > 0) && (
             <div className="bg-linear-to-r from-purple-900 to-indigo-950 text-white rounded-3xl p-6 md:p-8 shadow-lg border-2 border-purple-500/50 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-purple-500/30 text-purple-200 border border-purple-400/40 flex items-center gap-1.5">
@@ -325,20 +567,50 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
 
               <div>
                 <h3 className="text-xl md:text-2xl font-black text-white">
-                  {currentDriver.charterDetails?.destination || 'Servicio Turístico Contratado'}
+                  {currentDriver.charterDetails?.destination || driverCharters[0]?.destination || 'Servicio Turístico Contratado'}
                 </h3>
                 <p className="text-xs md:text-sm text-purple-200 mt-1">
-                  Cliente Contratante: <strong>{currentDriver.charterDetails?.clientName}</strong> {currentDriver.charterDetails?.clientPhone && `• Tel: ${currentDriver.charterDetails.clientPhone}`}
+                  Cliente Contratante: <strong>{currentDriver.charterDetails?.clientName || driverCharters[0]?.clientName}</strong> {(currentDriver.charterDetails?.clientPhone || driverCharters[0]?.clientPhone) && `• Tel: ${currentDriver.charterDetails?.clientPhone || driverCharters[0]?.clientPhone}`}
                 </p>
                 <p className="text-xs text-purple-300 font-mono mt-1">
-                  Fechas: {currentDriver.charterDetails?.startDate} al {currentDriver.charterDetails?.endDate}
+                  Fechas: {currentDriver.charterDetails?.startDate || driverCharters[0]?.startDate} al {currentDriver.charterDetails?.endDate || driverCharters[0]?.endDate}
                 </p>
               </div>
 
-              {currentDriver.charterDetails?.notes && (
+              {(currentDriver.charterDetails?.notes || driverCharters[0]?.notes) && (
                 <div className="p-3 bg-white/10 rounded-2xl text-xs text-neutral-200 border border-white/10">
                   <span className="font-bold text-purple-200 uppercase text-[10px] block">Instrucciones:</span>
-                  {currentDriver.charterDetails.notes}
+                  {currentDriver.charterDetails?.notes || driverCharters[0]?.notes}
+                </div>
+              )}
+
+              {/* Botón de aceptación si está pendiente */}
+              {driverCharters[0] && (
+                <div className="pt-2 border-t border-purple-500/30 flex flex-wrap items-center justify-between gap-3">
+                  {driverCharters[0].driverAccepted ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-300 bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-500/40">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      Servicio confirmado y aceptado por ti
+                    </span>
+                  ) : (
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                      <button
+                        type="button"
+                        onClick={() => acceptCharterAssignment(driverCharters[0].id)}
+                        className="flex-1 sm:flex-none py-2 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        Aceptar Tour
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenReject('charter', driverCharters[0].id, `Tour a ${driverCharters[0].destination}`)}
+                        className="py-2 px-3 bg-white/10 hover:bg-rose-900/50 text-neutral-200 hover:text-white rounded-xl font-bold text-xs transition-colors cursor-pointer"
+                      >
+                        Rechazar
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -358,6 +630,81 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
                 {activeTrip.status.replace('_', ' ')}
               </span>
             </div>
+
+            {/* ESTADO DE ACEPTACIÓN POR EL CHOFER */}
+            {activeTrip.driverAccepted ? (
+              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <CheckCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs md:text-sm font-black text-emerald-950">
+                      ✓ Viaje Aceptado y Confirmado por ti
+                    </p>
+                    <p className="text-[11px] text-emerald-800 font-medium">
+                      {activeTrip.driverAcceptedAt 
+                        ? `Confirmaste el ${new Date(activeTrip.driverAcceptedAt).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}. Todo listo para operar.`
+                        : 'Confirmaste este viaje. El despacho cuenta con tu operación.'}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 self-start sm:self-auto">
+                  ✓ Asistencia Confirmada
+                </span>
+              </div>
+            ) : activeTrip.driverRejectionReason ? (
+              <div className="p-3.5 bg-rose-50 rounded-2xl border border-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <p className="text-xs md:text-sm font-black text-rose-950">
+                    ✕ Reportaste no disponibilidad para este viaje
+                  </p>
+                  <p className="text-[11px] text-rose-800 font-medium">
+                    Motivo: &quot;{activeTrip.driverRejectionReason}&quot;
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => acceptAssignedTrip(activeTrip.id)}
+                  className="text-xs text-emerald-700 font-black hover:underline cursor-pointer self-start sm:self-auto flex items-center gap-1"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Reconsiderar y Aceptar Viaje
+                </button>
+              </div>
+            ) : (
+              <div className="p-4 bg-amber-50 rounded-2xl border-2 border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 animate-pulse">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-xs md:text-sm font-black text-amber-950">
+                      Asignación Pendiente de tu Aceptación
+                    </p>
+                    <p className="text-[11px] text-amber-800 font-medium">
+                      El administrador te ha asignado este viaje. Confirma para asegurar tu ruta.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => acceptAssignedTrip(activeTrip.id)}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-95"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    ✓ Aceptar Viaje
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenReject('trip', activeTrip.id, `${activeTrip.routeTitle} (${activeTrip.date} ${activeTrip.departureTime})`)}
+                    className="px-3 py-2 bg-white hover:bg-rose-50 text-neutral-600 hover:text-rose-700 border border-neutral-300 rounded-xl font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    ✕ Rechazar
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div>
               <h4 className="text-lg md:text-xl font-black text-neutral-900">{activeTrip.routeTitle}</h4>
@@ -990,6 +1337,99 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
               >
                 Guardar y Enviar a Finanzas
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para Rechazar / Reportar Inconveniente con Asignación */}
+      {showRejectModal && rejectItem && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-neutral-200 animate-in fade-in zoom-in duration-200 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-rose-600">
+                <AlertTriangle className="w-5 h-5" />
+                <h3 className="font-black text-lg text-neutral-900">Reportar No Disponibilidad</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setRejectItem(null);
+                }}
+                className="w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-neutral-600 font-medium">
+              Indica a la administración el motivo por el cual no puedes operar este servicio: <br />
+              <strong className="text-neutral-900">{rejectItem.title}</strong>. La unidad será liberada para reasignación.
+            </p>
+
+            {/* Quick Reason Pills */}
+            <div>
+              <label className="text-[11px] font-black uppercase text-neutral-500 block mb-1.5">
+                Motivos Frecuentes:
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  'Problema de salud / Incapacidad',
+                  'Falla mecánica en la unidad',
+                  'Superposición con otro servicio',
+                  'Permiso personal urgente',
+                  'Trámite de licencia en proceso'
+                ].map(reason => (
+                  <button
+                    key={reason}
+                    type="button"
+                    onClick={() => setRejectionReason(reason)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      rejectionReason === reason
+                        ? 'bg-rose-600 text-white shadow-xs'
+                        : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700'
+                    }`}
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <form onSubmit={handleConfirmReject} className="space-y-4 pt-1">
+              <div>
+                <label className="text-xs font-black uppercase text-neutral-700 block mb-1">
+                  Explicación o Motivo Detallado:
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  value={rejectionReason}
+                  onChange={e => setRejectionReason(e.target.value)}
+                  placeholder="Escribe el motivo detallado para el administrador de despacho..."
+                  className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl font-medium text-xs sm:text-sm text-neutral-900 focus:border-rose-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRejectModal(false);
+                    setRejectItem(null);
+                  }}
+                  className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl font-bold text-xs cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black text-xs shadow-md cursor-pointer transition-all active:scale-95"
+                >
+                  Confirmar Rechazo y Notificar
+                </button>
+              </div>
             </form>
           </div>
         </div>

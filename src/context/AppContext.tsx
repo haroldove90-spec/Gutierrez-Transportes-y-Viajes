@@ -108,6 +108,10 @@ interface AppContextType {
   validateTicketQR: (qrData: string) => { status: 'valid' | 'already_used' | 'invalid'; booking?: Booking };
   checkInPassenger: (bookingId: string, locationName: string) => boolean;
   updateTripStatus: (tripId: string, status: TripSchedule['status'], currentScale?: string) => void;
+  acceptAssignedTrip: (tripId: string) => boolean;
+  rejectAssignedTrip: (tripId: string, reason: string) => boolean;
+  acceptCharterAssignment: (charterId: string) => boolean;
+  rejectCharterAssignment: (charterId: string, reason: string) => boolean;
   addExpense: (expense: Omit<TripExpense, 'id' | 'status'>) => TripExpense;
   approveExpense: (expenseId: string) => void;
   
@@ -1268,6 +1272,124 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification(`Viaje actualizado a: ${(status || '').replace('_', ' ').toUpperCase()}`, 'info');
   };
 
+  const acceptAssignedTrip = (tripId: string): boolean => {
+    let acceptedTrip: TripSchedule | undefined;
+    const nowIso = new Date().toISOString();
+    setTrips(prev => prev.map(t => {
+      if (t.id === tripId) {
+        acceptedTrip = {
+          ...t,
+          driverAccepted: true,
+          driverAcceptedAt: nowIso,
+          driverRejectionReason: undefined
+        };
+        return acceptedTrip;
+      }
+      return t;
+    }));
+
+    if (acceptedTrip) {
+      saveTripToSupabase(acceptedTrip).catch(() => {});
+      addAuditEntry(
+        'CHOFER_ACEPTO_VIAJE',
+        'TripSchedule',
+        tripId,
+        'Pendiente de Aceptación',
+        `El chofer confirmó y aceptó la asignación para la ruta ${acceptedTrip.routeTitle} (${acceptedTrip.date} ${acceptedTrip.departureTime})`
+      );
+      showNotification(`¡Has aceptado el viaje a ${acceptedTrip.destination}! Se notificó a la Administración.`, 'success');
+      return true;
+    }
+    return false;
+  };
+
+  const rejectAssignedTrip = (tripId: string, reason: string): boolean => {
+    let rejectedTrip: TripSchedule | undefined;
+    setTrips(prev => prev.map(t => {
+      if (t.id === tripId) {
+        rejectedTrip = {
+          ...t,
+          driverAccepted: false,
+          driverRejectionReason: reason || 'No disponibilidad reportada'
+        };
+        return rejectedTrip;
+      }
+      return t;
+    }));
+
+    if (rejectedTrip) {
+      saveTripToSupabase(rejectedTrip).catch(() => {});
+      addAuditEntry(
+        'CHOFER_RECHAZO_VIAJE',
+        'TripSchedule',
+        tripId,
+        'Asignado',
+        `El chofer reportó no disponibilidad para ${rejectedTrip.routeTitle}. Motivo: ${reason || 'Sin motivo especificado'}`
+      );
+      showNotification('Has reportado no disponibilidad para este viaje. Se notificó a la Administración.', 'warning');
+      return true;
+    }
+    return false;
+  };
+
+  const acceptCharterAssignment = (charterId: string): boolean => {
+    let acceptedCharter: CharterAssignment | undefined;
+    const nowIso = new Date().toISOString();
+    setCharterAssignments(prev => prev.map(c => {
+      if (c.id === charterId) {
+        acceptedCharter = {
+          ...c,
+          driverAccepted: true,
+          driverAcceptedAt: nowIso,
+          driverRejectionReason: undefined
+        };
+        return acceptedCharter;
+      }
+      return c;
+    }));
+
+    if (acceptedCharter) {
+      addAuditEntry(
+        'CHOFER_ACEPTO_TOUR',
+        'CharterAssignment',
+        charterId,
+        'Pendiente',
+        `El operador aceptó el tour particular folio ${acceptedCharter.folio} con destino a ${acceptedCharter.destination}`
+      );
+      showNotification(`¡Servicio Turístico a ${acceptedCharter.destination} aceptado y confirmado!`, 'success');
+      return true;
+    }
+    return false;
+  };
+
+  const rejectCharterAssignment = (charterId: string, reason: string): boolean => {
+    let rejectedCharter: CharterAssignment | undefined;
+    setCharterAssignments(prev => prev.map(c => {
+      if (c.id === charterId) {
+        rejectedCharter = {
+          ...c,
+          driverAccepted: false,
+          driverRejectionReason: reason || 'No disponibilidad reportada'
+        };
+        return rejectedCharter;
+      }
+      return c;
+    }));
+
+    if (rejectedCharter) {
+      addAuditEntry(
+        'CHOFER_RECHAZO_TOUR',
+        'CharterAssignment',
+        charterId,
+        'Asignado',
+        `El operador reportó inconveniente para el tour folio ${rejectedCharter.folio}. Motivo: ${reason || 'Sin motivo'}`
+      );
+      showNotification('Has reportado no disponibilidad para este tour turístico. Se notificó a la Administración.', 'warning');
+      return true;
+    }
+    return false;
+  };
+
   const addExpense = (expenseData: Omit<TripExpense, 'id' | 'status'>): TripExpense => {
     const newExpense: TripExpense = {
       ...expenseData,
@@ -2339,6 +2461,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         validateTicketQR,
         checkInPassenger,
         updateTripStatus,
+        acceptAssignedTrip,
+        rejectAssignedTrip,
+        acceptCharterAssignment,
+        rejectCharterAssignment,
         addExpense,
         approveExpense,
         addDriver,
