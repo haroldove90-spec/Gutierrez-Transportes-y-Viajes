@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   Bus, 
@@ -48,8 +48,20 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
     playAlarmSoundTest
   } = useApp();
 
-  // Current logged in driver for demo
-  const [selectedDriverId, setSelectedDriverId] = useState<string>(drivers[0]?.id || 'drv-01');
+  // Current logged in driver with persistence
+  const [selectedDriverId, setSelectedDriverId] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_driver_id_v1');
+      if (saved && drivers.some(d => d.id === saved)) return saved;
+    } catch {}
+    return drivers[0]?.id || 'drv-01';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_driver_id_v1', selectedDriverId);
+    } catch {}
+  }, [selectedDriverId]);
   const currentDriver = drivers.find(d => d.id === selectedDriverId) || drivers[0];
   const driverVehicle = vehicles.find(v => v.id === currentDriver.currentVehicleId) || vehicles[0];
   const assignedTrips = trips.filter(t => t.driverId === currentDriver.id);

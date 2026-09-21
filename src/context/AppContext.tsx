@@ -238,7 +238,24 @@ const recordDeletedId = (id: string) => {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentRole, setCurrentRole] = useState<UserRole>('home');
+  const [currentRole, setCurrentRole] = useState<UserRole>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_current_role_v1');
+      if (saved && ['home', 'pasajero', 'conductor', 'secretaria', 'operaciones', 'finanzas', 'director'].includes(saved)) {
+        return saved as UserRole;
+      }
+    } catch (e) {
+      console.warn('Error reading stored role', e);
+    }
+    return 'home';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('gutierrez_current_role_v1', currentRole);
+    } catch (e) {}
+  }, [currentRole]);
+
   const [isMobileDeviceFrame, setIsMobileDeviceFrame] = useState<boolean>(false);
   
   const [trips, setTrips] = useState<TripSchedule[]>(() => {
@@ -493,7 +510,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [seatTemplates]);
 
-  const [selectedTripId, setSelectedTripId] = useState<string | null>('trip-101');
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_selected_trip_id_v1');
+      if (saved) return saved;
+    } catch {}
+    return 'trip-101';
+  });
+
+  useEffect(() => {
+    if (selectedTripId) {
+      try {
+        localStorage.setItem('gutierrez_selected_trip_id_v1', selectedTripId);
+      } catch {}
+    }
+  }, [selectedTripId]);
   const [tempLockedSeats, setTempLockedSeats] = useState<{ tripId: string; seatNumbers: number[]; expiresAt: number } | null>(null);
   const [activeTicket, setActiveTicket] = useState<Booking | null>(INITIAL_BOOKINGS[0]);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);

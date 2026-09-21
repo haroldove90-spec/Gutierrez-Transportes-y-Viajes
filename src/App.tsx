@@ -19,41 +19,101 @@ import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
 function AppContent() {
   const { currentRole, setCurrentRole, notification, activeTicket, setActiveTicket } = useApp();
   
-  // Splash Screen state on initial launch
-  const [showSplash, setShowSplash] = useState<boolean>(true);
+  // Splash Screen state on initial launch - ONLY show if not already logged in to a role
+  const [showSplash, setShowSplash] = useState<boolean>(() => {
+    try {
+      const savedRole = localStorage.getItem('gutierrez_current_role_v1');
+      if (savedRole && savedRole !== 'home') {
+        return false; // Skip splash screen on reload when user has an active session!
+      }
+      const alreadyShown = sessionStorage.getItem('gutierrez_splash_seen');
+      if (alreadyShown) return false;
+    } catch {}
+    return true;
+  });
 
-  // Active Tab state inside current portal
-  const [activeTab, setActiveTab] = useState<string>('search');
+  const getDefaultTabForRole = (role: string): string => {
+    switch (role) {
+      case 'pasajero':
+        return 'search';
+      case 'conductor':
+        return 'trip';
+      case 'secretaria':
+        return 'counter';
+      case 'operaciones':
+        return 'dispatch';
+      case 'finanzas':
+        return 'receivables';
+      case 'director':
+        return 'executive';
+      default:
+        return 'search';
+    }
+  };
+
+  const getInitialTab = (): string => {
+    try {
+      const savedRole = localStorage.getItem('gutierrez_current_role_v1') || currentRole;
+      if (savedRole && savedRole !== 'home') {
+        const savedTab = localStorage.getItem(`gutierrez_tab_${savedRole}`);
+        if (savedTab) return savedTab;
+        return getDefaultTabForRole(savedRole);
+      }
+    } catch {}
+    return getDefaultTabForRole(currentRole);
+  };
+
+  // Active Tab state inside current portal with persistent memory
+  const [activeTab, setActiveTabState] = useState<string>(getInitialTab);
+
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    try {
+      if (currentRole !== 'home') {
+        localStorage.setItem(`gutierrez_tab_${currentRole}`, tab);
+      }
+    } catch {}
+  };
+
   const [isScannerOpen, setIsScannerOpen] = useState<boolean>(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState<boolean>(false);
   const [modalBooking, setModalBooking] = useState<Booking | null>(activeTicket);
   
-  // Sidebar state for tablet / desktop view (toggleable via hamburger button)
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+  // Sidebar state for tablet / desktop view (persisted in localStorage)
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_sidebar_open_v1');
+      if (saved !== null) return saved === 'true';
+    } catch {}
+    return true;
+  });
 
-  // Sync tab defaults when user switches role
+  const handleToggleSidebar = () => {
+    setIsSidebarOpen(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('gutierrez_sidebar_open_v1', String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  // Sync tab defaults when user switches role (remembering last visited tab per role)
+  const prevRoleRef = React.useRef<string>(currentRole);
+
   useEffect(() => {
-    switch (currentRole) {
-      case 'pasajero':
-        setActiveTab('search');
-        break;
-      case 'conductor':
-        setActiveTab('trip');
-        break;
-      case 'secretaria':
-        setActiveTab('counter');
-        break;
-      case 'operaciones':
-        setActiveTab('dispatch');
-        break;
-      case 'finanzas':
-        setActiveTab('receivables');
-        break;
-      case 'director':
-        setActiveTab('executive');
-        break;
-      default:
-        break;
+    if (prevRoleRef.current !== currentRole) {
+      prevRoleRef.current = currentRole;
+      if (currentRole !== 'home') {
+        try {
+          const savedTab = localStorage.getItem(`gutierrez_tab_${currentRole}`);
+          if (savedTab) {
+            setActiveTabState(savedTab);
+            return;
+          }
+        } catch {}
+        setActiveTabState(getDefaultTabForRole(currentRole));
+      }
     }
   }, [currentRole]);
 
@@ -70,7 +130,7 @@ function AppContent() {
       {currentRole !== 'home' && (
         <Header
           isSidebarOpen={isSidebarOpen}
-          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          onToggleSidebar={handleToggleSidebar}
           onOpenScanner={() => setIsScannerOpen(true)}
           onOpenTicket={() => {
             if (activeTicket) {
@@ -176,7 +236,14 @@ function AppContent() {
 
       {/* Initial Brand Splash Screen - Shows complete unencapsulated logo */}
       {showSplash && (
-        <SplashScreen onFinish={() => setShowSplash(false)} />
+        <SplashScreen
+          onFinish={() => {
+            setShowSplash(false);
+            try {
+              sessionStorage.setItem('gutierrez_splash_seen', 'true');
+            } catch {}
+          }}
+        />
       )}
     </div>
   );
