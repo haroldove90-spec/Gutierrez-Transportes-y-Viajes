@@ -22,7 +22,8 @@ import {
   CalendarDays,
   Palmtree,
   LayoutGrid,
-  Car
+  Car,
+  ArrowDownUp
 } from 'lucide-react';
 
 interface BottomNavProps {
@@ -37,6 +38,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
     switch (currentRole) {
       case 'pasajero':
         return [
+          { id: 'search', label: 'Boletos', icon: <Search className="w-5 h-5 text-white" /> },
           { id: 'tours', label: 'Tours', icon: <Palmtree className="w-5 h-5 text-white" /> },
           { id: 'tickets', label: 'Mis Boletos', icon: <Ticket className="w-5 h-5 text-white" /> },
           { id: 'rentals', label: 'Renta Autos', icon: <Car className="w-5 h-5 text-white" /> },
@@ -67,6 +69,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
         ];
       case 'finanzas':
         return [
+          { id: 'cash_flow', label: 'Flujos Caja', icon: <ArrowDownUp className="w-5 h-5 text-white" /> },
           { id: 'receivables', label: 'Cobranza', icon: <DollarSign className="w-5 h-5 text-white" /> },
           { id: 'audit_expenses', label: 'Auditoría', icon: <Receipt className="w-5 h-5 text-white" /> },
           { id: 'cfdi', label: 'CFDI 4.0', icon: <FileText className="w-5 h-5 text-white" /> },

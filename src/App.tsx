@@ -53,7 +53,7 @@ function AppContent() {
   const getDefaultTabForRole = (role: string): string => {
     switch (role) {
       case 'pasajero':
-        return 'tours';
+        return 'search';
       case 'conductor':
         return 'trip';
       case 'secretaria':

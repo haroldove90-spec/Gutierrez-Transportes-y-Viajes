@@ -19,7 +19,10 @@ import {
   LayoutGrid,
   Eye,
   Trash2,
-  X
+  X,
+  ArrowRightLeft,
+  RotateCcw,
+  ShieldCheck
 } from 'lucide-react';
 import { TripSchedule } from '../../types';
 import { SeatDiagramViewer } from '../common/SeatDiagramViewer';
@@ -35,6 +38,7 @@ export const TripsCalendarAgenda: React.FC = () => {
     addTrip,
     deleteTrip,
     toggleTripBookingStatus,
+    swapTripVehicle,
     sendManualWakeUpAlarm,
     syncWithSupabase
   } = useApp();
@@ -48,6 +52,8 @@ export const TripsCalendarAgenda: React.FC = () => {
   const [filterType, setFilterType] = useState<'all' | 'route' | 'tour'>('all');
   const [showAddTripModal, setShowAddTripModal] = useState<boolean>(false);
   const [viewingDiagramTrip, setViewingDiagramTrip] = useState<TripSchedule | null>(null);
+  const [capacityModalTrip, setCapacityModalTrip] = useState<TripSchedule | null>(null);
+  const [newSelectedVehicleId, setNewSelectedVehicleId] = useState<string>('');
 
   // Form for registering a new scheduled trip
   const [newTripForm, setNewTripForm] = useState({
@@ -563,15 +569,30 @@ export const TripsCalendarAgenda: React.FC = () => {
                           </span>
 
                           {event.type === 'route' && event.tripObj && (
-                            <button
-                              type="button"
-                              onClick={() => setViewingDiagramTrip(event.tripObj)}
-                              className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1 border border-emerald-200"
-                              title="Ver diagrama con asientos verdes (libres) y rojos (ocupados)"
-                            >
-                              <LayoutGrid className="w-3 h-3 text-emerald-600" />
-                              Diagrama ({event.tripObj.seats.filter(s => s.status === 'sold' || s.status === 'locked').length}/{event.tripObj.seats.filter(s => s.type === 'standard' || (!s.type && s.number > 0)).length})
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setViewingDiagramTrip(event.tripObj)}
+                                className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1 border border-emerald-200"
+                                title="Ver diagrama con asientos verdes (libres) y rojos (ocupados)"
+                              >
+                                <LayoutGrid className="w-3 h-3 text-emerald-600" />
+                                Diagrama ({event.tripObj.seats.filter(s => s.status === 'sold' || s.status === 'locked').length}/{event.tripObj.seats.filter(s => s.type === 'standard' || (!s.type && s.number > 0)).length})
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCapacityModalTrip(event.tripObj!);
+                                  setNewSelectedVehicleId(event.tripObj!.vehicleId);
+                                }}
+                                className="px-2.5 py-1 bg-sky-50 hover:bg-sky-100 text-sky-800 rounded-lg font-bold text-[11px] transition-colors cursor-pointer flex items-center gap-1 border border-sky-200"
+                                title="Ajustar tamaño o modelo de camioneta según la demanda (ej. 14p o 19p)"
+                              >
+                                <ArrowRightLeft className="w-3 h-3 text-sky-600" />
+                                Cambiar Unidad (Demanda)
+                              </button>
+                            </>
                           )}
                         </div>
 
@@ -1040,6 +1061,155 @@ export const TripsCalendarAgenda: React.FC = () => {
                   Cerrar
                 </button>
               </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Modal: Cambiar Unidad por Demanda (Asignación Flexible de Flota) */}
+      {capacityModalTrip && (() => {
+        const currentTrip = trips.find(t => t.id === capacityModalTrip.id) || capacityModalTrip;
+        const currentVehicle = vehicles.find(v => v.id === currentTrip.vehicleId);
+        const soldSeatsCount = currentTrip.seats.filter(s => s.status === 'sold' || s.status === 'locked').length;
+
+        const handleConfirmSwap = (e: React.FormEvent) => {
+          e.preventDefault();
+          if (!newSelectedVehicleId || newSelectedVehicleId === currentTrip.vehicleId) {
+            setCapacityModalTrip(null);
+            return;
+          }
+          const res = swapTripVehicle(currentTrip.id, newSelectedVehicleId);
+          if (res.success) {
+            setCapacityModalTrip(null);
+          }
+        };
+
+        return (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+            <div className="bg-white w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-neutral-200">
+              <div className="flex items-center justify-between border-b border-neutral-100 p-5 bg-white">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center">
+                    <ArrowRightLeft className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-neutral-900">
+                      Cambiar Unidad por Demanda
+                    </h3>
+                    <p className="text-xs text-neutral-500 font-medium">
+                      Asignación flexible según volumen de pasaje vendido
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setCapacityModalTrip(null)}
+                  className="p-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 cursor-pointer transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleConfirmSwap} className="p-5 space-y-4">
+                {/* Trip & Current Demand Card */}
+                <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-neutral-500 uppercase text-[10px]">Ruta y Salida</span>
+                    <span className="font-black text-neutral-900">{currentTrip.date} • {currentTrip.departureTime}</span>
+                  </div>
+                  <p className="font-black text-neutral-900 text-sm">{currentTrip.routeTitle}</p>
+                  
+                  <div className="pt-2 border-t border-neutral-200 grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="text-[10px] text-neutral-400 font-bold uppercase block">Unidad Actual:</span>
+                      <p className="font-black text-neutral-800">
+                        {currentVehicle?.unitNumber} ({currentVehicle?.model || 'Van'})
+                      </p>
+                      <p className="text-[11px] text-neutral-500">Capacidad: {currentVehicle?.capacity || 19} Pax</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-neutral-400 font-bold uppercase block">Demanda Vendida:</span>
+                      <p className="font-black text-orange-600 text-sm">
+                        {soldSeatsCount} Asientos Ocupados
+                      </p>
+                      <p className="text-[11px] text-neutral-500">
+                        {soldSeatsCount > 0 ? 'Mínimo requerido' : 'Sin reservas aún'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Target Unit Selector */}
+                <div>
+                  <label className="text-xs font-black uppercase tracking-wider text-neutral-700 block mb-1.5">
+                    Seleccionar Nueva Unidad para esta Salida:
+                  </label>
+                  <select
+                    value={newSelectedVehicleId}
+                    onChange={e => setNewSelectedVehicleId(e.target.value)}
+                    className="w-full p-3 bg-neutral-50 border-2 border-neutral-200 rounded-xl text-xs sm:text-sm font-bold text-neutral-900 focus:outline-hidden focus:border-sky-500"
+                    required
+                  >
+                    {vehicles.map(v => {
+                      const isCurrent = v.id === currentTrip.vehicleId;
+                      const isMaintenance = v.status === 'maintenance';
+                      const isBusyOtherTrip = trips.some(
+                        t => t.id !== currentTrip.id && t.vehicleId === v.id && t.date === currentTrip.date && t.status !== 'completed' && t.status !== 'cancelled'
+                      );
+                      const isBusyTour = charterAssignments.some(
+                        c => c.vehicleId === v.id && (c.status === 'active' || c.status === 'upcoming') && (c.startDate <= currentTrip.date && c.endDate >= currentTrip.date)
+                      );
+                      const isCapacityTooLow = v.capacity < soldSeatsCount;
+                      const disabled = !isCurrent && (isMaintenance || isBusyOtherTrip || isBusyTour || isCapacityTooLow);
+
+                      let tag = '';
+                      if (isCurrent) tag = ' (Unidad Actual)';
+                      else if (isMaintenance) tag = ' [Taller Mecánico]';
+                      else if (isBusyOtherTrip) tag = ' [Ocupada en otra salida hoy]';
+                      else if (isBusyTour) tag = ' [Contratada en tour hoy]';
+                      else if (isCapacityTooLow) tag = ` [Insuficiente: solo ${v.capacity}p vs ${soldSeatsCount} vendidos]`;
+                      else if (v.capacity > (currentVehicle?.capacity || 19)) tag = ` [🔺 Ampliar a ${v.capacity}p]`;
+                      else if (v.capacity < (currentVehicle?.capacity || 19)) tag = ` [🔻 Reducir a ${v.capacity}p]`;
+                      else tag = ' [✓ Misma Capacidad]';
+
+                      return (
+                        <option key={v.id} value={v.id} disabled={disabled}>
+                          {v.unitNumber} - {v.model} ({v.capacity} Pasajeros) {tag}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                {/* Info Note */}
+                <div className="p-3 bg-sky-50 rounded-2xl border border-sky-200 text-xs text-sky-950 space-y-1">
+                  <p className="font-bold flex items-center gap-1.5 text-sky-900">
+                    <ShieldCheck className="w-4 h-4 text-sky-600" />
+                    Protección Automática de Pasajeros
+                  </p>
+                  <p className="text-[11px] text-sky-800">
+                    Al confirmar, el sistema conserva intactos los {soldSeatsCount} boletos ya vendidos y reconfigura el diagrama de asientos al nuevo número de plazas de forma transparente para clientes y taquilla.
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-100">
+                  <button
+                    type="button"
+                    onClick={() => setCapacityModalTrip(null)}
+                    className="px-4 py-2.5 rounded-xl border border-neutral-300 text-xs font-bold text-neutral-700 hover:bg-neutral-100 cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!newSelectedVehicleId || newSelectedVehicleId === currentTrip.vehicleId}
+                    className="px-5 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-black shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <ArrowRightLeft className="w-4 h-4" />
+                    Confirmar Reasignación
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         );

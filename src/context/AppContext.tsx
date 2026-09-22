@@ -131,6 +131,7 @@ interface AppContextType {
   updateTrip: (id: string, updates: Partial<TripSchedule>) => boolean;
   deleteTrip: (id: string) => boolean;
   toggleTripBookingStatus: (tripId: string) => boolean;
+  swapTripVehicle: (tripId: string, newVehicleId: string) => { success: boolean; message: string };
 
   // Operations & Maintenance & Agenda de Servicios
   addVehicle: (vehicleData: Omit<Vehicle, 'id'>) => Vehicle;
@@ -2214,6 +2215,111 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return false;
   };
 
+  /**
+   * Asignación flexible por capacidad: Permite cambiar el tamaño/tipo de unidad según la demanda
+   * (ej. habilitar una de 12 o 14 pasajeros o una de 19 si se llena o no se llena)
+   */
+  const swapTripVehicle = (tripId: string, newVehicleId: string): { success: boolean; message: string } => {
+    const trip = trips.find(t => t.id === tripId);
+    if (!trip) return { success: false, message: 'Viaje no encontrado.' };
+
+    const newVehicle = vehicles.find(v => v.id === newVehicleId);
+    if (!newVehicle) return { success: false, message: 'Camioneta seleccionada no encontrada.' };
+
+    if (newVehicle.status === 'maintenance') {
+      showNotification(`La unidad ${newVehicle.unitNumber} se encuentra en taller/mantenimiento.`, 'warning');
+      return { success: false, message: 'La unidad seleccionada está en mantenimiento.' };
+    }
+
+    // Bloqueo contra colisión en la misma fecha
+    const isVehicleBusyOnTrip = trips.some(
+      t => t.id !== tripId && t.vehicleId === newVehicleId && t.date === trip.date && t.status !== 'completed' && t.status !== 'cancelled'
+    );
+    if (isVehicleBusyOnTrip) {
+      showNotification(`La unidad ${newVehicle.unitNumber} ya está asignada a otra corrida en la fecha ${trip.date}.`, 'warning');
+      return { success: false, message: 'La unidad ya tiene otra salida asignada en esta fecha.' };
+    }
+
+    const isVehicleBusyOnTour = charterAssignments.some(
+      c => c.vehicleId === newVehicleId && (c.status === 'active' || c.status === 'upcoming') && (c.startDate <= trip.date && c.endDate >= trip.date)
+    );
+    if (isVehicleBusyOnTour) {
+      showNotification(`La unidad ${newVehicle.unitNumber} está contratada para un tour turístico en esa fecha.`, 'warning');
+      return { success: false, message: 'La unidad está ocupada en un tour turístico.' };
+    }
+
+    // Comprobar si los pasajeros ya vendidos caben en la nueva unidad
+    const soldSeats = trip.seats.filter(s => s.status === 'sold' || s.status === 'locked');
+    if (soldSeats.length > newVehicle.capacity) {
+      const msg = `Capacidad insuficiente: La salida ya tiene ${soldSeats.length} boletos vendidos/apartados y la unidad ${newVehicle.model} solo tiene ${newVehicle.capacity} asientos.`;
+      showNotification(msg, 'warning');
+      return { success: false, message: msg };
+    }
+
+    // Obtener plantilla adecuada para la nueva unidad
+    const newTemplate = seatTemplates.find(t => t.id === newVehicle.layoutTemplateId)
+      || seatTemplates.find(t => t.totalSeats === newVehicle.capacity)
+      || seatTemplates[0];
+
+    // Reasignar asientos preservando los vendidos
+    const newSeats: Seat[] = Array.from({ length: newVehicle.capacity }, (_, i) => {
+      const seatNum = i + 1;
+      const prevSeat = trip.seats.find(s => s.number === seatNum);
+      if (prevSeat && (prevSeat.status === 'sold' || prevSeat.status === 'locked')) {
+        return { ...prevSeat };
+      }
+      return {
+        id: `seat-${tripId}-${seatNum}`,
+        number: seatNum,
+        status: 'available',
+        price: trip.basePrice,
+        type: 'standard'
+      };
+    });
+
+    const oldVehicleId = trip.vehicleId;
+
+    // Actualizar viaje
+    let updatedTrip: TripSchedule | undefined;
+    setTrips(prev => prev.map(t => {
+      if (t.id !== tripId) return t;
+      updatedTrip = {
+        ...t,
+        vehicleId: newVehicle.id,
+        layoutTemplateId: newTemplate?.id || t.layoutTemplateId,
+        totalSeats: newVehicle.capacity,
+        seats: newSeats
+      };
+      return updatedTrip;
+    }));
+
+    if (updatedTrip) {
+      saveTripToSupabase(updatedTrip).catch(() => {});
+    }
+
+    // Liberar camioneta anterior si estaba en ruta y actualizar nueva
+    setVehicles(prev => prev.map(v => {
+      if (v.id === oldVehicleId && v.status === 'in_route') {
+        return { ...v, status: 'active' };
+      }
+      if (v.id === newVehicle.id) {
+        return { ...v, status: (trip.status === 'in_transit' || trip.status === 'boarding') ? 'in_route' : v.status };
+      }
+      return v;
+    }));
+
+    addAuditEntry(
+      'CAMBIO_UNIDAD_DEMANDA',
+      'TripSchedule',
+      tripId,
+      `Unidad previa: ${oldVehicleId}`,
+      `Nueva unidad asignada: ${newVehicle.unitNumber} (${newVehicle.model} - ${newVehicle.capacity}p)`
+    );
+
+    showNotification(`Unidad reasignada con éxito a ${newVehicle.unitNumber} (${newVehicle.model} - ${newVehicle.capacity} Pax).`, 'success');
+    return { success: true, message: 'Unidad reasignada con éxito.' };
+  };
+
   // Seat Layout Templates Operations (Diagramas de Asientos)
   const saveSeatTemplate = (templateData: Omit<SeatLayoutTemplate, 'id' | 'createdAt'> & { id?: string }): SeatLayoutTemplate => {
     const isEdit = !!templateData.id;
@@ -2971,6 +3077,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateTrip,
         deleteTrip,
         toggleTripBookingStatus,
+        swapTripVehicle,
         addVehicle,
         updateVehicle,
         deleteVehicle,

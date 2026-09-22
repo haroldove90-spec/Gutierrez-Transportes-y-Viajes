@@ -26,7 +26,7 @@ import {
   Save,
   X
 } from 'lucide-react';
-import { TripExpense } from '../../types';
+import { TripSchedule, TripExpense } from '../../types';
 import { DriverWakeUpAlarmModal } from './DriverWakeUpAlarmModal';
 
 interface DriverPortalProps {
@@ -88,7 +88,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
   
   // Trip selection state
   const [selectedTripId, setSelectedTripId] = useState<string>('');
-  const activeTrip = assignedTrips.find(t => t.id === selectedTripId) || assignedTrips[0] || trips[0];
+  const activeTrip: TripSchedule | undefined = assignedTrips.find(t => t.id === selectedTripId) || assignedTrips[0];
 
   useEffect(() => {
     if (assignedTrips.length > 0 && !assignedTrips.some(t => t.id === selectedTripId)) {
@@ -129,7 +129,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
   };
 
   // Passengers on this active trip
-  const tripBookings = bookings.filter(b => b.tripId === activeTrip.id);
+  const tripBookings = activeTrip ? bookings.filter(b => b.tripId === activeTrip.id) : [];
   const checkedInCount = tripBookings.filter(b => b.checkInStatus === 'checked_in').length;
 
   // New Expense form modal/state
@@ -150,7 +150,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
     }
 
     addExpense({
-      tripId: activeTrip.id,
+      tripId: activeTrip?.id || 'sin-viaje',
       vehicleId: driverVehicle.id,
       driverId: currentDriver.id,
       type: expenseType,
@@ -526,7 +526,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
               </span>
               <div className="flex flex-wrap gap-2">
                 {assignedTrips.map(t => {
-                  const isSelected = t.id === activeTrip.id;
+                  const isSelected = activeTrip ? t.id === activeTrip.id : false;
                   return (
                     <button
                       key={t.id}
@@ -623,20 +623,31 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
             </div>
           )}
 
-          {/* Active Trip Card */}
-          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs md:text-sm font-black text-orange-600 uppercase tracking-wider">
-                Servicio Asignado Hoy
-              </span>
-              <span className={`text-xs md:text-sm font-black px-3 py-1 rounded-full uppercase ${
-                activeTrip.status === 'in_transit' ? 'bg-orange-100 text-orange-800' :
-                activeTrip.status === 'boarding' ? 'bg-amber-100 text-amber-800' :
-                activeTrip.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-neutral-100 text-neutral-800'
-              }`}>
-                {activeTrip.status.replace('_', ' ')}
-              </span>
+          {/* Active Trip Card or Empty State */}
+          {!activeTrip ? (
+            <div className="bg-white rounded-3xl p-8 border-2 border-dashed border-neutral-300 text-center space-y-3">
+              <div className="w-14 h-14 bg-neutral-100 rounded-2xl mx-auto flex items-center justify-center text-neutral-400">
+                <Bus className="w-7 h-7" />
+              </div>
+              <h4 className="text-base font-black text-neutral-900">Sin Salidas de Ruta Programadas Hoy</h4>
+              <p className="text-xs text-neutral-500 max-w-md mx-auto">
+                Hola {currentDriver.name}. Actualmente no tienes corridas regulares asignadas para esta fecha. Mantén tu teléfono con volumen activo; recibirás una alerta en tiempo real en cuanto administración te asigne una salida.
+              </p>
             </div>
+          ) : (
+            <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs md:text-sm font-black text-orange-600 uppercase tracking-wider">
+                  Servicio Asignado Hoy
+                </span>
+                <span className={`text-xs md:text-sm font-black px-3 py-1 rounded-full uppercase ${
+                  activeTrip.status === 'in_transit' ? 'bg-orange-100 text-orange-800' :
+                  activeTrip.status === 'boarding' ? 'bg-amber-100 text-amber-800' :
+                  activeTrip.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-neutral-100 text-neutral-800'
+                }`}>
+                  {activeTrip.status.replace('_', ' ')}
+                </span>
+              </div>
 
             {/* ESTADO DE ACEPTACIÓN POR EL CHOFER */}
             {activeTrip.driverAccepted ? (
@@ -765,6 +776,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ activeTab, setActive
               </div>
             </div>
           </div>
+          )}
 
           {/* Quick Route Stops Checklist */}
           <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-4">

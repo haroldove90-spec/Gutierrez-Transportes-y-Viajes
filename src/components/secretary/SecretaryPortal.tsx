@@ -26,6 +26,7 @@ import { ROUTE_STOPS, OFFICIAL_PRICING, OFFICIAL_PHONE, OFFICIAL_WHATSAPP, OFFIC
 import { ClientReportModal } from '../modals/ClientReportModal';
 import { RentalCatalog } from '../common/RentalCatalog';
 import { SeatDiagramViewer } from '../common/SeatDiagramViewer';
+import { FleetAgendaConsolidated } from './FleetAgendaConsolidated';
 
 interface SecretaryPortalProps {
   activeTab: string;
@@ -38,7 +39,8 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
     trips, 
     vehicles, 
     drivers,
-    rentalCars,
+    charterAssignments,
+    rentalCars, 
     quotes, 
     routePricings,
     routeStops,
@@ -1056,11 +1058,14 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
                           onChange={e => setSelectedUnitForReservation(e.target.value)}
                           className="w-full p-2 bg-neutral-50 border border-neutral-300 rounded-xl font-medium text-neutral-800"
                         >
-                          {vehicles.map(v => (
-                            <option key={v.id} value={v.id}>
-                              {v.unitNumber} ({v.model} - {v.capacity}p)
-                            </option>
-                          ))}
+                          {vehicles.map(v => {
+                            const isBusy = v.status !== 'active';
+                            return (
+                              <option key={v.id} value={v.id} disabled={isBusy}>
+                                {v.unitNumber} ({v.model} - {v.capacity}p) {isBusy ? `[BLOQUEADA: ${v.status === 'in_route' ? 'En Ruta' : v.status === 'tour_contract' ? 'En Tour' : v.status === 'reserved_rent' ? 'Rentada' : 'Taller'}]` : '✓ Disponible'}
+                              </option>
+                            );
+                          })}
                         </select>
                       </div>
                       <div>
@@ -1096,38 +1101,21 @@ export const SecretaryPortal: React.FC<SecretaryPortalProps> = ({ activeTab, set
         </div>
       )}
 
-      {/* Tab 4: Calendario de Disponibilidad */}
+      {/* Tab 4: Calendario Consolidado de Disponibilidad (Oficina / Ventanilla) */}
       {activeTab === 'calendar' && (
-        <div className="max-w-4xl mx-auto w-full space-y-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-neutral-200 space-y-4">
-            <h3 className="text-base md:text-lg font-black uppercase tracking-wider text-neutral-900 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-orange-600" /> Disponibilidad Central de Unidades
-            </h3>
-            <p className="text-sm text-neutral-600">
-              Consulta en cuadrícula visual qué unidades están libres, apartadas o en viaje.
-            </p>
-
-            <div className="space-y-3 pt-2">
-              {vehicles.map(v => (
-                <div key={v.id} className="p-4 rounded-2xl bg-neutral-50 border-2 border-neutral-200 flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-black text-sm md:text-base text-neutral-900">{v.unitNumber}</span>
-                      <span className="text-xs text-neutral-500 font-mono font-bold">({v.plate})</span>
-                    </div>
-                    <p className="text-xs md:text-sm text-neutral-600">{v.model} • Capacidad: {v.capacity} Pax</p>
-                  </div>
-                  <span className={`text-xs font-black px-3 py-1.5 rounded-full uppercase ${
-                    v.status === 'active' ? 'bg-emerald-100 text-emerald-800' :
-                    v.status === 'in_route' ? 'bg-orange-100 text-orange-800' :
-                    v.status === 'reserved_rent' ? 'bg-purple-100 text-purple-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {v.status.replace('_', ' ')}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="max-w-6xl mx-auto w-full">
+          <FleetAgendaConsolidated
+            vehicles={vehicles}
+            trips={trips}
+            charterAssignments={charterAssignments}
+            drivers={drivers}
+            rentalCars={rentalCars}
+            onSelectForQuote={(vehicle) => {
+              setActiveTab('quotes');
+              updateVehicleSelection(vehicle.model);
+              showNotification(`Unidad ${vehicle.unitNumber} seleccionada para cotización.`, 'info');
+            }}
+          />
         </div>
       )}
 

@@ -24,7 +24,8 @@ import {
   ChevronRight,
   CalendarDays,
   Palmtree,
-  LayoutGrid
+  LayoutGrid,
+  ArrowDownUp
 } from 'lucide-react';
 
 interface SidebarNavProps {
@@ -43,6 +44,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
           title: 'Portal Pasajero',
           badge: 'Viajes & Boletos',
           items: [
+            { id: 'search', label: 'Comprar / Apartar Boletos', icon: <Search className="w-5 h-5" /> },
             { id: 'tours', label: 'Tours y Viajes', icon: <Palmtree className="w-5 h-5" /> },
             { id: 'tickets', label: 'Mis Boletos Digitales', icon: <Ticket className="w-5 h-5" /> },
             { id: 'rentals', label: 'Renta de Autos y Vans', icon: <Car className="w-5 h-5" /> },
@@ -91,6 +93,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
           title: 'Portal Finanzas',
           badge: 'Cobranza y Gastos',
           items: [
+            { id: 'cash_flow', label: 'Flujo de Dinero (Ingresos/Egresos)', icon: <ArrowDownUp className="w-5 h-5" /> },
             { id: 'receivables', label: 'Control de Cobranza', icon: <DollarSign className="w-5 h-5" /> },
             { id: 'audit_expenses', label: 'Auditoría de Gastos', icon: <Receipt className="w-5 h-5" /> },
             { id: 'cfdi', label: 'Facturación CFDI 4.0', icon: <FileText className="w-5 h-5" /> },

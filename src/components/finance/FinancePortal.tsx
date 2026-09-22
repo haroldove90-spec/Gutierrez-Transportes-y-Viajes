@@ -8,8 +8,12 @@ import {
   Download, 
   FileSpreadsheet, 
   Fuel, 
-  Building
+  Building,
+  ArrowDownUp,
+  ArrowUpRight,
+  ArrowDownLeft
 } from 'lucide-react';
+import { CashFlowLedger } from './CashFlowLedger';
 
 interface FinancePortalProps {
   activeTab: string;
@@ -19,11 +23,14 @@ interface FinancePortalProps {
 export const FinancePortal: React.FC<FinancePortalProps> = ({ activeTab, setActiveTab }) => {
   const { 
     expenses, 
+    addExpense,
     approveExpense, 
     quotes, 
     invoices, 
     requestInvoice, 
     bookings, 
+    vehicles,
+    drivers,
     showNotification 
   } = useApp();
 
@@ -87,7 +94,33 @@ export const FinancePortal: React.FC<FinancePortalProps> = ({ activeTab, setActi
             <p className="text-lg md:text-2xl font-black text-amber-400 mt-1">${totalReceivables.toLocaleString()} MXN</p>
           </div>
         </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-800">
+          <span className="text-xs text-neutral-400">
+            Margen Operativo Neto: <strong className="text-white font-mono">${netOperatingProfit.toLocaleString()} MXN</strong>
+          </span>
+          <button
+            onClick={() => setActiveTab('cash_flow')}
+            className="px-3.5 py-1.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-black transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <ArrowDownUp className="w-3.5 h-3.5" /> Ver Libro Diario de Ingresos y Egresos
+          </button>
+        </div>
       </div>
+
+      {/* Tab 0: Flujo de Dinero (Ingresos y Egresos en Vivo) */}
+      {activeTab === 'cash_flow' && (
+        <CashFlowLedger
+          bookings={bookings}
+          quotes={quotes}
+          expenses={expenses}
+          vehicles={vehicles}
+          drivers={drivers}
+          onAddExpense={addExpense}
+          onApproveExpense={approveExpense}
+          showNotification={showNotification}
+        />
+      )}
 
       {/* Tab 1: Control de Cobranza & Cuentas por Cobrar */}
       {activeTab === 'receivables' && (
@@ -279,12 +312,21 @@ export const FinancePortal: React.FC<FinancePortalProps> = ({ activeTab, setActi
               </div>
             </div>
 
-            <button
-              onClick={() => showNotification('Reporte contable exportado a Excel/PDF', 'success')}
-              className="w-full py-4 bg-black hover:bg-neutral-800 text-white rounded-2xl font-black text-sm md:text-base shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <FileSpreadsheet className="w-5 h-5 text-orange-500" /> Exportar Reporte Contable (Excel / PDF)
-            </button>
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+              <button
+                onClick={() => showNotification('Reporte contable exportado a Excel/PDF', 'success')}
+                className="w-full sm:flex-1 py-4 bg-black hover:bg-neutral-800 text-white rounded-2xl font-black text-sm md:text-base shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <FileSpreadsheet className="w-5 h-5 text-orange-500" /> Exportar Reporte Contable (Excel / PDF)
+              </button>
+
+              <button
+                onClick={() => setActiveTab('cash_flow')}
+                className="w-full sm:w-auto px-6 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-black text-sm md:text-base shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer shrink-0"
+              >
+                <ArrowDownUp className="w-5 h-5" /> Ver Libro Diario de Movimientos
+              </button>
+            </div>
           </div>
         </div>
       )}
