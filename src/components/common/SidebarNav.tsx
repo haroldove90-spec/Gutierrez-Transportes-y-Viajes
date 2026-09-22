@@ -34,7 +34,7 @@ interface SidebarNavProps {
 }
 
 export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab, isOpen = true }) => {
-  const { currentRole, setCurrentRole } = useApp();
+  const { currentRole, setCurrentRole, bookings } = useApp();
 
   const getRoleConfig = () => {
     switch (currentRole) {
@@ -43,12 +43,9 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
           title: 'Portal Pasajero',
           badge: 'Viajes & Boletos',
           items: [
-            { id: 'search', label: 'Buscar Itinerarios', icon: <Search className="w-5 h-5" /> },
             { id: 'tours', label: 'Tours y Viajes', icon: <Palmtree className="w-5 h-5" /> },
-            { id: 'seats', label: 'Selección de Asientos', icon: <Grid className="w-5 h-5" /> },
             { id: 'tickets', label: 'Mis Boletos Digitales', icon: <Ticket className="w-5 h-5" /> },
             { id: 'rentals', label: 'Renta de Autos y Vans', icon: <Car className="w-5 h-5" /> },
-            { id: 'routes', label: 'Tarifario y Paradas', icon: <Map className="w-5 h-5" /> },
           ]
         };
       case 'conductor':
@@ -68,7 +65,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
           title: 'Portal Ventanilla',
           badge: 'Ventas y Cotizaciones',
           items: [
-            { id: 'counter', label: 'Venta en Ventanilla', icon: <PlusCircle className="w-5 h-5" /> },
+            { id: 'counter', label: 'Venta de Boletos (Ventanilla)', icon: <PlusCircle className="w-5 h-5" /> },
             { id: 'quotes', label: 'Cotizador de Rentas', icon: <FileText className="w-5 h-5" /> },
             { id: 'rental_catalog', label: 'Autos de Renta (Tarifas)', icon: <Car className="w-5 h-5" /> },
             { id: 'crm', label: 'CRM Leads & Clientes', icon: <Users className="w-5 h-5" /> },
@@ -106,7 +103,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
           badge: 'Control Total',
           items: [
             { id: 'executive', label: 'Métricas', icon: <TrendingUp className="w-5 h-5" /> },
-            { id: 'sales', label: 'Ventas & Boletos', icon: <Ticket className="w-5 h-5" /> },
+            { id: 'sales', label: 'Venta de Boletos', icon: <Ticket className="w-5 h-5" /> },
             { id: 'agenda', label: 'Agenda', icon: <CalendarDays className="w-5 h-5" /> },
             { id: 'drivers', label: 'Choferes', icon: <Users className="w-5 h-5" /> },
             { id: 'tours', label: 'Tours', icon: <Palmtree className="w-5 h-5" /> },
@@ -148,6 +145,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
 
         {roleConfig.items.map((item) => {
           const isActive = activeTab === item.id;
+          const isSaleButton = item.id === 'sales' || item.id === 'counter';
           return (
             <button
               key={item.id}
@@ -158,15 +156,29 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ activeTab, setActiveTab,
                   : 'text-neutral-200 hover:text-white hover:bg-neutral-900 border-transparent'
               }`}
             >
-              <div className="flex items-center gap-3.5">
-                <div className={`p-2 rounded-xl ${isActive ? 'bg-black/30 text-white' : 'bg-neutral-900 text-orange-500'}`}>
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className={`p-2 rounded-xl shrink-0 ${isActive ? 'bg-black/30 text-white' : 'bg-neutral-900 text-orange-500'}`}>
                   {item.icon}
                 </div>
-                <span className="tracking-tight">{item.label}</span>
+                <span className="tracking-tight truncate">{item.label}</span>
               </div>
-              {isActive && (
-                <ChevronRight className="w-5 h-5 text-white" />
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {isSaleButton && (
+                  <span 
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-black shadow-md border flex items-center justify-center transition-all ${
+                      isActive 
+                        ? 'bg-black text-white border-white/40 ring-1 ring-white/50' 
+                        : 'bg-emerald-500 text-black border-emerald-400 animate-pulse font-black'
+                    }`}
+                    title={`${bookings.length} ventas de boletos registradas`}
+                  >
+                    {bookings.length}
+                  </span>
+                )}
+                {isActive && (
+                  <ChevronRight className="w-5 h-5 text-white" />
+                )}
+              </div>
             </button>
           );
         })}

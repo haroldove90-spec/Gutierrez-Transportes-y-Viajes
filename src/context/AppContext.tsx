@@ -18,8 +18,10 @@ import {
   DriverAlarm,
   SeatLayoutTemplate,
   SaleAlert,
-  DriverAcceptedEvent
+  DriverAcceptedEvent,
+  DriverAssignedEvent
 } from '../types';
+import { realtimeBus } from '../lib/realtimeSync';
 import {
   DEFAULT_SEAT_TEMPLATES,
   buildSeatsFromTemplate,
@@ -200,6 +202,15 @@ interface AppContextType {
   // Real-time Driver Acceptance Notifications (Admin Pop-up)
   activeDriverAcceptedNotification: DriverAcceptedEvent | null;
   dismissDriverAcceptedNotification: () => void;
+
+  // Real-time Driver Assignment Pop-up for Driver
+  activeDriverAssignedNotification: DriverAssignedEvent | null;
+  dismissDriverAssignedNotification: () => void;
+
+  // Live Sale Floating Notification for Admin
+  activeSaleAlert: SaleAlert | null;
+  setActiveSaleAlert: (alert: SaleAlert | null) => void;
+  dismissSaleAlert: () => void;
 
   notification: { message: string; type: 'success' | 'error' | 'info' | 'warning' } | null;
   showNotification: (message: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
@@ -547,10 +558,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed.map((s: RouteStop) => {
+            const days = s.departureDays && s.departureDays.length > 0 
+              ? s.departureDays 
+              : ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+            const times = s.departureTimes && s.departureTimes.length > 0 
+              ? s.departureTimes 
+              : ['06:00 AM', '08:30 AM', '01:00 PM', '05:30 PM'];
             if (s.id === 'loc-gdl-minerva' && (!s.mapsUrl || s.mapsUrl.includes('k9L8m7n6b5v4c3x21'))) {
-              return { ...s, mapsUrl: 'https://maps.app.goo.gl/Ji9UMZtn3uwVphgu8' };
+              return { ...s, mapsUrl: 'https://maps.app.goo.gl/Ji9UMZtn3uwVphgu8', departureDays: days, departureTimes: times };
             }
-            return s;
+            return { ...s, departureDays: days, departureTimes: times };
           });
         }
       }
@@ -680,6 +697,103 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.removeItem('gutierrez_driver_accepted_notification_v1');
     } catch {}
   };
+
+  // Real-time Driver Assignment Pop-up for Driver
+  const [activeDriverAssignedNotification, setActiveDriverAssignedNotification] = useState<DriverAssignedEvent | null>(() => {
+    try {
+      const saved = localStorage.getItem('gutierrez_driver_assigned_notification_v1');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  });
+
+  const dismissDriverAssignedNotification = () => {
+    setActiveDriverAssignedNotification(null);
+    try {
+      localStorage.removeItem('gutierrez_driver_assigned_notification_v1');
+    } catch {}
+  };
+
+  // Live Sale Floating Notification for Admin
+  const [activeSaleAlert, setActiveSaleAlert] = useState<SaleAlert | null>(null);
+  const dismissSaleAlert = () => setActiveSaleAlert(null);
+
+  // Cross-tab real-time listener for instant notification sync without page refresh
+  useEffect(() => {
+    const unsubscribe = realtimeBus.subscribe((msg) => {
+      switch (msg.type) {
+        case 'NEW_SALE': {
+          const { saleAlert, booking } = msg.payload || {};
+          if (saleAlert) {
+            setSaleAlerts(prev => {
+              if (prev.some(a => a.id === saleAlert.id)) return prev;
+              return [saleAlert, ...prev];
+            });
+            setActiveSaleAlert(saleAlert);
+            playSaleChime();
+          }
+          if (booking) {
+            setBookings(prev => {
+              if (prev.some(b => b.id === booking.id)) return prev;
+              return [booking, ...prev];
+            });
+          }
+          break;
+        }
+        case 'DRIVER_ACCEPTED': {
+          const notif = msg.payload as DriverAcceptedEvent;
+          if (notif) {
+            setActiveDriverAcceptedNotification(notif);
+            showNotification(`¡El operador ${notif.driverName} aceptó el viaje a ${notif.destination}!`, 'success');
+            if (notif.tripId) {
+              setTrips(prev => prev.map(t => t.id === notif.tripId ? { ...t, driverAccepted: true } : t));
+            }
+          }
+          break;
+        }
+        case 'TRIP_ASSIGNED': {
+          const assignment = msg.payload as DriverAssignedEvent;
+          if (assignment) {
+            setActiveDriverAssignedNotification(assignment);
+            showNotification(`¡Nuevo viaje asignado: ${assignment.title}!`, 'info');
+          }
+          break;
+        }
+        case 'WAKE_UP_ALARM': {
+          const alarm = msg.payload as DriverAlarm;
+          if (alarm) {
+            setActiveAlarm(alarm);
+            setDriverAlarms(prev => {
+              if (prev.some(a => a.id === alarm.id)) return prev;
+              return [alarm, ...prev];
+            });
+            startAlarmSound();
+          }
+          break;
+        }
+        case 'ALARM_ACKNOWLEDGED': {
+          const { alarmId } = msg.payload || {};
+          stopAlarmSound();
+          setActiveAlarm(null);
+          if (alarmId) {
+            setDriverAlarms(prev => prev.map(a => a.id === alarmId ? { ...a, status: 'acknowledged' as const } : a));
+          }
+          break;
+        }
+        case 'ROUTE_STOPS_UPDATED': {
+          const stops = msg.payload as RouteStop[];
+          if (Array.isArray(stops)) {
+            setRouteStops(stops);
+          }
+          break;
+        }
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
   const [soundPermissionGranted, setSoundPermissionGranted] = useState<boolean>(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       return Notification.permission === 'granted';
@@ -811,6 +925,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       localStorage.removeItem('gutierrez_active_driver_alarm_v1');
     } catch {}
+    realtimeBus.publish('ALARM_ACKNOWLEDGED', { alarmId });
     showNotification('¡Alarma apagada con éxito! Has confirmado asistencia y conocimiento de tu viaje.', 'success');
     addAuditEntry('ALARMA_DESPERTADOR_APAGADA', 'DriverAlarm', alarmId, undefined, 'Chofer apagó la alarma y confirmó asistencia.');
   };
@@ -863,6 +978,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('gutierrez_active_driver_alarm_v1', JSON.stringify(newAlarm));
     } catch {}
     startAlarmSound();
+    realtimeBus.publish('WAKE_UP_ALARM', newAlarm);
 
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
       try {
@@ -1244,7 +1360,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       read: false
     };
     setSaleAlerts(prev => [saleAlertItem, ...prev]);
+    setActiveSaleAlert(saleAlertItem);
     playSaleChime();
+    realtimeBus.publish('NEW_SALE', { saleAlert: saleAlertItem, booking: newBooking });
 
     if (soldOutAdminNotice) {
       const soldOutAlert: SaleAlert = {
@@ -1559,6 +1677,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         folio: acceptedTrip.tourFolio || linkedCharter?.folio
       };
       setActiveDriverAcceptedNotification(notificationEvent);
+      realtimeBus.publish('DRIVER_ACCEPTED', notificationEvent);
       try {
         localStorage.setItem('gutierrez_driver_accepted_notification_v1', JSON.stringify(notificationEvent));
       } catch {}
@@ -1663,6 +1782,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         folio: acceptedCharter.folio
       };
       setActiveDriverAcceptedNotification(notificationEvent);
+      realtimeBus.publish('DRIVER_ACCEPTED', notificationEvent);
       try {
         localStorage.setItem('gutierrez_driver_accepted_notification_v1', JSON.stringify(notificationEvent));
       } catch {}
@@ -1884,6 +2004,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setDriverAlarms(prev => [assignAlarm, ...prev]);
     setActiveAlarm(assignAlarm);
     startAlarmSound();
+
+    const assignmentEvent: DriverAssignedEvent = {
+      id: `assigned-${Date.now()}`,
+      driverId,
+      driverName: driver.name,
+      title: `Asignación a ${vehicle.unitNumber}`,
+      origin: 'Base Central',
+      destination: 'Servicio de Ruta Regular',
+      unitNumber: vehicle.unitNumber,
+      date: new Date().toISOString().split('T')[0],
+      departureTime: 'Ver Itinerario',
+      type: 'route',
+      notes: `Asignado por Administración a unidad ${vehicle.unitNumber}`
+    };
+    setActiveDriverAssignedNotification(assignmentEvent);
+    realtimeBus.publish('TRIP_ASSIGNED', assignmentEvent);
 
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
       try {
@@ -2252,6 +2388,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setActiveAlarm(charterAlarm);
     startAlarmSound();
 
+    const tourEvent: DriverAssignedEvent = {
+      id: `assigned-tour-${Date.now()}`,
+      driverId: data.driverId,
+      driverName: data.driverName || 'Operador',
+      title: `Tour Especial a ${data.destination}`,
+      origin: data.origin || 'Base Central',
+      destination: data.destination,
+      unitNumber: data.unitNumber,
+      date: data.startDate,
+      departureTime: data.startTime || '08:00 AM',
+      type: 'tour',
+      folio,
+      notes: `Asignado por Administración (${data.clientName})`
+    };
+    setActiveDriverAssignedNotification(tourEvent);
+    realtimeBus.publish('TRIP_ASSIGNED', tourEvent);
+
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
       try {
         new Notification(charterAlarm.title, {
@@ -2438,9 +2591,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...stopData,
       id: `loc-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       order: stopData.order || routeStops.length + 1,
-      isActive: stopData.isActive !== undefined ? stopData.isActive : true
+      isActive: stopData.isActive !== undefined ? stopData.isActive : true,
+      departureDays: stopData.departureDays && stopData.departureDays.length > 0 
+        ? stopData.departureDays 
+        : ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+      departureTimes: stopData.departureTimes && stopData.departureTimes.length > 0 
+        ? stopData.departureTimes 
+        : ['06:00 AM', '08:30 AM', '01:00 PM', '05:30 PM']
     };
-    setRouteStops(prev => [...prev, newStop]);
+    setRouteStops(prev => {
+      const updated = [...prev, newStop];
+      realtimeBus.publish('ROUTE_STOPS_UPDATED', updated);
+      return updated;
+    });
     upsertRouteStopToSupabase(newStop).catch(() => {});
     addAuditEntry('CREACION_PUNTO_PARTIDA', 'RouteStop', newStop.id, 'n/a', `Ubicación: ${newStop.name} (${newStop.city})`);
     showNotification(`Nueva ubicación "${newStop.name}" guardada con éxito.`, 'success');
@@ -2450,15 +2613,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateRouteStop = (id: string, updated: Partial<RouteStop>): boolean => {
     let found = false;
     let targetStop: RouteStop | null = null;
-    setRouteStops(prev => prev.map(stop => {
-      if (stop.id === id) {
-        found = true;
-        const merged = { ...stop, ...updated };
-        targetStop = merged;
-        return merged;
+    setRouteStops(prev => {
+      const next = prev.map(stop => {
+        if (stop.id === id) {
+          found = true;
+          const merged = { ...stop, ...updated };
+          targetStop = merged;
+          return merged;
+        }
+        return stop;
+      });
+      if (found) {
+        realtimeBus.publish('ROUTE_STOPS_UPDATED', next);
       }
-      return stop;
-    }));
+      return next;
+    });
     if (found && targetStop) {
       upsertRouteStopToSupabase(targetStop).catch(() => {});
       addAuditEntry('ACTUALIZACION_PUNTO_PARTIDA', 'RouteStop', id, 'modificado', JSON.stringify(updated));
@@ -2471,16 +2640,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let newStatus = false;
     let stopName = '';
     let targetStop: RouteStop | null = null;
-    setRouteStops(prev => prev.map(stop => {
-      if (stop.id === id) {
-        newStatus = !stop.isActive;
-        stopName = stop.name;
-        const merged = { ...stop, isActive: newStatus };
-        targetStop = merged;
-        return merged;
-      }
-      return stop;
-    }));
+    setRouteStops(prev => {
+      const next = prev.map(stop => {
+        if (stop.id === id) {
+          newStatus = !stop.isActive;
+          stopName = stop.name;
+          const merged = { ...stop, isActive: newStatus };
+          targetStop = merged;
+          return merged;
+        }
+        return stop;
+      });
+      realtimeBus.publish('ROUTE_STOPS_UPDATED', next);
+      return next;
+    });
     if (targetStop) {
       upsertRouteStopToSupabase(targetStop).catch(() => {});
     }
@@ -2495,7 +2668,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteRouteStop = (id: string): boolean => {
     const target = routeStops.find(s => s.id === id);
     recordDeletedId(id);
-    setRouteStops(prev => prev.filter(stop => stop.id !== id));
+    setRouteStops(prev => {
+      const filtered = prev.filter(stop => stop.id !== id);
+      realtimeBus.publish('ROUTE_STOPS_UPDATED', filtered);
+      return filtered;
+    });
     deleteRouteStopFromSupabase(id).catch(() => {});
     addAuditEntry('ELIMINACION_PUNTO_PARTIDA', 'RouteStop', id, 'eliminado', target ? target.name : id);
     showNotification('Ubicación eliminada definitivamente del catálogo.', 'info');
@@ -2504,6 +2681,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const resetRouteStopsToDefault = () => {
     setRouteStops(ROUTE_STOPS);
+    realtimeBus.publish('ROUTE_STOPS_UPDATED', ROUTE_STOPS);
     try {
       localStorage.removeItem('gutierrez_route_stops_v1');
     } catch (e) {}
@@ -2844,6 +3022,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         stopAlarmSound,
         activeDriverAcceptedNotification,
         dismissDriverAcceptedNotification,
+        activeDriverAssignedNotification,
+        dismissDriverAssignedNotification,
+        activeSaleAlert,
+        setActiveSaleAlert,
+        dismissSaleAlert,
         notification,
         showNotification,
         saleAlerts,

@@ -20,6 +20,8 @@ export interface RouteStop {
   isSpecialPoint?: boolean; // CAS, Zoológico
   farePrice?: number; // Precio / Tarifa específica asignada a este punto de abordaje ($ MXN)
   notes?: string;
+  departureDays?: string[]; // Días disponibles ej. ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] o ['Todos los días']
+  departureTimes?: string[]; // Horarios disponibles ej. ['06:00 AM', '08:30 AM', '01:00 PM', '05:30 PM']
 }
 
 export interface RoutePricing {
@@ -383,4 +385,22 @@ export interface DriverAcceptedEvent {
   acceptedAt: string;
   type: 'route' | 'tour';
   folio?: string;
+}
+
+export interface DriverAssignedEvent {
+  id: string;
+  driverId: string;
+  driverName?: string;
+  tripId?: string;
+  charterId?: string;
+  title: string;
+  origin: string;
+  destination: string;
+  unitNumber: string;
+  date: string;
+  departureTime: string;
+  notes?: string;
+  type: 'route' | 'tour' | 'reminder';
+  folio?: string;
+  assignedAt?: string;
 }

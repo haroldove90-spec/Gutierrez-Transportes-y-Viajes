@@ -783,7 +783,7 @@ export const SeatLayoutBuilder: React.FC = () => {
                 <div className="bg-neutral-50 rounded-3xl p-5 border border-neutral-200 space-y-4">
                   <h4 className="text-sm font-black text-neutral-900 flex items-center justify-between">
                     <span>Pasaje Registrado</span>
-                    <span className="text-xs font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
+                    <span className="text-xs font-black px-2 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-200">
                       {selectedTrip.seats.filter(s => s.status === 'sold' || s.status === 'locked').length} Vendidos
                     </span>
                   </h4>
@@ -797,7 +797,7 @@ export const SeatLayoutBuilder: React.FC = () => {
                           className="p-3 bg-white rounded-xl border border-neutral-200 flex items-center justify-between text-xs"
                         >
                           <div className="flex items-center gap-2.5">
-                            <span className="w-8 h-8 rounded-lg bg-rose-500 text-white font-black flex items-center justify-center text-sm shadow-xs">
+                            <span className="w-8 h-8 rounded-lg bg-red-600 text-white font-black flex items-center justify-center text-sm shadow-xs">
                               {seat.number}
                             </span>
                             <div>
@@ -809,7 +809,7 @@ export const SeatLayoutBuilder: React.FC = () => {
                               </p>
                             </div>
                           </div>
-                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
                             Ocupado
                           </span>
                         </div>

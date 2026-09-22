@@ -671,7 +671,9 @@ export async function fetchRouteStopsFromSupabase(): Promise<RouteStop[] | null>
       isActive: s.is_active ?? true,
       isSpecialPoint: s.is_special_point ?? false,
       farePrice: s.fare_price ? Number(s.fare_price) : undefined,
-      notes: s.notes
+      notes: s.notes,
+      departureDays: s.departure_days || ['Todos los días'],
+      departureTimes: s.departure_times || ['06:00 AM', '08:30 AM', '01:00 PM', '05:30 PM']
     }));
   } catch {
     return null;
@@ -695,7 +697,9 @@ export async function upsertRouteStopToSupabase(stop: RouteStop): Promise<boolea
       is_active: stop.isActive,
       is_special_point: stop.isSpecialPoint ?? false,
       fare_price: stop.farePrice ?? null,
-      notes: stop.notes || null
+      notes: stop.notes || null,
+      departure_days: stop.departureDays || ['Todos los días'],
+      departure_times: stop.departureTimes || ['06:00 AM', '08:30 AM', '01:00 PM', '05:30 PM']
     });
     return !error;
   } catch {

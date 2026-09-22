@@ -13,6 +13,9 @@ import { DirectorPortal } from './components/director/DirectorPortal';
 import { TicketModal } from './components/modals/TicketModal';
 import { QRScannerModal } from './components/modals/QRScannerModal';
 import { DriverAcceptedNotificationModal } from './components/modals/DriverAcceptedNotificationModal';
+import { LiveSaleNotificationModal } from './components/modals/LiveSaleNotificationModal';
+import { DriverAssignedTripModal } from './components/modals/DriverAssignedTripModal';
+import { DriverWakeUpAlarmModal } from './components/driver/DriverWakeUpAlarmModal';
 import { SplashScreen } from './components/common/SplashScreen';
 import { Booking } from './types';
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react';
@@ -25,7 +28,13 @@ function AppContent() {
     activeTicket, 
     setActiveTicket,
     activeDriverAcceptedNotification,
-    dismissDriverAcceptedNotification
+    dismissDriverAcceptedNotification,
+    activeSaleAlert,
+    dismissSaleAlert,
+    activeDriverAssignedNotification,
+    dismissDriverAssignedNotification,
+    acceptAssignedTrip,
+    acceptCharterAssignment
   } = useApp();
   
   // Splash Screen state on initial launch - ONLY show if not already logged in to a role
@@ -44,7 +53,7 @@ function AppContent() {
   const getDefaultTabForRole = (role: string): string => {
     switch (role) {
       case 'pasajero':
-        return 'search';
+        return 'tours';
       case 'conductor':
         return 'trip';
       case 'secretaria':
@@ -260,6 +269,38 @@ function AppContent() {
           }}
         />
       )}
+
+      {/* Floating Live Sale Notification Modal for Admin / Director */}
+      {activeSaleAlert && (
+        <LiveSaleNotificationModal
+          alert={activeSaleAlert}
+          onClose={dismissSaleAlert}
+          onViewSales={() => {
+            dismissSaleAlert();
+            setCurrentRole('director');
+            setActiveTab('sales');
+          }}
+        />
+      )}
+
+      {/* Floating Driver Assigned Trip / Tour Notification Modal */}
+      {activeDriverAssignedNotification && (
+        <DriverAssignedTripModal
+          assignment={activeDriverAssignedNotification}
+          onClose={dismissDriverAssignedNotification}
+          onAccept={(assignment) => {
+            dismissDriverAssignedNotification();
+            if (assignment.type === 'tour') {
+              acceptCharterAssignment(assignment.id);
+            } else {
+              acceptAssignedTrip(assignment.id);
+            }
+          }}
+        />
+      )}
+
+      {/* Global Driver Wake Up / Trip Reminder Alarm Modal */}
+      <DriverWakeUpAlarmModal />
 
       {/* Initial Brand Splash Screen - Shows complete unencapsulated logo */}
       {showSplash && (

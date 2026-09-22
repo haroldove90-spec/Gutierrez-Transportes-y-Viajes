@@ -57,7 +57,9 @@ export const ROUTE_STOPS: RouteStop[] = [
     isActive: true,
     isSpecialPoint: false,
     farePrice: 370,
-    notes: 'Punto de partida principal en Manzanillo. Presentarse 15 min antes de la salida.'
+    notes: 'Punto de partida principal en Manzanillo. Presentarse 15 min antes de la salida.',
+    departureDays: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+    departureTimes: ['06:00 AM', '08:30 AM', '01:00 PM', '05:30 PM']
   },
   { 
     id: 'mzn-autozone', 
@@ -71,7 +73,9 @@ export const ROUTE_STOPS: RouteStop[] = [
     isActive: true,
     isSpecialPoint: false,
     farePrice: 370,
-    notes: 'Parada de abordaje sobre el Boulevard.'
+    notes: 'Parada de abordaje sobre el Boulevard.',
+    departureDays: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+    departureTimes: ['06:15 AM', '08:45 AM', '01:15 PM', '05:45 PM']
   },
   
   // 2. Tecomán
@@ -87,7 +91,9 @@ export const ROUTE_STOPS: RouteStop[] = [
     isActive: true,
     isSpecialPoint: false,
     farePrice: 330,
-    notes: 'Abordaje en el Kiosko del Jardín Principal de Tecomán.'
+    notes: 'Abordaje en el Kiosko del Jardín Principal de Tecomán.',
+    departureDays: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+    departureTimes: ['07:00 AM', '09:30 AM', '02:00 PM', '06:30 PM']
   },
   
   // 3. Colima
@@ -103,7 +109,9 @@ export const ROUTE_STOPS: RouteStop[] = [
     isActive: true,
     isSpecialPoint: false,
     farePrice: 279,
-    notes: 'Oficina Central y escala técnica obligatoria de 10 a 15 minutos (sanitarios y cafetería).'
+    notes: 'Oficina Central y escala técnica obligatoria de 10 a 15 minutos (sanitarios y cafetería).',
+    departureDays: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+    departureTimes: ['08:00 AM', '10:30 AM', '03:00 PM', '07:30 PM']
   },
   { 
     id: 'col-escala', 
@@ -117,7 +125,9 @@ export const ROUTE_STOPS: RouteStop[] = [
     isActive: true,
     isSpecialPoint: false,
     farePrice: 279,
-    notes: 'Parada intermedia técnica.'
+    notes: 'Parada intermedia técnica.',
+    departureDays: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+    departureTimes: ['08:15 AM', '10:45 AM', '03:15 PM', '07:45 PM']
   },
 
   // 4. Guzmán (Cd. Guzmán)
@@ -133,7 +143,9 @@ export const ROUTE_STOPS: RouteStop[] = [
     isActive: true,
     isSpecialPoint: false,
     farePrice: 170,
-    notes: 'Conexión rápida sur de Jalisco sobre la glorieta.'
+    notes: 'Conexión rápida sur de Jalisco sobre la glorieta.',
+    departureDays: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+    departureTimes: ['09:10 AM', '11:40 AM', '04:10 PM', '08:40 PM']
   },
 
   // 5. Guadalajara
@@ -149,7 +161,9 @@ export const ROUTE_STOPS: RouteStop[] = [
     isActive: true,
     isSpecialPoint: false,
     farePrice: 370,
-    notes: 'Punto de abordaje principal en Guadalajara Zona Poniente.'
+    notes: 'Punto de abordaje principal en Guadalajara Zona Poniente.',
+    departureDays: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+    departureTimes: ['07:00 AM', '10:30 AM', '02:30 PM', '06:30 PM']
   },
   { 
     id: 'gdl-plazasol', 
@@ -163,7 +177,9 @@ export const ROUTE_STOPS: RouteStop[] = [
     isActive: true,
     isSpecialPoint: false,
     farePrice: 370,
-    notes: 'Punto de abordaje Zona Plaza del Sol.'
+    notes: 'Punto de abordaje Zona Plaza del Sol.',
+    departureDays: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+    departureTimes: ['07:15 AM', '10:45 AM', '02:45 PM', '06:45 PM']
   },
   { 
     id: 'gdl-fuentes', 
@@ -177,7 +193,9 @@ export const ROUTE_STOPS: RouteStop[] = [
     isActive: true,
     isSpecialPoint: false,
     farePrice: 370,
-    notes: 'Abordaje rumbo a Colima / Manzanillo.'
+    notes: 'Abordaje rumbo a Colima / Manzanillo.',
+    departureDays: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+    departureTimes: ['07:30 AM', '11:00 AM', '03:00 PM', '07:00 PM']
   },
 
   // 6. Cas/Consulado
@@ -193,7 +211,9 @@ export const ROUTE_STOPS: RouteStop[] = [
     isActive: true,
     isSpecialPoint: true,
     farePrice: 450,
-    notes: 'Servicio directo a citas consulares de visa americana.'
+    notes: 'Servicio directo a citas consulares de visa americana.',
+    departureDays: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+    departureTimes: ['06:30 AM', '08:00 AM', '10:00 AM']
   },
 
   // 7. Zoológico
@@ -209,7 +229,9 @@ export const ROUTE_STOPS: RouteStop[] = [
     isActive: true,
     isSpecialPoint: true,
     farePrice: 500,
-    notes: 'Paquete especial recreativo y familiar.'
+    notes: 'Paquete especial recreativo y familiar.',
+    departureDays: ['Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+    departureTimes: ['07:00 AM', '08:30 AM']
   },
 ];
 

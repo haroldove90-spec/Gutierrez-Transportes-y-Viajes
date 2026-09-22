@@ -207,6 +207,8 @@ CREATE TABLE IF NOT EXISTS public.route_stops (
     is_active BOOLEAN DEFAULT TRUE,
     is_special_point BOOLEAN DEFAULT FALSE,
     notes TEXT,
+    departure_days TEXT[] DEFAULT ARRAY['Todos los días'],
+    departure_times TEXT[] DEFAULT ARRAY['06:00 AM', '08:30 AM', '01:00 PM', '05:30 PM'],
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -214,6 +216,8 @@ CREATE TABLE IF NOT EXISTS public.route_stops (
 ALTER TABLE public.route_stops ADD COLUMN IF NOT EXISTS maps_url TEXT;
 ALTER TABLE public.route_stops ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
 ALTER TABLE public.route_stops ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE public.route_stops ADD COLUMN IF NOT EXISTS departure_days TEXT[] DEFAULT ARRAY['Todos los días'];
+ALTER TABLE public.route_stops ADD COLUMN IF NOT EXISTS departure_times TEXT[] DEFAULT ARRAY['06:00 AM', '08:30 AM', '01:00 PM', '05:30 PM'];
 
 -- 10. TABLA: BITÁCORA DE AUDITORÍA (AUDIT LOGS)
 CREATE TABLE IF NOT EXISTS public.audit_logs (

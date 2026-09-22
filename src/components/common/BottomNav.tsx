@@ -21,7 +21,8 @@ import {
   Layers,
   CalendarDays,
   Palmtree,
-  LayoutGrid
+  LayoutGrid,
+  Car
 } from 'lucide-react';
 
 interface BottomNavProps {
@@ -30,17 +31,15 @@ interface BottomNavProps {
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab }) => {
-  const { currentRole } = useApp();
+  const { currentRole, bookings } = useApp();
 
   const getNavItems = () => {
     switch (currentRole) {
       case 'pasajero':
         return [
-          { id: 'search', label: 'Itinerarios', icon: <Search className="w-5 h-5 text-white" /> },
           { id: 'tours', label: 'Tours', icon: <Palmtree className="w-5 h-5 text-white" /> },
-          { id: 'seats', label: 'Asientos', icon: <Grid className="w-5 h-5 text-white" /> },
           { id: 'tickets', label: 'Mis Boletos', icon: <Ticket className="w-5 h-5 text-white" /> },
-          { id: 'routes', label: 'Tarifario', icon: <Map className="w-5 h-5 text-white" /> },
+          { id: 'rentals', label: 'Renta Autos', icon: <Car className="w-5 h-5 text-white" /> },
         ];
       case 'conductor':
         return [
@@ -52,7 +51,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
         ];
       case 'secretaria':
         return [
-          { id: 'counter', label: 'Ventanilla', icon: <PlusCircle className="w-5 h-5 text-white" /> },
+          { id: 'counter', label: 'Ventanilla', icon: <PlusCircle className="w-5 h-5 text-white" />, badge: bookings.length },
           { id: 'quotes', label: 'Cotizador', icon: <FileText className="w-5 h-5 text-white" /> },
           { id: 'crm', label: 'CRM Leads', icon: <Users className="w-5 h-5 text-white" /> },
           { id: 'calendar', label: 'Flota', icon: <Calendar className="w-5 h-5 text-white" /> },
@@ -76,7 +75,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
       case 'director':
         return [
           { id: 'executive', label: 'Métricas', icon: <TrendingUp className="w-5 h-5 text-white" /> },
-          { id: 'sales', label: 'Ventas', icon: <Ticket className="w-5 h-5 text-white" /> },
+          { id: 'sales', label: 'Venta Boletos', icon: <Ticket className="w-5 h-5 text-white" />, badge: bookings.length },
           { id: 'agenda', label: 'Agenda', icon: <CalendarDays className="w-5 h-5 text-white" /> },
           { id: 'seat_layouts', label: 'Diagramas', icon: <LayoutGrid className="w-5 h-5 text-white" /> },
           { id: 'drivers', label: 'Choferes', icon: <Users className="w-5 h-5 text-white" /> },
@@ -112,8 +111,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab })
                   : 'text-white/85 hover:text-white hover:bg-orange-700/60 font-medium'
               }`}
             >
-              <div className="p-0.5 sm:p-1 rounded-lg">
+              <div className="p-0.5 sm:p-1 rounded-lg relative">
                 {item.icon}
+                {item.badge !== undefined && (
+                  <span className="absolute -top-1.5 -right-2.5 bg-emerald-400 text-black font-black text-[9px] px-1.5 py-0.2 rounded-full border border-black shadow-xs animate-pulse">
+                    {item.badge}
+                  </span>
+                )}
               </div>
               <span className="text-[10px] tracking-tight mt-0.5 whitespace-nowrap text-white font-bold">
                 {item.label}

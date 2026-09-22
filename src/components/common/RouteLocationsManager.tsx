@@ -20,7 +20,9 @@ import {
   CheckCircle2,
   X,
   Sparkles,
-  DollarSign
+  DollarSign,
+  Calendar,
+  CalendarDays
 } from 'lucide-react';
 
 const BASE_7_CITIES = [
@@ -31,6 +33,28 @@ const BASE_7_CITIES = [
   'Guadalajara',
   'Cas/Consulado',
   'Zoológico'
+];
+
+const ALL_WEEK_DAYS = [
+  'Lunes',
+  'Martes',
+  'Miércoles',
+  'Jueves',
+  'Viernes',
+  'Sábado',
+  'Domingo'
+];
+
+const POPULAR_DEPARTURE_TIMES = [
+  '06:00 AM',
+  '07:30 AM',
+  '08:30 AM',
+  '10:00 AM',
+  '01:00 PM',
+  '03:30 PM',
+  '05:30 PM',
+  '07:00 PM',
+  '09:00 PM'
 ];
 
 export const RouteLocationsManager: React.FC = () => {
@@ -66,12 +90,52 @@ export const RouteLocationsManager: React.FC = () => {
   const [formIsSpecial, setFormIsSpecial] = useState(false);
   const [formFarePrice, setFormFarePrice] = useState<number | ''>('');
   const [formNotes, setFormNotes] = useState('');
+  
+  // Días y Horarios configurables
+  const [formDepartureDays, setFormDepartureDays] = useState<string[]>(ALL_WEEK_DAYS);
+  const [formDepartureTimes, setFormDepartureTimes] = useState<string[]>([
+    '06:00 AM',
+    '08:30 AM',
+    '01:00 PM',
+    '05:30 PM'
+  ]);
+  const [customTimeInput, setCustomTimeInput] = useState('');
 
   // Delete confirmation modal
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const activeCount = routeStops.filter(s => s.isActive).length;
   const inactiveCount = routeStops.length - activeCount;
+
+  // Day & Time helper functions
+  const toggleDay = (day: string) => {
+    setFormDepartureDays(prev => 
+      prev.includes(day)
+        ? (prev.length > 1 ? prev.filter(d => d !== day) : prev)
+        : [...prev, day]
+    );
+  };
+
+  const handleSelectAllDays = () => setFormDepartureDays([...ALL_WEEK_DAYS]);
+  const handleSelectWeekdays = () => setFormDepartureDays(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']);
+  const handleSelectWeekend = () => setFormDepartureDays(['Sábado', 'Domingo']);
+
+  const handleAddDepartureTime = (timeToAdd?: string) => {
+    const time = (timeToAdd || customTimeInput).trim();
+    if (!time) return;
+    if (!formDepartureTimes.includes(time)) {
+      setFormDepartureTimes(prev => [...prev, time]);
+    }
+    setCustomTimeInput('');
+  };
+
+  const handleRemoveDepartureTime = (timeToRemove: string) => {
+    if (formDepartureTimes.length <= 1) {
+      showNotification('Debe permanecer al menos un horario de salida configurado.', 'info');
+      return;
+    }
+    setFormDepartureTimes(prev => prev.filter(t => t !== timeToRemove));
+  };
 
   const handleOpenAddModal = () => {
     setEditingStop(null);
@@ -88,6 +152,9 @@ export const RouteLocationsManager: React.FC = () => {
     setFormIsSpecial(false);
     setFormFarePrice('');
     setFormNotes('');
+    setFormDepartureDays([...ALL_WEEK_DAYS]);
+    setFormDepartureTimes(['06:00 AM', '08:30 AM', '01:00 PM', '05:30 PM']);
+    setCustomTimeInput('');
     setIsModalOpen(true);
   };
 
@@ -114,6 +181,17 @@ export const RouteLocationsManager: React.FC = () => {
     setFormIsSpecial(!!stop.isSpecialPoint);
     setFormFarePrice(stop.farePrice !== undefined ? stop.farePrice : '');
     setFormNotes(stop.notes || '');
+    setFormDepartureDays(
+      stop.departureDays && stop.departureDays.length > 0
+        ? [...stop.departureDays]
+        : [...ALL_WEEK_DAYS]
+    );
+    setFormDepartureTimes(
+      stop.departureTimes && stop.departureTimes.length > 0
+        ? [...stop.departureTimes]
+        : ['06:00 AM', '08:30 AM', '01:00 PM', '05:30 PM']
+    );
+    setCustomTimeInput('');
     setIsModalOpen(true);
   };
 
@@ -149,7 +227,9 @@ export const RouteLocationsManager: React.FC = () => {
         isActive: formIsActive,
         isSpecialPoint: formIsSpecial,
         farePrice: formFarePrice === '' ? undefined : Number(formFarePrice),
-        notes: formNotes.trim() || undefined
+        notes: formNotes.trim() || undefined,
+        departureDays: formDepartureDays,
+        departureTimes: formDepartureTimes
       });
     } else {
       addRouteStop({
@@ -163,7 +243,9 @@ export const RouteLocationsManager: React.FC = () => {
         isActive: formIsActive,
         isSpecialPoint: formIsSpecial,
         farePrice: formFarePrice === '' ? undefined : Number(formFarePrice),
-        notes: formNotes.trim() || undefined
+        notes: formNotes.trim() || undefined,
+        departureDays: formDepartureDays,
+        departureTimes: formDepartureTimes
       });
     }
 
@@ -443,6 +525,49 @@ export const RouteLocationsManager: React.FC = () => {
                           ℹ️ {stop.notes}
                         </p>
                       )}
+                    </div>
+
+                    {/* Días y Horarios Programados */}
+                    <div className="bg-neutral-50 border border-neutral-200/90 rounded-2xl p-2.5 sm:p-3 space-y-2 mt-2">
+                      <div className="flex flex-wrap items-center justify-between gap-1.5 text-xs">
+                        <div className="flex items-center gap-1.5 font-bold text-neutral-800">
+                          <Calendar className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                          <span>Días de salida:</span>
+                          <span className="font-medium text-neutral-600">
+                            {stop.departureDays && stop.departureDays.length === 7
+                              ? 'Todos los días (Lun - Dom)'
+                              : stop.departureDays && stop.departureDays.length > 0
+                              ? stop.departureDays.join(', ')
+                              : 'Todos los días'}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(stop)}
+                          className="text-[11px] font-black text-orange-600 hover:text-orange-700 hover:underline flex items-center gap-1 cursor-pointer ml-auto"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          <span>Editar Horarios</span>
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-bold text-neutral-700 flex items-center gap-1 mr-1">
+                          <Clock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          Horarios:
+                        </span>
+                        {(stop.departureTimes && stop.departureTimes.length > 0
+                          ? stop.departureTimes
+                          : ['06:00 AM', '08:30 AM', '01:00 PM', '05:30 PM']
+                        ).map((time, idx) => (
+                          <span
+                            key={idx}
+                            className="bg-white text-neutral-800 border border-neutral-300 font-mono text-[11px] font-bold px-2 py-0.5 rounded-lg shadow-2xs"
+                          >
+                            {time}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -757,6 +882,151 @@ export const RouteLocationsManager: React.FC = () => {
                     <p className="text-[10px] text-neutral-500">CAS / Zoológico / Turístico</p>
                   </div>
                 </label>
+              </div>
+
+              {/* DÍAS Y HORARIOS DE SALIDA PROGRAMADOS (Configurable y editable en cualquier momento) */}
+              <div className="bg-orange-50/50 border-2 border-orange-200 rounded-2xl p-4 space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="w-5 h-5 text-orange-600 shrink-0" />
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-orange-950">
+                        Días y Horarios de Salida Programados
+                      </h4>
+                      <p className="text-[11px] text-orange-800">
+                        Configura y edita en cualquier momento los días de servicio y horarios exactos de este punto
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Días de la semana */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                    <label className="text-[11px] font-black uppercase text-neutral-700 tracking-wider">
+                      Días con Servicio ({formDepartureDays.length} días seleccionados)
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={handleSelectAllDays}
+                        className="text-[10px] font-bold text-orange-700 hover:text-orange-900 bg-orange-100 hover:bg-orange-200 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                      >
+                        Todos
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSelectWeekdays}
+                        className="text-[10px] font-bold text-neutral-700 hover:text-neutral-900 bg-neutral-200 hover:bg-neutral-300 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                      >
+                        Lun - Vie
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSelectWeekend}
+                        className="text-[10px] font-bold text-neutral-700 hover:text-neutral-900 bg-neutral-200 hover:bg-neutral-300 px-2 py-0.5 rounded cursor-pointer transition-colors"
+                      >
+                        Fin de semana
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-1.5">
+                    {ALL_WEEK_DAYS.map(day => {
+                      const isSelected = formDepartureDays.includes(day);
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => toggleDay(day)}
+                          className={`py-2 px-1 rounded-xl text-xs font-bold transition-all text-center cursor-pointer border ${
+                            isSelected
+                              ? 'bg-orange-600 text-white border-orange-600 shadow-xs'
+                              : 'bg-white text-neutral-600 border-neutral-300 hover:bg-neutral-100'
+                          }`}
+                        >
+                          {day.substring(0, 3)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Horarios de salida */}
+                <div>
+                  <label className="block text-[11px] font-black uppercase text-neutral-700 tracking-wider mb-1.5">
+                    Horarios de Salida ({formDepartureTimes.length} horarios asignados)
+                  </label>
+
+                  {/* Pills de horarios actuales */}
+                  <div className="flex flex-wrap gap-1.5 mb-2.5 min-h-[38px] p-2 bg-white rounded-xl border border-neutral-300">
+                    {formDepartureTimes.map(time => (
+                      <span
+                        key={time}
+                        className="inline-flex items-center gap-1 bg-neutral-900 text-white font-mono text-xs font-bold pl-2.5 pr-1.5 py-1 rounded-lg shadow-xs"
+                      >
+                        <Clock className="w-3 h-3 text-orange-400" />
+                        <span>{time}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveDepartureTime(time)}
+                          className="hover:bg-neutral-800 p-0.5 rounded text-neutral-400 hover:text-red-400 cursor-pointer ml-1"
+                          title="Eliminar este horario"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                    {formDepartureTimes.length === 0 && (
+                      <span className="text-xs text-neutral-400 italic">No hay horarios seleccionados</span>
+                    )}
+                  </div>
+
+                  {/* Agregar nuevo horario */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Ej. 07:15 AM o 14:00"
+                      value={customTimeInput}
+                      onChange={e => setCustomTimeInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddDepartureTime();
+                        }
+                      }}
+                      className="flex-1 p-2.5 bg-white border-2 border-neutral-300 rounded-xl font-mono text-xs font-bold text-neutral-900 focus:outline-none focus:border-orange-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleAddDepartureTime()}
+                      className="px-3.5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-xl font-black text-xs cursor-pointer flex items-center gap-1 transition-all active:scale-95 shadow-xs"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Agregar Horario</span>
+                    </button>
+                  </div>
+
+                  {/* Sugerencias rápidas */}
+                  <div className="flex items-center gap-1 flex-wrap mt-2">
+                    <span className="text-[10px] text-neutral-500 font-bold mr-1">Rápidos:</span>
+                    {POPULAR_DEPARTURE_TIMES.map(time => (
+                      <button
+                        key={time}
+                        type="button"
+                        disabled={formDepartureTimes.includes(time)}
+                        onClick={() => handleAddDepartureTime(time)}
+                        className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border transition-colors ${
+                          formDepartureTimes.includes(time)
+                            ? 'bg-neutral-100 text-neutral-400 border-neutral-200 cursor-not-allowed'
+                            : 'bg-white text-neutral-700 border-neutral-300 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-700 cursor-pointer'
+                        }`}
+                      >
+                        + {time}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Notes */}

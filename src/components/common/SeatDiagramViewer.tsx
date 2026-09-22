@@ -127,8 +127,8 @@ export const SeatDiagramViewer: React.FC<SeatDiagramViewerProps> = ({
               <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                 {stats.available} Libres
               </span>
-              <span className="text-xs font-black text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                {stats.occupied} Ocupados
+              <span className="text-xs font-black text-red-700 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-300">
+                {stats.occupied} Reservados / Vendidos
               </span>
             </div>
           )}
@@ -138,16 +138,16 @@ export const SeatDiagramViewer: React.FC<SeatDiagramViewerProps> = ({
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-bold text-neutral-600 bg-neutral-50 px-3 py-1.5 rounded-2xl border border-neutral-200">
           <span className="flex items-center gap-1.5">
             <span className="w-3.5 h-3.5 rounded-md bg-emerald-500 border border-emerald-600 shadow-2xs"></span>
-            Disponible
+            Disponible (Verde)
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3.5 h-3.5 rounded-md bg-rose-500 border border-rose-600 shadow-2xs"></span>
-            Ocupado
+            <span className="w-3.5 h-3.5 rounded-md bg-red-600 border border-red-700 shadow-2xs"></span>
+            Reservado / Vendido (Rojo)
           </span>
           {interactive && (
             <span className="flex items-center gap-1.5">
               <span className="w-3.5 h-3.5 rounded-md bg-orange-500 border border-orange-600 shadow-2xs"></span>
-              Seleccionado
+              Seleccionado (Naranja)
             </span>
           )}
         </div>
@@ -250,7 +250,7 @@ export const SeatDiagramViewer: React.FC<SeatDiagramViewerProps> = ({
                         isSelected
                           ? 'bg-orange-500 text-white border-2 border-orange-600 scale-105 shadow-md ring-2 ring-orange-300'
                           : isOccupied
-                          ? 'bg-rose-500 text-white border-2 border-rose-600 shadow-rose-200'
+                          ? 'bg-red-600 text-white border-2 border-red-700 shadow-md ring-1 ring-red-400'
                           : 'bg-emerald-500 text-white border-2 border-emerald-600 shadow-emerald-200 hover:scale-105 hover:bg-emerald-600'
                       } ${!interactive && !isAdminView ? 'cursor-default' : ''}`}
                     >

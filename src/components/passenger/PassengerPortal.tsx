@@ -85,6 +85,13 @@ export const PassengerPortal: React.FC<PassengerPortalProps> = ({ activeTab, set
   const [hasPet, setHasPet] = useState<boolean>(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'spei' | 'cash_counter' | 'oxxo'>('card');
 
+  // Redirigir si el cliente intenta acceder a módulos desactivados (buscar itinerarios, asientos, tarifario)
+  React.useEffect(() => {
+    if (activeTab === 'search' || activeTab === 'seats' || activeTab === 'routes') {
+      setActiveTab('tours');
+    }
+  }, [activeTab, setActiveTab]);
+
   const selectedTrip = trips.find(t => t.id === selectedTripId) || trips[0];
 
   // Active pricings managed by admin
